@@ -14,9 +14,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import dev.twelveoclock.liquidoverlay.api.Liquipedia
+import kotlinx.coroutines.runBlocking
 
 
-fun main() = application {
+fun main() {
+
+    runBlocking {
+        Liquipedia.broadcasters(Liquipedia.Wiki.DOTA_2)
+    }
+
+    //createApplication()
+}
+
+private fun createApplication() = application {
 
     Window(
         onCloseRequest = ::exitApplication,
@@ -52,6 +63,7 @@ fun main() = application {
         }
     }
 }
+
 /*
 object Main {
 
