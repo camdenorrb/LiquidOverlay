@@ -12,7 +12,7 @@ object NativeRegistry {
     private val lookupSystem = SymbolLookup.loaderLookup()
     private val loadedLibs = mutableSetOf<String>()
 
-    val registery = mutableListOf<MethodHandle>()
+    val registry = mutableListOf<MethodHandle>()
 
     fun newRegistryId(type: Any): Long {
         var long = Random.nextLong()
@@ -74,9 +74,9 @@ object NativeRegistry {
             "Could not find: \"$method\""
         }
 
-        registery.add(dataTypesToMethod(method.get(), descriptor))
+        registry.add(dataTypesToMethod(method.get(), descriptor))
 
-        return registery.size - 1
+        return registry.size - 1
     }
 
 

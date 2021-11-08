@@ -10,14 +10,14 @@ class TestHook {
         val processes = Callback.getProcesses()
         var i = 0
         processes.forEachIndexed { index, process ->
-            if (process.exeLocation.contains("Notepad++")) {
+            if (process.exeLocation.contains("notepad++.exe")) {
                 i = index
             }
             println("$index: ${process.title}(${process.exeLocation})")
         }
         println("Choose: $i")
         val overlay = Overlay(processes[i])
-        repeat(9999) {
+        repeat(1000) {
             overlay.startPaint()
             overlay.drawText("Hello World", 0, 0)
             overlay.endPaint()

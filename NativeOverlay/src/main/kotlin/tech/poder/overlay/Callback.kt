@@ -3,11 +3,14 @@ package tech.poder.overlay
 import jdk.incubator.foreign.*
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
-import java.util.concurrent.ConcurrentHashMap
-import kotlin.random.Random
 
 object Callback {
 
+    init {
+        NativeRegistry.loadLib("user32")
+        NativeRegistry.loadLib("kernel32")
+        NativeRegistry.loadLib("psapi")
+    }
 
     val upcallScope = ResourceScope.newSharedScope()
 
@@ -16,89 +19,91 @@ object Callback {
         return CLinker.getInstance().upcallStub(handle, description, upcallScope)
     }
 
-    // TODO: Cache
-    internal val methods: List<MethodHandle> by lazy {
-
-        NativeRegistry.loadLib("user32")
-        NativeRegistry.loadLib("kernel32")
-        NativeRegistry.loadLib("psapi")
-        NativeRegistry.loadLib("gdi32")
-
-        val methodNames = listOf(
-            FunctionDescription( //0
-                "GetLastError", Int::class.java
-            ),
-            FunctionDescription( //1
-                "EnumWindows", Byte::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
-            ),
-            FunctionDescription( //2
-                "GetWindowThreadProcessId",
-                Int::class.java,
-                listOf(MemoryAddress::class.java, MemoryAddress::class.java)
-            ),
-            FunctionDescription( //3
-                "IsWindowVisible", Boolean::class.java, listOf(MemoryAddress::class.java)
-            ),
-            FunctionDescription( //4
-                "GetWindow", MemoryAddress::class.java, listOf(MemoryAddress::class.java, Int::class.java)
-            ),
-            FunctionDescription( //5
-                "GetDC", MemoryAddress::class.java, listOf(MemoryAddress::class.java)
-            ),
-            FunctionDescription( //6
-                "GetClassNameA",
-                Int::class.java,
-                listOf(MemoryAddress::class.java, MemoryAddress::class.java, Int::class.java)
-            ),
-            FunctionDescription( //7
-                "GetWindowTextA",
-                Int::class.java,
-                listOf(MemoryAddress::class.java, MemoryAddress::class.java, Int::class.java)
-            ),
-            FunctionDescription( //8
-                "GetWindowRect", Boolean::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
-            ),
-            FunctionDescription( //9
-                "GetWindowModuleFileNameA",
-                Int::class.java,
-                listOf(MemoryAddress::class.java, MemoryAddress::class.java, Int::class.java)
-            ),
-            FunctionDescription( //10
-                "OpenProcess", MemoryAddress::class.java, listOf(Int::class.java, Boolean::class.java, Int::class.java)
-            ),
-            FunctionDescription( //11
-                "GetModuleFileNameExA",
-                Int::class.java,
-                listOf(MemoryAddress::class.java, MemoryAddress::class.java, MemoryAddress::class.java, Int::class.java)
-            ),
-            FunctionDescription( //12
-                "CloseHandle", Boolean::class.java, listOf(MemoryAddress::class.java)
-            ),
-            FunctionDescription( //13
-                "BeginPaint", MemoryAddress::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
-            ),
-            FunctionDescription( //14
-                "EndPaint", Boolean::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
-            ),
-            FunctionDescription( //15
-                "TextOutA",
-                Boolean::class.java,
-                listOf(
-                    MemoryAddress::class.java,
-                    Int::class.java,
-                    Int::class.java,
-                    MemoryAddress::class.java,
-                    Int::class.java
-                )
-            ),
-            FunctionDescription( //16
-                "UpdateWindow", Boolean::class.java, listOf(MemoryAddress::class.java)
-            ),
+    private val getLastError = NativeRegistry.register(
+        FunctionDescription(
+            "GetLastError", Int::class.java
         )
+    )
 
-        methodNames.forEach(NativeRegistry::register)
-        NativeRegistry.registery
-    }
+    private val enumWindows = NativeRegistry.register(
+        FunctionDescription(
+            "EnumWindows", Byte::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
+        )
+    )
+
+    private val getWindowThreadProcessId = NativeRegistry.register(
+        FunctionDescription(
+            "GetWindowThreadProcessId", Int::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
+        )
+    )
+
+    private val isWindowVisible = NativeRegistry.register(
+        FunctionDescription(
+            "IsWindowVisible", Boolean::class.java, listOf(MemoryAddress::class.java)
+        )
+    )
+
+    private val getWindow = NativeRegistry.register(
+        FunctionDescription(
+            "GetWindow", MemoryAddress::class.java, listOf(MemoryAddress::class.java, Int::class.java)
+        )
+    )
+
+    /*private val getDC = NativeRegistry.register(
+        FunctionDescription(
+            "GetDC", MemoryAddress::class.java, listOf(MemoryAddress::class.java)
+        )
+    )*/
+
+    private val getClassNameA = NativeRegistry.register(
+        FunctionDescription(
+            "GetClassNameA",
+            Int::class.java,
+            listOf(MemoryAddress::class.java, MemoryAddress::class.java, Int::class.java)
+        )
+    )
+
+    private val getWindowTextA = NativeRegistry.register(
+        FunctionDescription(
+            "GetWindowTextA",
+            Int::class.java,
+            listOf(MemoryAddress::class.java, MemoryAddress::class.java, Int::class.java)
+        )
+    )
+
+    private val getWindowRect = NativeRegistry.register(
+        FunctionDescription(
+            "GetWindowRect", Boolean::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
+        )
+    )
+
+    private val getWindowModuleFileNameA = NativeRegistry.register(
+        FunctionDescription(
+            "GetWindowModuleFileNameA",
+            Int::class.java,
+            listOf(MemoryAddress::class.java, MemoryAddress::class.java, Int::class.java)
+        )
+    )
+
+    private val openProcess = NativeRegistry.register(
+        FunctionDescription(
+            "OpenProcess", MemoryAddress::class.java, listOf(Int::class.java, Boolean::class.java, Int::class.java)
+        )
+    )
+
+    private val getModuleFileNameExA = NativeRegistry.register(
+        FunctionDescription(
+            "GetModuleFileNameExA",
+            Int::class.java,
+            listOf(MemoryAddress::class.java, MemoryAddress::class.java, MemoryAddress::class.java, Int::class.java)
+        )
+    )
+
+    private val closeHandle = NativeRegistry.register(
+        FunctionDescription(
+            "CloseHandle", Boolean::class.java, listOf(MemoryAddress::class.java)
+        )
+    )
 
     private fun <T> getExpanding(invoke: (Long, MemorySegment) -> T?): T {
         var result: T? = null
@@ -117,7 +122,10 @@ object Callback {
     }
 
     fun isMainWindow(hwnd: MemoryAddress): Boolean {
-        return methods[3].invoke(hwnd) as Int != 0 && methods[4].invoke(hwnd, 4) as MemoryAddress == MemoryAddress.NULL
+        return NativeRegistry.registry[isWindowVisible].invoke(hwnd) as Int != 0 && NativeRegistry.registry[getWindow].invoke(
+            hwnd,
+            4
+        ) as MemoryAddress == MemoryAddress.NULL
     }
 
     @JvmStatic
@@ -151,7 +159,7 @@ object Callback {
         val id = NativeRegistry.newRegistryId(mutableListOf<MemoryAddress>())
 
         val idLocation = MemoryAddress.ofLong(id)
-        val result = methods[1].invoke(forEachUpcall, idLocation.address()) as Byte
+        val result = NativeRegistry.registry[enumWindows].invoke(forEachUpcall, idLocation.address()) as Byte
 
         check(result != 0.toByte()) {
             "Callback failed"
@@ -163,14 +171,15 @@ object Callback {
         val denseProcesses = mutableListOf<Process>()
         processes.forEach {
             val pidSeg = MemorySegment.allocateNative(CLinker.C_INT.byteSize(), confinedStatic)
-            val pidNoReason = methods[2].invoke(it, pidSeg.address()) as Int
+            val pidNoReason = NativeRegistry.registry[getWindowThreadProcessId].invoke(it, pidSeg.address()) as Int
             check(pidNoReason != 0) {
                 "Could not get pid"
             }
             val pid = MemoryAccess.getInt(pidSeg)
-            val handle = methods[10].invoke(PROCESS_QUERY_INFORMATION or 16, 0, pid) as MemoryAddress
+            val handle =
+                NativeRegistry.registry[openProcess].invoke(PROCESS_QUERY_INFORMATION or 16, 0, pid) as MemoryAddress
             if (handle == MemoryAddress.NULL) {
-                val code = methods[0].invoke() as Int
+                val code = NativeRegistry.registry[getLastError].invoke() as Int
                 if (code == 5) {
                     return@forEach
                 }
@@ -183,27 +192,33 @@ object Callback {
 
                 if (handle == MemoryAddress.NULL) {
 
-                    val used = methods[9].invoke(it, segment.address(), size.toInt()) as Int
+                    val used = NativeRegistry.registry[getWindowModuleFileNameA].invoke(
+                        it,
+                        segment.address(),
+                        size.toInt()
+                    ) as Int
 
                     if (used >= size) {
                         null
-                    }
-                    else {
+                    } else {
                         CLinker.toJavaString(segment)
                     }
-                }
-                else {
+                } else {
 
-                    val used = methods[11].invoke(handle, MemoryAddress.NULL, segment.address(), size.toInt()) as Int
+                    val used = NativeRegistry.registry[getModuleFileNameExA].invoke(
+                        handle,
+                        MemoryAddress.NULL,
+                        segment.address(),
+                        size.toInt()
+                    ) as Int
 
                     if (used == 0) {
-                        println(methods[0].invoke())
+                        println(NativeRegistry.registry[getLastError].invoke())
                     }
 
                     if (used >= size) {
                         null
-                    }
-                    else {
+                    } else {
                         CLinker.toJavaString(segment)
                     }
                 }
@@ -213,15 +228,15 @@ object Callback {
                 return@forEach
             }
             if (handle != MemoryAddress.NULL) {
-                methods[12].invoke(handle)
+                NativeRegistry.registry[closeHandle].invoke(handle)
             }
-            check(methods[8].invoke(it, rectPlaceholder.address()) != 0.toByte()) {
+            check(NativeRegistry.registry[getWindowRect].invoke(it, rectPlaceholder.address()) != 0.toByte()) {
                 "Could not get rect"
             }
             val rect = RectReader.fromMemorySegment(rectPlaceholder)
             if (rect.area != 0u) {
                 val clazzName = getExpanding { size, handle ->
-                    val used = methods[6].invoke(it, handle.address(), size.toInt()) as Int
+                    val used = NativeRegistry.registry[getClassNameA].invoke(it, handle.address(), size.toInt()) as Int
                     if (used >= size) {
                         null
                     } else {
@@ -230,20 +245,19 @@ object Callback {
                 }
                 val title = getExpanding { size, handle ->
 
-                    val used = methods[7].invoke(it, handle.address(), size.toInt()) as Int
+                    val used = NativeRegistry.registry[getWindowTextA].invoke(it, handle.address(), size.toInt()) as Int
 
                     if (used >= size) {
                         null
-                    }
-                    else {
+                    } else {
                         CLinker.toJavaString(handle)
                     }
                 }
-                /*val dc = methods[5].invoke(it) as MemoryAddress
+                /*val dc = NativeRegistry.registry[getDC].invoke(it) as MemoryAddress
                 check(dc != MemoryAddress.NULL) {
                     "Could not get DC"
                 }*/
-                denseProcesses.add(Process(it as MemoryAddress, exeName, clazzName, title, pid, rect))
+                denseProcesses.add(Process(it, exeName, clazzName, title, pid, rect))
             } else {
                 return@forEach
             }
