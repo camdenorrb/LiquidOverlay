@@ -3,71 +3,33 @@ package tech.poder.overlay
 import jdk.incubator.foreign.*
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
 
 object Callback {
+
     val processStorage = ConcurrentHashMap<Long, Any>()
 
     val upcallScope = ResourceScope.newSharedScope()
 
-    private val clazzToMemoryLayout: Map<Class<*>, MemoryLayout> = mapOf(
-        Boolean::class.java to CLinker.C_INT,
-        Byte::class.java to CLinker.C_CHAR,
-        Short::class.java to CLinker.C_SHORT,
-        Int::class.java to CLinker.C_INT,
-        Long::class.java to CLinker.C_LONG,
-        Float::class.java to CLinker.C_FLOAT,
-        Double::class.java to CLinker.C_DOUBLE,
-        MemoryAddress::class.java to CLinker.C_POINTER
-    )
 
-    private val clazzToPrimitive: Map<Class<*>, Class<*>> = mapOf(
-        Boolean::class.java to Int::class.java,
-        Byte::class.java to Byte::class.java,
-        Short::class.java to Short::class.java,
-        Int::class.java to Int::class.java,
-        Long::class.java to Long::class.java,
-        Float::class.java to Float::class.java,
-        Double::class.java to Double::class.java,
-        MemoryAddress::class.java to MemoryAddress::class.java,
-        Void.TYPE to Void.TYPE
-    )
-
+    /*
     private fun dataTypesToMethod(location: Addressable, data: FunctionDescription): MethodHandle {
         val type = generateType(data)
         val description = generateDescription(data)
 
         return CLinker.getInstance().downcallHandle(location, type, description)
     }
-
-    private fun generateDescription(data: FunctionDescription): FunctionDescriptor {
-        return if (data.returnType == null) {
-            FunctionDescriptor.ofVoid(*data.params.map { clazzToMemoryLayout[it]!! }.toTypedArray())
-        } else {
-            FunctionDescriptor.of(
-                clazzToMemoryLayout[data.returnType]!!, *data.params.map { clazzToMemoryLayout[it]!! }.toTypedArray()
-            )
-        }
-    }
-
-    private fun generateType(data: FunctionDescription): MethodType {
-        val returnVoidSafe = clazzToPrimitive[data.returnType ?: Void.TYPE]!!
-        return if (data.params.isNotEmpty()) {
-            MethodType.methodType(returnVoidSafe, data.params.map { clazzToPrimitive[it]!! })
-        } else {
-            MethodType.methodType(returnVoidSafe)
-        }
-    }
+    */
 
     private fun methodToUpcall(handle: MethodHandle, data: FunctionDescription): MemoryAddress {
-        val description = generateDescription(data)
+        val description = NativeRegistry.generateDescriptor(data)
         return CLinker.getInstance().upcallStub(handle, description, upcallScope)
     }
 
+    // TODO: Cache
     internal val methods: List<MethodHandle> by lazy {
-        val methods = mutableListOf<MethodHandle>()
+
         try {
             System.loadLibrary("user32")
             System.loadLibrary("kernel32")
@@ -76,6 +38,7 @@ object Callback {
         } catch (ex: Exception) {
             ex.printStackTrace()
         }
+
         val methodNames = listOf(
             FunctionDescription( //0
                 "GetLastError", Int::class.java
@@ -147,16 +110,9 @@ object Callback {
                 "UpdateWindow", Boolean::class.java, listOf(MemoryAddress::class.java)
             ),
         )
-        val lookupSystem = SymbolLookup.loaderLookup()
-        methodNames.forEach {
-            val method = lookupSystem.lookup(it.name)
-            check(method.isPresent) {
-                "Could not find: \"$it\""
-            }
-            methods.add(dataTypesToMethod(method.get(), it))
-        }
 
-        methods
+        methodNames.forEach(NativeRegistry::register)
+        NativeRegistry.registery
     }
 
     private fun <T> getExpanding(invoke: (Long, MemorySegment) -> T?): T {
@@ -181,35 +137,46 @@ object Callback {
 
     @JvmStatic
     fun forEachWindow(addr1: MemoryAddress, addr2: MemoryAddress): Int {
+
         val id = MemoryAccess.getLong(addr2.asSegment(CLinker.C_LONG_LONG.byteSize(), ResourceScope.globalScope()))
+
         if (isMainWindow(addr1)) {
             (processStorage[id] as MutableList<MemoryAddress>).add(addr1)
         }
+
         return 1
     }
 
     val forEachUpcall by lazy {
+
         val forEachDescriptor = FunctionDescription(
             "forEachWindow", Boolean::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
         )
+
         val lookup = MethodHandles.lookup()
-        val type = generateType(forEachDescriptor)
+        val type = NativeRegistry.generateType(forEachDescriptor)
         val method = lookup.findStatic(Callback::class.java, forEachDescriptor.name, type)
+
         methodToUpcall(method, forEachDescriptor)
     }
 
     fun getProcesses(): List<Process> {
+
         val confinedStatic = ResourceScope.newConfinedScope()
         var id = Random.nextLong()
+
         while (processStorage.putIfAbsent(id, mutableListOf<MemoryAddress>()) != null) {
             id = Random.nextLong()
         }
+
         val idLocation = MemorySegment.allocateNative(CLinker.C_LONG_LONG.byteSize(), confinedStatic)
         MemoryAccess.setLong(idLocation, id)
         val result = methods[1].invoke(forEachUpcall, idLocation.address()) as Byte
+
         check(result != 0.toByte()) {
             "Callback failed"
         }
+
         val processes = processStorage.remove(id)!!
         val PROCESS_QUERY_INFORMATION = 1024
         val rectPlaceholder = MemorySegment.allocateNative(CLinker.C_LONG.byteSize() * 4, confinedStatic)
@@ -231,26 +198,37 @@ object Callback {
             }
 
             val exeName = getExpanding { size, segment ->
+
                 MemoryAccess.setByte(segment, 0)
+
                 if (handle == MemoryAddress.NULL) {
+
                     val used = methods[9].invoke(it, segment.address(), size.toInt()) as Int
+
                     if (used >= size) {
                         null
-                    } else {
+                    }
+                    else {
                         CLinker.toJavaString(segment)
                     }
-                } else {
+                }
+                else {
+
                     val used = methods[11].invoke(handle, MemoryAddress.NULL, segment.address(), size.toInt()) as Int
+
                     if (used == 0) {
                         println(methods[0].invoke())
                     }
+
                     if (used >= size) {
                         null
-                    } else {
+                    }
+                    else {
                         CLinker.toJavaString(segment)
                     }
                 }
             }
+
             if (exeName.contains("C:\\System32") || exeName.contains("C:\\Windows")) {
                 return@forEach
             }
@@ -271,10 +249,13 @@ object Callback {
                     }
                 }
                 val title = getExpanding { size, handle ->
+
                     val used = methods[7].invoke(it, handle.address(), size.toInt()) as Int
+
                     if (used >= size) {
                         null
-                    } else {
+                    }
+                    else {
                         CLinker.toJavaString(handle)
                     }
                 }
