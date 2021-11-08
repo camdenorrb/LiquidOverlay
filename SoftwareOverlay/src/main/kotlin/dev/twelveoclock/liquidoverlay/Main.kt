@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
@@ -16,9 +15,9 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import dev.twelveoclock.liquidoverlay.speech.GoogleSpeechAPI
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import javax.sound.sampled.*
+import kotlin.math.ceil
+import kotlin.math.min
 import kotlin.system.exitProcess
 
 
@@ -40,12 +39,10 @@ private fun createApplication() = application {
     // Needs to be declared here
     val density = LocalDensity.current
 
-    Window(
-        onCloseRequest = ::exitApplication,
+    Window(onCloseRequest = ::exitApplication,
         title = "Compose for Desktop",
         state = rememberWindowState(width = 1000.dp, height = 600.dp),
-        icon = useResource("Water-Drop.svg") { loadSvgPainter(it, density) }
-    ) {
+        icon = useResource("Water-Drop.svg") { loadSvgPainter(it, density) }) {
 
         //val count = remember { mutableStateOf(0) }
 
@@ -56,7 +53,10 @@ private fun createApplication() = application {
 
                 // Header
                 Row(Modifier.height(100.dp).fillMaxWidth().background(Color.Blue)) {
-                    Image(useResource("Water-Drop-Transparent.svg") { loadSvgPainter(it, density) }, "Liquid Overlay Icon")
+                    Image(
+                        useResource("Water-Drop-Transparent.svg") { loadSvgPainter(it, density) },
+                        "Liquid Overlay Icon"
+                    )
                 }
 
                 Divider(color = Color.Black, thickness = 10.dp)
@@ -71,38 +71,38 @@ private fun createApplication() = application {
         }
     }
 }
-            /*
-                }
-                Divider(color = Color.Red, thickness = 5.dp, modifier = Modifier.size(200.dp, 200.dp))
-
-                // Sections
-            //Rect(Offset.Zero, Size(200.toFloat(), window.height.toFloat()))
-            }
-            /*
-            Column(Modifier.fillMaxSize(), Arrangement.spacedBy(5.dp)) {
-
-                Button(modifier = Modifier.align(Alignment.CenterHorizontally),
-                    onClick = {
-                        count.value++
-                    }
-                ) {
-                    Text(if (count.value == 0) "Hello World" else "Clicked ${count.value}!")
-                }
-
-                Button(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    onClick = {
-                        count.value = 0
-                    }
-                ) {
-                    Text("Reset")
-                }
-
-            }
-            */
-
-        }
+/*
     }
+    Divider(color = Color.Red, thickness = 5.dp, modifier = Modifier.size(200.dp, 200.dp))
+
+    // Sections
+//Rect(Offset.Zero, Size(200.toFloat(), window.height.toFloat()))
+}
+/*
+Column(Modifier.fillMaxSize(), Arrangement.spacedBy(5.dp)) {
+
+    Button(modifier = Modifier.align(Alignment.CenterHorizontally),
+        onClick = {
+            count.value++
+        }
+    ) {
+        Text(if (count.value == 0) "Hello World" else "Clicked ${count.value}!")
+    }
+
+    Button(
+        modifier = Modifier.align(Alignment.CenterHorizontally),
+        onClick = {
+            count.value = 0
+        }
+    ) {
+        Text("Reset")
+    }
+
+}
+*/
+
+}
+}
 }
 */
 
@@ -143,60 +143,56 @@ fun streamingMicRecognize() {
 
             }*/
 
-            //val clientStream: ClientStream<StreamingRecognizeRequest> = client.streamingRecognizeCallable().splitCall(responseObserver)
+        //val clientStream: ClientStream<StreamingRecognizeRequest> = client.streamingRecognizeCallable().splitCall(responseObserver)
 
-            /*val recognitionConfig: RecognitionConfig = RecognitionConfig.newBuilder()
-                .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16)
-                .setLanguageCode("en-US")
-                .setSampleRateHertz(16000)
-                .build()
+        /*val recognitionConfig: RecognitionConfig = RecognitionConfig.newBuilder()
+            .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16)
+            .setLanguageCode("en-US")
+            .setSampleRateHertz(16000)
+            .build()
 
-            val streamingRecognitionConfig: StreamingRecognitionConfig =
-                StreamingRecognitionConfig.newBuilder().setConfig(recognitionConfig).build()
-            var request: StreamingRecognizeRequest = StreamingRecognizeRequest.newBuilder()
-                .setStreamingConfig(streamingRecognitionConfig)
-                .build() // The first request in a streaming call has to be a config
-            //clientStream.send(request)*/
-            // SampleRate:16000Hz, SampleSizeInBits: 16, Number of channels: 1, Signed: true,
-            // bigEndian: false
+        val streamingRecognitionConfig: StreamingRecognitionConfig =
+            StreamingRecognitionConfig.newBuilder().setConfig(recognitionConfig).build()
+        var request: StreamingRecognizeRequest = StreamingRecognizeRequest.newBuilder()
+            .setStreamingConfig(streamingRecognitionConfig)
+            .build() // The first request in a streaming call has to be a config
+        //clientStream.send(request)*/
+        // SampleRate:16000Hz, SampleSizeInBits: 16, Number of channels: 1, Signed: true,
+        // bigEndian: false
 
-            val audioFormat = AudioFormat(16000f, 16, 1, true, false)
+        val audioFormat = AudioFormat(16000f, 16, 1, true, false)
+        val bytesPerSecond = (audioFormat.sampleRate * audioFormat.sampleSizeInBits) / 8.0
+        println(bytesPerSecond)
 
-            val targetInfo = DataLine.Info(
-                TargetDataLine::class.java,
-                audioFormat
-            )
-            // Set the system information to read from the microphone audio stream
-            if (!AudioSystem.isLineSupported(targetInfo)) {
-                println("Microphone not supported")
-                exitProcess(0)
-            }
+        val targetInfo = DataLine.Info(
+            TargetDataLine::class.java, audioFormat
+        )
+        // Set the system information to read from the microphone audio stream
+        if (!AudioSystem.isLineSupported(targetInfo)) {
+            println("Microphone not supported")
+            exitProcess(0)
+        }
 
-            // Target data line captures the audio stream the microphone produces.
-            val targetDataLine = AudioSystem.getLine(targetInfo) as TargetDataLine
-            targetDataLine.open(audioFormat)
-            targetDataLine.start()
-            println("Start speaking")
-            val startTime = System.currentTimeMillis()
-            // Audio Input Stream
-            val audio = AudioInputStream(targetDataLine)
+        // Target data line captures the audio stream the microphone produces.
+        val targetDataLine = AudioSystem.getLine(targetInfo) as TargetDataLine
+        targetDataLine.open(audioFormat)
+        targetDataLine.start()
+        println("Start speaking")
+        // Audio Input Stream
+        val audio = AudioInputStream(targetDataLine)
 
+        val fiveSeconds = ByteArray(5 * bytesPerSecond.toInt())
 
+        audio.read(fiveSeconds)
 
-            while (true) {
-                val estimatedTime = System.currentTimeMillis() - startTime
-                val data = ByteArray(1024 * 70)
-                audio.read(data)
-                if (estimatedTime > 1000) { // 1 seconds
-                    println("Stop speaking.")
-                    targetDataLine.stop()
-                    targetDataLine.close()
-                    break
-                }
-                val sender = GoogleSpeechAPI()
-                val result = sender.getSpeech(data)
-                println(result)
-            }
+        println("Stop speaking")
+        audio.close()
+        targetDataLine.stop()
+        targetDataLine.close()
+        val sender = GoogleSpeechAPI()
+        val result = sender.getSpeech(fiveSeconds)
+        println(result)
+        targetDataLine.close()
 
         //}
     } catch (e: Exception) {
