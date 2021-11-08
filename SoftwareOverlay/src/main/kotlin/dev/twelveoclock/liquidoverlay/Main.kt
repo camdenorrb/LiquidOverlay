@@ -189,8 +189,7 @@ fun streamingMicRecognize() {
         audio.close()
         targetDataLine.stop()
         targetDataLine.close()
-        val sender = GoogleSpeechAPI()
-        val result = sender.getSpeech(fiveSeconds)
+        val result = GoogleSpeechAPI.getSpeech(fiveSeconds)
         println(result)
         targetDataLine.close()
 
