@@ -3,6 +3,41 @@ package tech.poder.overlay
 import jdk.incubator.foreign.*
 
 class Overlay(val process: Process) : AutoCloseable {
+    companion object {
+        init {
+            NativeRegistry.loadLib("gdi32")
+        }
+        private val beginPaint = NativeRegistry.register(
+            FunctionDescription( //13
+                "BeginPaint", MemoryAddress::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
+            )
+        )
+
+        private val endPaint = NativeRegistry.register(
+            FunctionDescription( //14
+                "EndPaint", Boolean::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
+            )
+        )
+
+        private val textOutA = NativeRegistry.register(
+            FunctionDescription( //15
+                "TextOutA", Boolean::class.java, listOf(
+                    MemoryAddress::class.java,
+                    Int::class.java,
+                    Int::class.java,
+                    MemoryAddress::class.java,
+                    Int::class.java
+                )
+            )
+        )
+
+        private val updateWindow = NativeRegistry.register(
+            FunctionDescription( //16
+                "UpdateWindow", Boolean::class.java, listOf(MemoryAddress::class.java)
+            )
+        )
+    }
+
     val scope = ResourceScope.newConfinedScope()
     var dc = MemoryAddress.NULL
 
@@ -21,7 +56,7 @@ class Overlay(val process: Process) : AutoCloseable {
             "Already started painting"
         }
         zeroOut()
-        dc = Callback.methods[13].invoke(process.hWnd, paintStruct.address()) as MemoryAddress
+        dc = NativeRegistry.registry[beginPaint].invoke(process.hWnd, paintStruct.address()) as MemoryAddress
         check(dc != MemoryAddress.NULL) {
             "Failed to get DC"
         }
@@ -34,7 +69,7 @@ class Overlay(val process: Process) : AutoCloseable {
         text.forEachIndexed { index, c ->
             MemoryAccess.setCharAtIndex(stringStorage, index.toLong(), c)
         }
-        val result = Callback.methods[15].invoke(dc, x, y, stringStorage.address(), text.length)
+        val result = NativeRegistry.registry[textOutA].invoke(dc, x, y, stringStorage.address(), text.length)
         check(result != 0) {
             "Failed to draw text"
         }
@@ -44,9 +79,9 @@ class Overlay(val process: Process) : AutoCloseable {
         check(dc != MemoryAddress.NULL) {
             "Not painting"
         }
-        Callback.methods[14].invoke(process.hWnd, dc)
+        NativeRegistry.registry[endPaint].invoke(process.hWnd, dc)
         dc = MemoryAddress.NULL
-        val result = Callback.methods[16].invoke(process.hWnd)
+        val result = NativeRegistry.registry[updateWindow].invoke(process.hWnd)
         check(result != 0) {
             "Failed to update window!"
         }
