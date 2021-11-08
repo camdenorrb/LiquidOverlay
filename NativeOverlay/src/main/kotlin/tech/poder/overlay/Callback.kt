@@ -8,19 +8,8 @@ import kotlin.random.Random
 
 object Callback {
 
-    val processStorage = ConcurrentHashMap<Long, Any>()
 
     val upcallScope = ResourceScope.newSharedScope()
-
-
-    /*
-    private fun dataTypesToMethod(location: Addressable, data: FunctionDescription): MethodHandle {
-        val type = generateType(data)
-        val description = generateDescription(data)
-
-        return CLinker.getInstance().downcallHandle(location, type, description)
-    }
-    */
 
     private fun methodToUpcall(handle: MethodHandle, data: FunctionDescription): MemoryAddress {
         val description = NativeRegistry.generateDescriptor(data)
@@ -30,14 +19,10 @@ object Callback {
     // TODO: Cache
     internal val methods: List<MethodHandle> by lazy {
 
-        try {
-            System.loadLibrary("user32")
-            System.loadLibrary("kernel32")
-            System.loadLibrary("psapi")
-            System.loadLibrary("gdi32")
-        } catch (ex: Exception) {
-            ex.printStackTrace()
-        }
+        NativeRegistry.loadLib("user32")
+        NativeRegistry.loadLib("kernel32")
+        NativeRegistry.loadLib("psapi")
+        NativeRegistry.loadLib("gdi32")
 
         val methodNames = listOf(
             FunctionDescription( //0
@@ -138,10 +123,10 @@ object Callback {
     @JvmStatic
     fun forEachWindow(addr1: MemoryAddress, addr2: MemoryAddress): Int {
 
-        val id = MemoryAccess.getLong(addr2.asSegment(CLinker.C_LONG_LONG.byteSize(), ResourceScope.globalScope()))
+        val id = addr2.toRawLongValue()
 
         if (isMainWindow(addr1)) {
-            (processStorage[id] as MutableList<MemoryAddress>).add(addr1)
+            (NativeRegistry.getRegistry(id) as MutableList<MemoryAddress>).add(addr1)
         }
 
         return 1
@@ -163,25 +148,20 @@ object Callback {
     fun getProcesses(): List<Process> {
 
         val confinedStatic = ResourceScope.newConfinedScope()
-        var id = Random.nextLong()
+        val id = NativeRegistry.newRegistryId(mutableListOf<MemoryAddress>())
 
-        while (processStorage.putIfAbsent(id, mutableListOf<MemoryAddress>()) != null) {
-            id = Random.nextLong()
-        }
-
-        val idLocation = MemorySegment.allocateNative(CLinker.C_LONG_LONG.byteSize(), confinedStatic)
-        MemoryAccess.setLong(idLocation, id)
+        val idLocation = MemoryAddress.ofLong(id)
         val result = methods[1].invoke(forEachUpcall, idLocation.address()) as Byte
 
         check(result != 0.toByte()) {
             "Callback failed"
         }
 
-        val processes = processStorage.remove(id)!!
+        val processes = NativeRegistry.dropRegistry(id) as MutableList<MemoryAddress>
         val PROCESS_QUERY_INFORMATION = 1024
         val rectPlaceholder = MemorySegment.allocateNative(CLinker.C_LONG.byteSize() * 4, confinedStatic)
         val denseProcesses = mutableListOf<Process>()
-        (processes as MutableList<*>).forEach {
+        processes.forEach {
             val pidSeg = MemorySegment.allocateNative(CLinker.C_INT.byteSize(), confinedStatic)
             val pidNoReason = methods[2].invoke(it, pidSeg.address()) as Int
             check(pidNoReason != 0) {

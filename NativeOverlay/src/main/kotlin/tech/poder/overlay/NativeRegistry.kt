@@ -3,13 +3,38 @@ package tech.poder.overlay
 import jdk.incubator.foreign.*
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodType
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.random.Random
 
 object NativeRegistry {
 
-    val lookupSystem = SymbolLookup.loaderLookup()
+    private val processStorage = ConcurrentHashMap<Long, Any>()
+    private val lookupSystem = SymbolLookup.loaderLookup()
+    private val loadedLibs = mutableSetOf<String>()
 
     val registery = mutableListOf<MethodHandle>()
 
+    fun newRegistryId(type: Any): Long {
+        var long = Random.nextLong()
+        while (processStorage.putIfAbsent(long, type) != null) {
+            long = Random.nextLong()
+        }
+        return long
+    }
+
+    fun getRegistry(id: Long): Any {
+        return processStorage[id]!!
+    }
+
+    fun dropRegistry(id: Long): Any {
+        return processStorage.remove(id)!!
+    }
+
+    fun loadLib(lib: String) {
+        val realLib = lib.lowercase()
+        if (!loadedLibs.add(realLib)) return
+        System.loadLibrary(realLib)
+    }
 
     private val clazzToMemoryLayout: Map<Class<*>, MemoryLayout> = mapOf(
         Boolean::class.java to CLinker.C_INT,
