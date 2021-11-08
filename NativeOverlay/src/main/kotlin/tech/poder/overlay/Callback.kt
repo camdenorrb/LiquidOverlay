@@ -10,7 +10,7 @@ object Callback {
         NativeRegistry.loadLib("psapi")
     }
 
-    private val getLastError = NativeRegistry.register(
+    val getLastError = NativeRegistry.register(
         FunctionDescription(
             "GetLastError", Int::class.java
         )
@@ -90,7 +90,7 @@ object Callback {
         )
     )
 
-    private val closeHandle = NativeRegistry.register(
+    val closeHandle = NativeRegistry.register(
         FunctionDescription(
             "CloseHandle", Boolean::class.java, listOf(MemoryAddress::class.java)
         )
@@ -132,7 +132,8 @@ object Callback {
 
     @JvmStatic
     fun hookProc(code: Int, wParam: MemoryAddress, lParam: MemoryAddress): MemoryAddress {
-        TODO()
+
+        return MemoryAddress.NULL //todo run CallNextHookEx
     }
 
     private val forEachWindowUpcall = NativeRegistry.registerUpcallStatic(
@@ -141,13 +142,7 @@ object Callback {
         ), this::class.java
     )
 
-    val hookProcUpcall = NativeRegistry.registerUpcallStatic(
-        FunctionDescription(
-            "hookProc",
-            MemoryAddress::class.java,
-            listOf(Int::class.java, MemoryAddress::class.java, MemoryAddress::class.java)
-        ), this::class.java
-    )
+
 
     fun getProcesses(): List<Process> {
 
@@ -218,9 +213,6 @@ object Callback {
             if (exeName.contains("C:\\System32") || exeName.contains("C:\\Windows")) {
                 return@forEach
             }
-            if (handle != MemoryAddress.NULL) {
-                NativeRegistry.registry[closeHandle].invoke(handle)
-            }
             check(NativeRegistry.registry[getWindowRect].invoke(it, rectPlaceholder.address()) != 0.toByte()) {
                 "Could not get rect"
             }
@@ -248,7 +240,7 @@ object Callback {
                 check(dc != MemoryAddress.NULL) {
                     "Could not get DC"
                 }*/
-                denseProcesses.add(Process(it, exeName, clazzName, title, pid, rect))
+                denseProcesses.add(Process(it, handle, exeName, clazzName, title, pid, rect))
             } else {
                 return@forEach
             }

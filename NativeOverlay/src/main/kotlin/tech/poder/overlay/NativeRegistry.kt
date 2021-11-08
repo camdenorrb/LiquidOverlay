@@ -17,7 +17,7 @@ object NativeRegistry {
 
     val registry = mutableListOf<MethodHandle>()
 
-    val upcallRegistry = mutableListOf<MemoryAddress>()
+    //val upcallRegistry = mutableListOf<MemoryAddress>()
 
     fun newRegistryId(type: Any): Long {
         var long = Random.nextLong()

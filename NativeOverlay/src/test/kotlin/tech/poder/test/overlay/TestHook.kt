@@ -17,11 +17,7 @@ class TestHook {
         }
         println("Choose: $i")
         val overlay = Overlay(processes[i])
-        repeat(1000) {
-            overlay.startPaint()
-            overlay.drawText("Hello World", 0, 0)
-            overlay.endPaint()
-            Thread.sleep(1)
-        }
+
+        overlay.close()
     }
 }
