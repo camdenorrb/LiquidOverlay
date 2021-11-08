@@ -55,13 +55,13 @@ private fun createApplication() = application {
 
 
                 // Header
-                Row(Modifier.height(100.dp).fillMaxWidth().background(Color.Blue)) {
+                Row(Modifier.height(100.dp).fillMaxWidth().offset(y = 20.dp), horizontalArrangement = Arrangement.Center) {
                     Image(useResource("Water-Drop-Transparent.svg") { loadSvgPainter(it, density) }, "Liquid Overlay Icon")
                 }
 
-                Divider(color = Color.Black, thickness = 10.dp)
+                Divider(color = Color.Transparent, thickness = 40.dp)
 
-                Row(Modifier.height(100.dp).fillMaxWidth().background(Color.Yellow)) {
+                Row(Modifier.height(100.dp).fillMaxWidth().background(Color.Yellow)/*.offset(y = -40.dp)*/) {
 
                 }
                 // Sections
@@ -184,18 +184,20 @@ fun streamingMicRecognize() {
 
 
             while (true) {
+
                 val estimatedTime = System.currentTimeMillis() - startTime
                 val data = ByteArray(1024 * 70)
+
                 audio.read(data)
+
                 if (estimatedTime > 1000) { // 1 seconds
                     println("Stop speaking.")
                     targetDataLine.stop()
                     targetDataLine.close()
                     break
                 }
-                val sender = GoogleSpeechAPI()
-                val result = sender.getSpeech(data)
-                println(result)
+
+                println(GoogleSpeechAPI.getSpeech(data))
             }
 
         //}
