@@ -9,12 +9,10 @@
 
 plugins {
     // Apply the org.jetbrains.kotlin.jvm Plugin to add support for Kotlin.
-    kotlin("jvm") version "1.6.0-RC2"
-    kotlin("plugin.serialization") version "1.6.0-RC2"
+    kotlin("jvm") version "1.5.31"
+    kotlin("plugin.serialization") version "1.5.31"
     id("com.github.johnrengelman.shadow") version "7.1.0"
-    id("org.jetbrains.compose") version "1.0.0-beta5"
-    // Apply the application plugin to add support for building a CLI application in Java.
-    application
+    id("org.jetbrains.compose") version "+"
 }
 
 group = "dev.twelveoclock"
@@ -49,12 +47,17 @@ dependencies {
 }
 
 tasks {
+    val javaVersionCompat = JavaVersion.VERSION_16.toString()
     val javaVersion = JavaVersion.VERSION_17.toString()
 
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         sourceCompatibility = javaVersion
         targetCompatibility = javaVersion
-        kotlinOptions.jvmTarget = javaVersion
+        kotlinOptions.jvmTarget = javaVersionCompat
+        /*kotlinOptions.freeCompilerArgs += listOf(
+            "-P",
+            "plugin:androidx.compose.compiler.plugins.kotlin:suppressKotlinVersionCompatibilityCheck=true"
+        )*/
         //kotlinOptions.freeCompilerArgs = listOf("-Xopt-in=kotlin.RequiresOptIn")
     }
 
@@ -74,7 +77,8 @@ testing {
     }
 }
 
-application {
-    // Define the main class for the application.
-    mainClass.set("dev.twelveoclock.liquidoverlay.AppKt")
+compose.desktop {
+    application {
+        mainClass = "dev.twelveoclock.liquidoverlay.Main"
+    }
 }
