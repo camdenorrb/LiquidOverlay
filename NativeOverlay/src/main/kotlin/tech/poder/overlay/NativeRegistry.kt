@@ -13,7 +13,7 @@ object NativeRegistry {
     private val symbolLookup = SymbolLookup.loaderLookup()
     private val handleLookup = MethodHandles.lookup()
     private val loadedLibs = mutableSetOf<String>()
-    private val upcallScope = ResourceScope.newConfinedScope()
+    private val upcallScope = ResourceScope.newSharedScope()
 
     val registry = mutableListOf<MethodHandle>()
 
