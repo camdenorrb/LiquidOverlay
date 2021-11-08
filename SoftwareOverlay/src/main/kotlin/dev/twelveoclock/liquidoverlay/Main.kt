@@ -180,7 +180,7 @@ fun streamingMicRecognize() {
         val fiveSeconds = ByteArray(5 * bytesPerSecond.toInt())
         // Audio Input Stream
         val audio = AudioInputStream(targetDataLine)
-        val googleSpeechAPI = GoogleSpeechAPI()
+        val googleSpeechAPI = GoogleSpeechAPI(rate = audioFormat.sampleRate.toInt())
         repeat(5) {
             println("Start speaking: $it")
 
