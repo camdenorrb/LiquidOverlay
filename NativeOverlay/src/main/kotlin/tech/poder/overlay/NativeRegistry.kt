@@ -2,6 +2,7 @@ package tech.poder.overlay
 
 import jdk.incubator.foreign.*
 import java.lang.invoke.MethodHandle
+import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
@@ -9,10 +10,14 @@ import kotlin.random.Random
 object NativeRegistry {
 
     private val processStorage = ConcurrentHashMap<Long, Any>()
-    private val lookupSystem = SymbolLookup.loaderLookup()
+    private val symbolLookup = SymbolLookup.loaderLookup()
+    private val handleLookup = MethodHandles.lookup()
     private val loadedLibs = mutableSetOf<String>()
+    private val upcallScope = ResourceScope.newConfinedScope()
 
     val registry = mutableListOf<MethodHandle>()
+
+    val upcallRegistry = mutableListOf<MemoryAddress>()
 
     fun newRegistryId(type: Any): Long {
         var long = Random.nextLong()
@@ -68,7 +73,7 @@ object NativeRegistry {
      */
     fun register(descriptor: FunctionDescription): Int {
 
-        val method = lookupSystem.lookup(descriptor.name)
+        val method = symbolLookup.lookup(descriptor.name)
 
         check(method.isPresent) {
             "Could not find: \"$method\""
@@ -79,6 +84,24 @@ object NativeRegistry {
         return registry.size - 1
     }
 
+    /**
+     * Obtains an address to a static JVM method
+     *
+     * @param descriptor The function descriptor to register
+     * @param staticClazz The class to obtain the method from
+     * @return The memory address of the method
+     */
+    fun registerUpcallStatic(descriptor: FunctionDescription, staticClazz: Class<*>): MemoryAddress {
+        val type = generateType(descriptor)
+        val method = handleLookup.findStatic(staticClazz, descriptor.name, type)
+
+        return methodToUpcall(method, descriptor)
+    }
+
+    private fun methodToUpcall(handle: MethodHandle, data: FunctionDescription): MemoryAddress {
+        val description = generateDescriptor(data)
+        return CLinker.getInstance().upcallStub(handle, description, upcallScope)
+    }
 
     private fun dataTypesToMethod(location: Addressable, data: FunctionDescription): MethodHandle {
         return CLinker.getInstance().downcallHandle(location, generateType(data), generateDescriptor(data))
@@ -88,7 +111,7 @@ object NativeRegistry {
         return MethodType.methodType(clazzToPrimitive[data.returnType ?: Void.TYPE]!!, data.params.map { clazzToPrimitive[it]!! })
     }
 
-    internal fun generateDescriptor(data: FunctionDescription): FunctionDescriptor {
+    private fun generateDescriptor(data: FunctionDescription): FunctionDescriptor {
         return if (data.returnType == null) {
             FunctionDescriptor.ofVoid(*data.params.map { clazzToMemoryLayout[it]!! }.toTypedArray())
         }

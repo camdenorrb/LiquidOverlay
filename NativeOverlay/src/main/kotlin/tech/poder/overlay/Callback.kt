@@ -1,8 +1,6 @@
 package tech.poder.overlay
 
 import jdk.incubator.foreign.*
-import java.lang.invoke.MethodHandle
-import java.lang.invoke.MethodHandles
 
 object Callback {
 
@@ -10,13 +8,6 @@ object Callback {
         NativeRegistry.loadLib("user32")
         NativeRegistry.loadLib("kernel32")
         NativeRegistry.loadLib("psapi")
-    }
-
-    val upcallScope = ResourceScope.newSharedScope()
-
-    private fun methodToUpcall(handle: MethodHandle, data: FunctionDescription): MemoryAddress {
-        val description = NativeRegistry.generateDescriptor(data)
-        return CLinker.getInstance().upcallStub(handle, description, upcallScope)
     }
 
     private val getLastError = NativeRegistry.register(
@@ -123,8 +114,7 @@ object Callback {
 
     fun isMainWindow(hwnd: MemoryAddress): Boolean {
         return NativeRegistry.registry[isWindowVisible].invoke(hwnd) as Int != 0 && NativeRegistry.registry[getWindow].invoke(
-            hwnd,
-            4
+            hwnd, 4
         ) as MemoryAddress == MemoryAddress.NULL
     }
 
@@ -140,18 +130,24 @@ object Callback {
         return 1
     }
 
-    val forEachUpcall by lazy {
-
-        val forEachDescriptor = FunctionDescription(
-            "forEachWindow", Boolean::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
-        )
-
-        val lookup = MethodHandles.lookup()
-        val type = NativeRegistry.generateType(forEachDescriptor)
-        val method = lookup.findStatic(Callback::class.java, forEachDescriptor.name, type)
-
-        methodToUpcall(method, forEachDescriptor)
+    @JvmStatic
+    fun hookProc(code: Int, wParam: MemoryAddress, lParam: MemoryAddress): MemoryAddress {
+        TODO()
     }
+
+    private val forEachWindowUpcall = NativeRegistry.registerUpcallStatic(
+        FunctionDescription(
+            "forEachWindow", Boolean::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
+        ), this::class.java
+    )
+
+    val hookProcUpcall = NativeRegistry.registerUpcallStatic(
+        FunctionDescription(
+            "hookProc",
+            MemoryAddress::class.java,
+            listOf(Int::class.java, MemoryAddress::class.java, MemoryAddress::class.java)
+        ), this::class.java
+    )
 
     fun getProcesses(): List<Process> {
 
@@ -159,7 +155,7 @@ object Callback {
         val id = NativeRegistry.newRegistryId(mutableListOf<MemoryAddress>())
 
         val idLocation = MemoryAddress.ofLong(id)
-        val result = NativeRegistry.registry[enumWindows].invoke(forEachUpcall, idLocation.address()) as Byte
+        val result = NativeRegistry.registry[enumWindows].invoke(forEachWindowUpcall, idLocation.address()) as Byte
 
         check(result != 0.toByte()) {
             "Callback failed"
@@ -193,9 +189,7 @@ object Callback {
                 if (handle == MemoryAddress.NULL) {
 
                     val used = NativeRegistry.registry[getWindowModuleFileNameA].invoke(
-                        it,
-                        segment.address(),
-                        size.toInt()
+                        it, segment.address(), size.toInt()
                     ) as Int
 
                     if (used >= size) {
@@ -206,10 +200,7 @@ object Callback {
                 } else {
 
                     val used = NativeRegistry.registry[getModuleFileNameExA].invoke(
-                        handle,
-                        MemoryAddress.NULL,
-                        segment.address(),
-                        size.toInt()
+                        handle, MemoryAddress.NULL, segment.address(), size.toInt()
                     ) as Int
 
                     if (used == 0) {

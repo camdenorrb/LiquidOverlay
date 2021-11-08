@@ -36,6 +36,34 @@ class Overlay(val process: Process) : AutoCloseable {
                 "UpdateWindow", Boolean::class.java, listOf(MemoryAddress::class.java)
             )
         )
+
+        private val setWindowsHookExA = NativeRegistry.register(
+            FunctionDescription( //17
+                "SetWindowsHookExA", MemoryAddress::class.java, listOf(
+                    Int::class.java,
+                    MemoryAddress::class.java,
+                    MemoryAddress::class.java,
+                    Int::class.java
+                )
+            )
+        )
+
+        private const val WH_CALLWNDPROC = 4 //before process receives messages
+        private const val WH_CALLWNDPROCRET = 12 //after process receives messages
+        private const val WH_CBT = 5
+        private const val WH_DEBUG = 9
+        private const val WH_FOREGROUNDIDLE = 11
+        private const val WH_GETMESSAGE = 3
+        private const val WH_JOURNALPLAYBACK = 1
+        private const val WH_JOURNALRECORD = 0
+        private const val WH_KEYBOARD = 2
+        private const val WH_KEYBOARD_LL = 13
+        private const val WH_MOUSE = 7
+        private const val WH_MOUSE_LL = 14
+        private const val WH_MSGFILTER = -1
+        private const val WH_SHELL = 10
+        private const val WH_SYSMSGFILTER = 6
+
     }
 
     val scope = ResourceScope.newConfinedScope()
