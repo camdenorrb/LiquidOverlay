@@ -31,5 +31,5 @@ gradle-app.setting
 .classpath
 
 # The secret sauce
-liquidToken.txt
-google_credentials.json
+/liquidToken.txt
+/google_credentials.json

@@ -20,6 +20,7 @@ import com.google.api.gax.rpc.ResponseObserver
 import com.google.api.gax.rpc.StreamController
 import com.google.cloud.speech.v1.*
 import com.google.protobuf.ByteString
+import java.io.ByteArrayOutputStream
 import javax.sound.sampled.*
 import kotlin.system.exitProcess
 
@@ -39,18 +40,14 @@ fun main() {
 
 private fun createApplication() = application {
 
-    // Needs to be outside of logo
+    // Needs to be declared here
     val density = LocalDensity.current
-
-    val ideaLogo = remember {
-        useResource("Water-Drop.svg") { loadSvgPainter(it, density) }
-    }
 
     Window(
         onCloseRequest = ::exitApplication,
         title = "Compose for Desktop",
         state = rememberWindowState(width = 1000.dp, height = 600.dp),
-        icon = ideaLogo
+        icon = useResource("Water-Drop.svg") { loadSvgPainter(it, density) }
     ) {
 
         //val count = remember { mutableStateOf(0) }
@@ -59,10 +56,10 @@ private fun createApplication() = application {
 
             Column(Modifier.size(200.dp, window.height.dp).background(Color(33, 41, 54))) {
 
-                Image(ideaLogo, "Liquid Overlay Icon")
+
                 // Header
                 Row(Modifier.height(100.dp).fillMaxWidth().background(Color.Blue)) {
-
+                    Image(useResource("Water-Drop-Transparent.svg") { loadSvgPainter(it, density) }, "Liquid Overlay Icon")
                 }
 
                 Divider(color = Color.Black, thickness = 10.dp)
@@ -165,7 +162,9 @@ fun streamingMicRecognize() {
             clientStream.send(request)
             // SampleRate:16000Hz, SampleSizeInBits: 16, Number of channels: 1, Signed: true,
             // bigEndian: false
+
             val audioFormat = AudioFormat(16000f, 16, 1, true, false)
+
             val targetInfo = DataLine.Info(
                 TargetDataLine::class.java,
                 audioFormat
@@ -184,6 +183,12 @@ fun streamingMicRecognize() {
             val startTime = System.currentTimeMillis()
             // Audio Input Stream
             val audio = AudioInputStream(targetDataLine)
+
+
+            val output = ByteArrayOutputStream()
+
+            AudioSystem.write(audio, AudioFileFormat.Type.WAVE, output)
+
             while (true) {
                 val estimatedTime = System.currentTimeMillis() - startTime
                 val data = ByteArray(6400)
