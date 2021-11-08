@@ -1,44 +1,90 @@
 package dev.twelveoclock.liquidoverlay
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.Button
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.loadSvgPainter
+import androidx.compose.ui.res.useResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import dev.twelveoclock.liquidoverlay.api.Liquipedia
-import kotlinx.coroutines.runBlocking
+import com.google.api.gax.rpc.ClientStream
+import com.google.api.gax.rpc.ResponseObserver
+import com.google.api.gax.rpc.StreamController
+import com.google.cloud.speech.v1.*
+import com.google.protobuf.ByteString
+import javax.sound.sampled.*
+import kotlin.system.exitProcess
 
 
 fun main() {
 
+    streamingMicRecognize()
+
+    /*
     runBlocking {
-        Liquipedia.broadcasters(Liquipedia.Wiki.DOTA_2)
+        println(Liquipedia.broadcasters(listOf(Liquipedia.Wiki.DOTA_2)))
     }
+    */
 
     //createApplication()
 }
 
 private fun createApplication() = application {
 
+    // Needs to be outside of logo
+    val density = LocalDensity.current
+
+    val ideaLogo = remember {
+        useResource("Water-Drop.svg") { loadSvgPainter(it, density) }
+    }
+
     Window(
         onCloseRequest = ::exitApplication,
         title = "Compose for Desktop",
-        state = rememberWindowState(width = 300.dp, height = 300.dp)
+        state = rememberWindowState(width = 1000.dp, height = 600.dp),
+        icon = ideaLogo
     ) {
 
-        val count = remember { mutableStateOf(0) }
+        //val count = remember { mutableStateOf(0) }
 
         MaterialTheme {
 
+            Column(Modifier.size(200.dp, window.height.dp).background(Color(33, 41, 54))) {
+
+                Image(ideaLogo, "Liquid Overlay Icon")
+                // Header
+                Row(Modifier.height(100.dp).fillMaxWidth().background(Color.Blue)) {
+
+                }
+
+                Divider(color = Color.Black, thickness = 10.dp)
+
+                Row(Modifier.height(100.dp).fillMaxWidth().background(Color.Yellow)) {
+
+                }
+                // Sections
+                //Rect(Offset.Zero, Size(200.toFloat(), window.height.toFloat()))
+            }
+
+        }
+    }
+}
+            /*
+                }
+                Divider(color = Color.Red, thickness = 5.dp, modifier = Modifier.size(200.dp, 200.dp))
+
+                // Sections
+            //Rect(Offset.Zero, Size(200.toFloat(), window.height.toFloat()))
+            }
+            /*
             Column(Modifier.fillMaxSize(), Arrangement.spacedBy(5.dp)) {
 
                 Button(modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -59,9 +105,105 @@ private fun createApplication() = application {
                 }
 
             }
+            */
 
         }
     }
+}
+*/
+
+/** Performs microphone streaming speech recognition with a duration of 1 minute.  */
+
+@Throws(Exception::class)
+fun streamingMicRecognize() {
+
+    var responseObserver: ResponseObserver<StreamingRecognizeResponse?>? = null
+
+    try {
+        SpeechClient.create().use { client ->
+
+            responseObserver = object : ResponseObserver<StreamingRecognizeResponse?> {
+
+                val responses = mutableListOf<StreamingRecognizeResponse>()
+
+
+                override fun onStart(controller: StreamController?) {
+
+                }
+
+                override fun onResponse(response: StreamingRecognizeResponse?) {
+                    responses.add(response!!)
+                }
+
+                override fun onError(t: Throwable?) {
+                    println(t)
+                }
+
+                override fun onComplete() {
+                    for (response in responses) {
+                        val result: StreamingRecognitionResult = response.resultsList[0]
+                        val alternative: SpeechRecognitionAlternative = result.alternativesList[0]
+                        System.out.printf("Transcript : %s\n", alternative.transcript)
+                    }
+                }
+
+            }
+
+            val clientStream: ClientStream<StreamingRecognizeRequest> = client.streamingRecognizeCallable().splitCall(responseObserver)
+
+            val recognitionConfig: RecognitionConfig = RecognitionConfig.newBuilder()
+                .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16)
+                .setLanguageCode("en-US")
+                .setSampleRateHertz(16000)
+                .build()
+
+            val streamingRecognitionConfig: StreamingRecognitionConfig =
+                StreamingRecognitionConfig.newBuilder().setConfig(recognitionConfig).build()
+            var request: StreamingRecognizeRequest = StreamingRecognizeRequest.newBuilder()
+                .setStreamingConfig(streamingRecognitionConfig)
+                .build() // The first request in a streaming call has to be a config
+            clientStream.send(request)
+            // SampleRate:16000Hz, SampleSizeInBits: 16, Number of channels: 1, Signed: true,
+            // bigEndian: false
+            val audioFormat = AudioFormat(16000f, 16, 1, true, false)
+            val targetInfo = DataLine.Info(
+                TargetDataLine::class.java,
+                audioFormat
+            )
+            // Set the system information to read from the microphone audio stream
+            if (!AudioSystem.isLineSupported(targetInfo)) {
+                println("Microphone not supported")
+                exitProcess(0)
+            }
+
+            // Target data line captures the audio stream the microphone produces.
+            val targetDataLine = AudioSystem.getLine(targetInfo) as TargetDataLine
+            targetDataLine.open(audioFormat)
+            targetDataLine.start()
+            println("Start speaking")
+            val startTime = System.currentTimeMillis()
+            // Audio Input Stream
+            val audio = AudioInputStream(targetDataLine)
+            while (true) {
+                val estimatedTime = System.currentTimeMillis() - startTime
+                val data = ByteArray(6400)
+                audio.read(data)
+                if (estimatedTime > 60000) { // 60 seconds
+                    println("Stop speaking.")
+                    targetDataLine.stop()
+                    targetDataLine.close()
+                    break
+                }
+                request = StreamingRecognizeRequest.newBuilder()
+                    .setAudioContent(ByteString.copyFrom(data))
+                    .build()
+                clientStream.send(request)
+            }
+        }
+    } catch (e: Exception) {
+        println(e)
+    }
+    responseObserver!!.onComplete()
 }
 
 /*

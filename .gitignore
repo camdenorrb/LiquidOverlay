@@ -29,3 +29,7 @@ gradle-app.setting
 **/build/
 .project
 .classpath
+
+# The secret sauce
+liquidToken.txt
+google_credentials.json
