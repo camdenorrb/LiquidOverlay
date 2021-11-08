@@ -15,11 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import com.google.api.gax.rpc.ClientStream
-import com.google.api.gax.rpc.ResponseObserver
-import com.google.api.gax.rpc.StreamController
-import com.google.cloud.speech.v1.*
-import com.google.protobuf.ByteString
+import dev.twelveoclock.liquidoverlay.speech.GoogleSpeechAPI
+import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import javax.sound.sampled.*
 import kotlin.system.exitProcess
@@ -114,10 +111,10 @@ private fun createApplication() = application {
 @Throws(Exception::class)
 fun streamingMicRecognize() {
 
-    var responseObserver: ResponseObserver<StreamingRecognizeResponse?>? = null
+    //var responseObserver: ResponseObserver<StreamingRecognizeResponse?>? = null
 
     try {
-        SpeechClient.create().use { client ->
+        /*SpeechClient.create().use { client ->
 
             responseObserver = object : ResponseObserver<StreamingRecognizeResponse?> {
 
@@ -144,11 +141,11 @@ fun streamingMicRecognize() {
                     }
                 }
 
-            }
+            }*/
 
-            val clientStream: ClientStream<StreamingRecognizeRequest> = client.streamingRecognizeCallable().splitCall(responseObserver)
+            //val clientStream: ClientStream<StreamingRecognizeRequest> = client.streamingRecognizeCallable().splitCall(responseObserver)
 
-            val recognitionConfig: RecognitionConfig = RecognitionConfig.newBuilder()
+            /*val recognitionConfig: RecognitionConfig = RecognitionConfig.newBuilder()
                 .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16)
                 .setLanguageCode("en-US")
                 .setSampleRateHertz(16000)
@@ -159,7 +156,7 @@ fun streamingMicRecognize() {
             var request: StreamingRecognizeRequest = StreamingRecognizeRequest.newBuilder()
                 .setStreamingConfig(streamingRecognitionConfig)
                 .build() // The first request in a streaming call has to be a config
-            clientStream.send(request)
+            //clientStream.send(request)*/
             // SampleRate:16000Hz, SampleSizeInBits: 16, Number of channels: 1, Signed: true,
             // bigEndian: false
 
@@ -185,30 +182,27 @@ fun streamingMicRecognize() {
             val audio = AudioInputStream(targetDataLine)
 
 
-            val output = ByteArrayOutputStream()
-
-            AudioSystem.write(audio, AudioFileFormat.Type.WAVE, output)
 
             while (true) {
                 val estimatedTime = System.currentTimeMillis() - startTime
-                val data = ByteArray(6400)
+                val data = ByteArray(1024 * 70)
                 audio.read(data)
-                if (estimatedTime > 60000) { // 60 seconds
+                if (estimatedTime > 1000) { // 1 seconds
                     println("Stop speaking.")
                     targetDataLine.stop()
                     targetDataLine.close()
                     break
                 }
-                request = StreamingRecognizeRequest.newBuilder()
-                    .setAudioContent(ByteString.copyFrom(data))
-                    .build()
-                clientStream.send(request)
+                val sender = GoogleSpeechAPI()
+                val result = sender.getSpeech(data)
+                println(result)
             }
-        }
+
+        //}
     } catch (e: Exception) {
         println(e)
     }
-    responseObserver!!.onComplete()
+    //responseObserver!!.onComplete()
 }
 
 /*

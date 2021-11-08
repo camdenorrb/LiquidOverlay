@@ -36,10 +36,6 @@ dependencies {
 
     // Serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.0")
-
-    // Google APIs
-    implementation(platform("com.google.cloud:libraries-bom:24.0.0"))
-    implementation("com.google.cloud:google-cloud-speech")
 }
 
 tasks {
