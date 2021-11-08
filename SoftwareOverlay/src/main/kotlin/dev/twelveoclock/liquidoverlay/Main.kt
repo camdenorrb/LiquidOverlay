@@ -162,7 +162,6 @@ fun streamingMicRecognize() {
 
         val audioFormat = AudioFormat(16000f, 16, 1, true, false)
         val bytesPerSecond = (audioFormat.sampleRate * audioFormat.sampleSizeInBits) / 8.0
-        println(bytesPerSecond)
 
         val targetInfo = DataLine.Info(
             TargetDataLine::class.java, audioFormat
@@ -177,20 +176,22 @@ fun streamingMicRecognize() {
         val targetDataLine = AudioSystem.getLine(targetInfo) as TargetDataLine
         targetDataLine.open(audioFormat)
         targetDataLine.start()
-        println("Start speaking")
-        // Audio Input Stream
-        val audio = AudioInputStream(targetDataLine)
 
         val fiveSeconds = ByteArray(5 * bytesPerSecond.toInt())
+        // Audio Input Stream
+        val audio = AudioInputStream(targetDataLine)
+        repeat(5) {
+            println("Start speaking: $it")
 
-        audio.read(fiveSeconds)
+            audio.read(fiveSeconds)
 
-        println("Stop speaking")
+            println("Stop speaking: $it")
+            val result = GoogleSpeechAPI.getSpeech(fiveSeconds)
+            println(result)
+        }
         audio.close()
         targetDataLine.stop()
         targetDataLine.close()
-        val result = GoogleSpeechAPI.getSpeech(fiveSeconds)
-        println(result)
         targetDataLine.close()
 
         //}
