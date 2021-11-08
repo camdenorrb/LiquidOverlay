@@ -88,7 +88,7 @@ class Overlay(val process: Process) : AutoCloseable {
             )
         )
 
-        private val getModuleHandle = NativeRegistry.register(
+        val getModuleHandle = NativeRegistry.register(
             FunctionDescription( //21
                 "GetModuleHandleA", MemoryAddress::class.java, listOf(MemoryAddress::class.java)
             )
@@ -117,30 +117,23 @@ class Overlay(val process: Process) : AutoCloseable {
                 listOf(Int::class.java, MemoryAddress::class.java, MemoryAddress::class.java)
             ), Callback::class.java
         )
+
+        val dllCheckUpcall = NativeRegistry.registerUpcallStatic(
+            FunctionDescription("dllCheck"), Callback::class.java
+        )
     }
 
     var hook = MemoryAddress.NULL
 
-    val callbackThread = Thread {
+    init {
+        val basic = NativeRegistry.register(dllCheckUpcall, FunctionDescription("dllCheck"))
+        NativeRegistry.registry[basic].invoke()
         println(NativeRegistry.registry[getModuleHandle].invoke(MemoryAddress.NULL))
         val id = NativeRegistry.registry[getWindowThreadProcessId].invoke(process.hWnd, MemoryAddress.NULL)
         hook = NativeRegistry.registry[setWindowsHookExA].invoke(
             WH_CALLWNDPROCRET, hookProcUpcall, MemoryAddress.NULL, id
         ) as MemoryAddress
         check(hook != MemoryAddress.NULL) { "Failed to set hook: ${NativeRegistry.registry[Callback.getLastError].invoke()}" }
-        while (!Thread.currentThread().isInterrupted) {
-            Thread.sleep(1)
-        }
-    }
-
-    init {
-        callbackThread.start()
-        while (callbackThread.isAlive && hook == MemoryAddress.NULL) {
-            Thread.sleep(1)
-        }
-        check (callbackThread.isAlive) {
-            "Failed to start callback thread"
-        }
     }
 
     val scope = ResourceScope.newConfinedScope()
@@ -200,7 +193,6 @@ class Overlay(val process: Process) : AutoCloseable {
             }
             hook = MemoryAddress.NULL
         }
-        callbackThread.interrupt()
         scope.close()
     }
 }

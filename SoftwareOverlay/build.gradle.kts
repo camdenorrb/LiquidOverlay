@@ -39,6 +39,8 @@ dependencies {
 }
 
 tasks {
+    compileKotlin.get().destinationDirectory.set(compileJava.get().destinationDirectory.get())
+    compileTestKotlin.get().destinationDirectory.set(compileTestJava.get().destinationDirectory.get())
 
     val javaVersionCompat = JavaVersion.VERSION_16.toString()
     val javaVersion = JavaVersion.VERSION_17.toString()
@@ -50,6 +52,7 @@ tasks {
     }
 
     withType<JavaCompile> {
+        modularity.inferModulePath.set(true)
         sourceCompatibility = javaVersion
         targetCompatibility = javaVersion
     }
@@ -67,6 +70,9 @@ testing {
 
 compose.desktop {
     application {
-        mainClass = "dev.twelveoclock.liquidoverlay.Main"
+        jvmArgs("--add-modules=jdk.incubator.foreign", "--enable-native-access=PoderTech.overlay", "--enable-native-access=ALL-UNNAMED")
+        mainClass = "dev.twelveoclock.liquidoverlay.MainKt"
+        nativeDistributions.includeAllModules = true
+        javaHome = System.getenv("JAVA_HOME")
     }
 }

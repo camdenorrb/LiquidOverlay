@@ -85,6 +85,19 @@ object NativeRegistry {
     }
 
     /**
+     * Registers a function descriptor at address
+     *
+     * @param descriptor The function descriptor to register
+     * @return The index of the descriptor
+     */
+    fun register(method: Addressable, descriptor: FunctionDescription): Int {
+
+        registry.add(dataTypesToMethod(method, descriptor))
+
+        return registry.size - 1
+    }
+
+    /**
      * Obtains an address to a static JVM method
      *
      * @param descriptor The function descriptor to register

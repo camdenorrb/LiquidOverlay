@@ -165,7 +165,7 @@ object Callback {
 
         val processes = NativeRegistry.dropRegistry(id) as MutableList<MemoryAddress>
         val PROCESS_QUERY_INFORMATION = 1024
-        val PROCESS_VM_READ = 16
+        //val PROCESS_VM_READ = 16
         //val PROCESS_VM_WRITE = 32
         val rectPlaceholder = MemorySegment.allocateNative(CLinker.C_LONG.byteSize() * 4, confinedStatic)
         val denseProcesses = mutableListOf<Process>()
@@ -177,7 +177,7 @@ object Callback {
             }
             val pid = MemoryAccess.getInt(intHolderSeg)
             val processHandle =
-                NativeRegistry.registry[openProcess].invoke(0xFFFF or 983040 or 1048576, 0, pid) as MemoryAddress
+                NativeRegistry.registry[openProcess].invoke(PROCESS_QUERY_INFORMATION, 0, pid) as MemoryAddress
             if (processHandle == MemoryAddress.NULL) {
                 val code = NativeRegistry.registry[getLastError].invoke() as Int
                 if (code == 5) {
@@ -246,22 +246,6 @@ object Callback {
                     }
                 }
 
-                /*var result1 = NativeRegistry.registry[enumProcessModules].invoke(processHandle, MemoryAddress.NULL, 0, intHolderSeg.address()) as Int
-
-                check(result1 != 0) {
-                    "Could not get modules: ${NativeRegistry.registry[getLastError]}"
-                }
-                val tmpScope = ResourceScope.newConfinedScope()
-                val bytesNeeded = MemoryAccess.getInt(intHolderSeg).toUInt().toLong()
-                val moduleInfo = MemorySegment.allocateNative(bytesNeeded, tmpScope)
-                result1 = NativeRegistry.registry[enumProcessModules].invoke(processHandle, moduleInfo.address(), bytesNeeded.toInt(), intHolderSeg.address()) as Int
-                check(result1 != 0) {
-                    "Could not get modules: ${NativeRegistry.registry[getLastError]}"
-                }
-                val modules = List((bytesNeeded / CLinker.C_POINTER.byteSize()).toInt()) {
-                    MemoryAccess.getAddressAtIndex(moduleInfo, it.toLong())
-                }
-                tmpScope.close()*/
                 denseProcesses.add(Process(processData, processHandle, exeName, clazzName, title, pid, rect))
             } else {
                 return@forEach
@@ -270,5 +254,10 @@ object Callback {
         confinedStatic.close()
 
         return denseProcesses
+    }
+
+    @JvmStatic
+    fun dllCheck() {
+        println("DLL_CHECK = ${NativeRegistry.registry[Overlay.getModuleHandle].invoke(MemoryAddress.NULL)}")
     }
 }

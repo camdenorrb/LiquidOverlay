@@ -31,6 +31,7 @@ tasks {
     }
 
     withType<JavaCompile> {
+        modularity.inferModulePath.set(true)
         sourceCompatibility = javaVersion
         targetCompatibility = javaVersion
     }

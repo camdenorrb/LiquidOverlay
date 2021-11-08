@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
@@ -16,23 +15,40 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import dev.twelveoclock.liquidoverlay.speech.GoogleSpeechAPI
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
+import tech.poder.overlay.Callback
+import tech.poder.overlay.Overlay
+import java.io.FileOutputStream
+import java.io.PrintStream
 import javax.sound.sampled.*
 import kotlin.system.exitProcess
 
 
 fun main() {
+    System.setOut(PrintStream(FileOutputStream("log.txt", true)))
+    System.setErr(PrintStream(FileOutputStream("err.txt", true)))
+    Thread {
+        createApplication()
+    }.start()
+    Thread.sleep(5000)
+    val processes = Callback.getProcesses()
+    var i = 0
+    processes.forEachIndexed { index, process ->
+        if (process.exeLocation.contains("SoftwareOverlay.exe")) {
+            i = index
+        }
+        println("$index: ${process.title}(${process.exeLocation})")
+    }
+    println("Choose: $i")
+    val overlay = Overlay(processes[i])
 
-    streamingMicRecognize()
+    overlay.close()
+    //streamingMicRecognize()
 
     /*
     runBlocking {
         println(Liquipedia.broadcasters(listOf(Liquipedia.Wiki.DOTA_2)))
     }
     */
-
-    //createApplication()
 }
 
 private fun createApplication() = application {
