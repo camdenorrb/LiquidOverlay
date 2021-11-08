@@ -96,6 +96,14 @@ object Callback {
         )
     )
 
+    val enumProcessModules = NativeRegistry.register(
+        FunctionDescription(
+            "EnumProcessModules",
+            Boolean::class.java,
+            listOf(MemoryAddress::class.java, MemoryAddress::class.java, Int::class.java, MemoryAddress::class.java)
+        )
+    )
+
     private fun <T> getExpanding(invoke: (Long, MemorySegment) -> T?): T {
         var result: T? = null
         var size = 0L
@@ -132,7 +140,7 @@ object Callback {
 
     @JvmStatic
     fun hookProc(code: Int, wParam: MemoryAddress, lParam: MemoryAddress): MemoryAddress {
-
+        println("Called: $code")
         return MemoryAddress.NULL //todo run CallNextHookEx
     }
 
@@ -141,7 +149,6 @@ object Callback {
             "forEachWindow", Boolean::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
         ), this::class.java
     )
-
 
 
     fun getProcesses(): List<Process> {
@@ -158,18 +165,20 @@ object Callback {
 
         val processes = NativeRegistry.dropRegistry(id) as MutableList<MemoryAddress>
         val PROCESS_QUERY_INFORMATION = 1024
+        val PROCESS_VM_READ = 16
+        //val PROCESS_VM_WRITE = 32
         val rectPlaceholder = MemorySegment.allocateNative(CLinker.C_LONG.byteSize() * 4, confinedStatic)
         val denseProcesses = mutableListOf<Process>()
-        processes.forEach {
-            val pidSeg = MemorySegment.allocateNative(CLinker.C_INT.byteSize(), confinedStatic)
-            val pidNoReason = NativeRegistry.registry[getWindowThreadProcessId].invoke(it, pidSeg.address()) as Int
+        processes.forEach { processData ->
+            val intHolderSeg = MemorySegment.allocateNative(CLinker.C_INT.byteSize(), confinedStatic)
+            val pidNoReason = NativeRegistry.registry[getWindowThreadProcessId].invoke(processData, intHolderSeg.address()) as Int
             check(pidNoReason != 0) {
                 "Could not get pid"
             }
-            val pid = MemoryAccess.getInt(pidSeg)
-            val handle =
-                NativeRegistry.registry[openProcess].invoke(PROCESS_QUERY_INFORMATION or 16, 0, pid) as MemoryAddress
-            if (handle == MemoryAddress.NULL) {
+            val pid = MemoryAccess.getInt(intHolderSeg)
+            val processHandle =
+                NativeRegistry.registry[openProcess].invoke(0xFFFF or 983040 or 1048576, 0, pid) as MemoryAddress
+            if (processHandle == MemoryAddress.NULL) {
                 val code = NativeRegistry.registry[getLastError].invoke() as Int
                 if (code == 5) {
                     return@forEach
@@ -181,10 +190,10 @@ object Callback {
 
                 MemoryAccess.setByte(segment, 0)
 
-                if (handle == MemoryAddress.NULL) {
+                if (processHandle == MemoryAddress.NULL) {
 
                     val used = NativeRegistry.registry[getWindowModuleFileNameA].invoke(
-                        it, segment.address(), size.toInt()
+                        processData, segment.address(), size.toInt()
                     ) as Int
 
                     if (used >= size) {
@@ -195,7 +204,7 @@ object Callback {
                 } else {
 
                     val used = NativeRegistry.registry[getModuleFileNameExA].invoke(
-                        handle, MemoryAddress.NULL, segment.address(), size.toInt()
+                        processHandle, MemoryAddress.NULL, segment.address(), size.toInt()
                     ) as Int
 
                     if (used == 0) {
@@ -213,13 +222,13 @@ object Callback {
             if (exeName.contains("C:\\System32") || exeName.contains("C:\\Windows")) {
                 return@forEach
             }
-            check(NativeRegistry.registry[getWindowRect].invoke(it, rectPlaceholder.address()) != 0.toByte()) {
+            check(NativeRegistry.registry[getWindowRect].invoke(processData, rectPlaceholder.address()) != 0.toByte()) {
                 "Could not get rect"
             }
             val rect = RectReader.fromMemorySegment(rectPlaceholder)
             if (rect.area != 0u) {
                 val clazzName = getExpanding { size, handle ->
-                    val used = NativeRegistry.registry[getClassNameA].invoke(it, handle.address(), size.toInt()) as Int
+                    val used = NativeRegistry.registry[getClassNameA].invoke(processData, handle.address(), size.toInt()) as Int
                     if (used >= size) {
                         null
                     } else {
@@ -228,7 +237,7 @@ object Callback {
                 }
                 val title = getExpanding { size, handle ->
 
-                    val used = NativeRegistry.registry[getWindowTextA].invoke(it, handle.address(), size.toInt()) as Int
+                    val used = NativeRegistry.registry[getWindowTextA].invoke(processData, handle.address(), size.toInt()) as Int
 
                     if (used >= size) {
                         null
@@ -236,11 +245,24 @@ object Callback {
                         CLinker.toJavaString(handle)
                     }
                 }
-                /*val dc = NativeRegistry.registry[getDC].invoke(it) as MemoryAddress
-                check(dc != MemoryAddress.NULL) {
-                    "Could not get DC"
-                }*/
-                denseProcesses.add(Process(it, handle, exeName, clazzName, title, pid, rect))
+
+                /*var result1 = NativeRegistry.registry[enumProcessModules].invoke(processHandle, MemoryAddress.NULL, 0, intHolderSeg.address()) as Int
+
+                check(result1 != 0) {
+                    "Could not get modules: ${NativeRegistry.registry[getLastError]}"
+                }
+                val tmpScope = ResourceScope.newConfinedScope()
+                val bytesNeeded = MemoryAccess.getInt(intHolderSeg).toUInt().toLong()
+                val moduleInfo = MemorySegment.allocateNative(bytesNeeded, tmpScope)
+                result1 = NativeRegistry.registry[enumProcessModules].invoke(processHandle, moduleInfo.address(), bytesNeeded.toInt(), intHolderSeg.address()) as Int
+                check(result1 != 0) {
+                    "Could not get modules: ${NativeRegistry.registry[getLastError]}"
+                }
+                val modules = List((bytesNeeded / CLinker.C_POINTER.byteSize()).toInt()) {
+                    MemoryAccess.getAddressAtIndex(moduleInfo, it.toLong())
+                }
+                tmpScope.close()*/
+                denseProcesses.add(Process(processData, processHandle, exeName, clazzName, title, pid, rect))
             } else {
                 return@forEach
             }

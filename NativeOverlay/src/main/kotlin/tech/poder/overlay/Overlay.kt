@@ -44,9 +44,15 @@ class Overlay(val process: Process) : AutoCloseable {
             )
         )
 
+        private val getWindowThreadProcessId = NativeRegistry.register(
+            FunctionDescription( //18
+                "GetWindowThreadProcessId", Int::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
+            )
+        )
+
         private val getCurrentThreadId = NativeRegistry.register(
             FunctionDescription( //18
-                "GetCurrentThreadId", Int::class.java, listOf()
+                "GetCurrentThreadId", Int::class.java
             )
         )
 
@@ -68,6 +74,23 @@ class Overlay(val process: Process) : AutoCloseable {
                     Int::class.java,
                     MemoryAddress::class.java
                 )
+            )
+        )
+
+        private val getModuleBaseName = NativeRegistry.register(
+            FunctionDescription( //20
+                "GetModuleBaseNameA", Int::class.java, listOf(
+                    MemoryAddress::class.java,
+                    MemoryAddress::class.java,
+                    MemoryAddress::class.java,
+                    Int::class.java
+                )
+            )
+        )
+
+        private val getModuleHandle = NativeRegistry.register(
+            FunctionDescription( //21
+                "GetModuleHandleA", MemoryAddress::class.java, listOf(MemoryAddress::class.java)
             )
         )
 
@@ -99,7 +122,8 @@ class Overlay(val process: Process) : AutoCloseable {
     var hook = MemoryAddress.NULL
 
     val callbackThread = Thread {
-        val id = NativeRegistry.registry[getCurrentThreadId].invoke()
+        println(NativeRegistry.registry[getModuleHandle].invoke(MemoryAddress.NULL))
+        val id = NativeRegistry.registry[getWindowThreadProcessId].invoke(process.hWnd, MemoryAddress.NULL)
         hook = NativeRegistry.registry[setWindowsHookExA].invoke(
             WH_CALLWNDPROCRET, hookProcUpcall, MemoryAddress.NULL, id
         ) as MemoryAddress
