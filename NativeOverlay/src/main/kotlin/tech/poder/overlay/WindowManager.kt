@@ -10,6 +10,8 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
 
         init {
             NativeRegistry.loadLib("User32")
+            NativeRegistry.loadLib("kernel32")
+
         }
 
         //Overlay = WS_EX_TOPMOST | WS_EX_TRANSPARENT | WS_EX_LAYERED
@@ -57,6 +59,12 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
         const val WS_POPUP = 0x80000000
 
 
+        private val getLastError = NativeRegistry.register(
+            FunctionDescription(
+                "GetLastError", Int::class.java
+            )
+        )
+
         private val createWindow = NativeRegistry.register(
             FunctionDescription(
                 "CreateWindowExW", MemoryAddress::class.java, listOf(
@@ -99,8 +107,24 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
             val windowNameAddress = windowName?.let { CLinker.toCString(it, tmpScope) }
                 ?: MemoryAddress.NULL
 
-            /*(val result = NativeRegistry[createWindow]
-                .invoke(exStyle, classNameAddress, windowNameAddress, style, x, y, width, height, parent, menu, instance, param) as MemoryAddress()*/
+
+            println(NativeRegistry[createWindow]
+                .invoke(
+                    exStyle,
+                    classNameAddress.address(),
+                    windowNameAddress.address(),
+                    style,
+                    x,
+                    y,
+                    width,
+                    height,
+                    MemoryAddress.NULL,
+                    MemoryAddress.NULL,
+                    MemoryAddress.NULL,
+                    MemoryAddress.NULL
+                ))
+
+            println(NativeRegistry[getLastError].invoke())
 
             tmpScope.close()
 

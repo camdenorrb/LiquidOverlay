@@ -25,7 +25,7 @@ internal class TestHook {
 
     @Test
     fun createWindow() {
-        WindowManager.createWindow(width = 100, height = 100)
+        WindowManager.createWindow(width = 100, height = 100, className = "button", windowName = "Hello")
     }
 
 
