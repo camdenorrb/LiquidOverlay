@@ -86,7 +86,7 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
 
         fun createWindow(
             exStyle: Int = 0,
-            className: String? = null,
+            clazz: WindowClass? = null,
             windowName: String? = null,
             style: Int = 0,
             x: Int = 1,
@@ -100,29 +100,26 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
         ): WindowManager {
 
             val tmpScope = ResourceScope.newConfinedScope()
+            val windowClazz = clazz?.clazzPointer ?: MemoryAddress.NULL
 
-            val classNameAddress = className?.let { CLinker.toCString(it, tmpScope) }
-                ?: MemoryAddress.NULL
-
-            val windowNameAddress = windowName?.let { CLinker.toCString(it, tmpScope) }
-                ?: MemoryAddress.NULL
+            val windowNameAddress = windowName?.let { CLinker.toCString(it, tmpScope) } ?: MemoryAddress.NULL
 
 
-            println(NativeRegistry[createWindow]
-                .invoke(
-                    exStyle,
-                    classNameAddress.address(),
-                    windowNameAddress.address(),
-                    style,
-                    x,
-                    y,
-                    width,
-                    height,
-                    MemoryAddress.NULL,
-                    MemoryAddress.NULL,
-                    MemoryAddress.NULL,
-                    MemoryAddress.NULL
-                )
+            println(
+                NativeRegistry[createWindow].invoke(
+                        exStyle,
+                        windowClazz,
+                        windowNameAddress.address(),
+                        style,
+                        x,
+                        y,
+                        width,
+                        height,
+                        MemoryAddress.NULL,
+                        MemoryAddress.NULL,
+                        MemoryAddress.NULL,
+                        MemoryAddress.NULL
+                    )
             )
 
             println(NativeRegistry[getLastError].invoke())
