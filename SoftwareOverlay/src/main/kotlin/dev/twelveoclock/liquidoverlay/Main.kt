@@ -15,8 +15,6 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import dev.twelveoclock.liquidoverlay.speech.GoogleSpeechAPI
-import tech.poder.overlay.Callback
-import tech.poder.overlay.Overlay
 import java.io.FileOutputStream
 import java.io.PrintStream
 import javax.sound.sampled.*
@@ -26,22 +24,7 @@ import kotlin.system.exitProcess
 fun main() {
     System.setOut(PrintStream(FileOutputStream("log.txt", true)))
     System.setErr(PrintStream(FileOutputStream("err.txt", true)))
-    Thread {
-        createApplication()
-    }.start()
-    Thread.sleep(5000)
-    val processes = Callback.getProcesses()
-    var i = 0
-    processes.forEachIndexed { index, process ->
-        if (process.exeLocation.contains("SoftwareOverlay.exe")) {
-            i = index
-        }
-        println("$index: ${process.title}(${process.exeLocation})")
-    }
-    println("Choose: $i")
-    val overlay = Overlay(processes[i])
-
-    overlay.close()
+    createApplication()
     //streamingMicRecognize()
 
     /*
@@ -71,8 +54,14 @@ private fun createApplication() = application {
 
 
                 // Header
-                Row(Modifier.height(100.dp).fillMaxWidth().offset(y = 20.dp), horizontalArrangement = Arrangement.Center) {
-                    Image(useResource("Water-Drop-Transparent.svg") { loadSvgPainter(it, density) }, "Liquid Overlay Icon")
+                Row(
+                    Modifier.height(100.dp).fillMaxWidth().offset(y = 20.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Image(
+                        useResource("Water-Drop-Transparent.svg") { loadSvgPainter(it, density) },
+                        "Liquid Overlay Icon"
+                    )
                 }
 
                 Divider(color = Color.Transparent, thickness = 40.dp)
@@ -87,38 +76,38 @@ private fun createApplication() = application {
         }
     }
 }
-            /*
-                }
-                Divider(color = Color.Red, thickness = 5.dp, modifier = Modifier.size(200.dp, 200.dp))
-
-                // Sections
-            //Rect(Offset.Zero, Size(200.toFloat(), window.height.toFloat()))
-            }
-            /*
-            Column(Modifier.fillMaxSize(), Arrangement.spacedBy(5.dp)) {
-
-                Button(modifier = Modifier.align(Alignment.CenterHorizontally),
-                    onClick = {
-                        count.value++
-                    }
-                ) {
-                    Text(if (count.value == 0) "Hello World" else "Clicked ${count.value}!")
-                }
-
-                Button(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    onClick = {
-                        count.value = 0
-                    }
-                ) {
-                    Text("Reset")
-                }
-
-            }
-            */
-
-        }
+/*
     }
+    Divider(color = Color.Red, thickness = 5.dp, modifier = Modifier.size(200.dp, 200.dp))
+
+    // Sections
+//Rect(Offset.Zero, Size(200.toFloat(), window.height.toFloat()))
+}
+/*
+Column(Modifier.fillMaxSize(), Arrangement.spacedBy(5.dp)) {
+
+    Button(modifier = Modifier.align(Alignment.CenterHorizontally),
+        onClick = {
+            count.value++
+        }
+    ) {
+        Text(if (count.value == 0) "Hello World" else "Clicked ${count.value}!")
+    }
+
+    Button(
+        modifier = Modifier.align(Alignment.CenterHorizontally),
+        onClick = {
+            count.value = 0
+        }
+    ) {
+        Text("Reset")
+    }
+
+}
+*/
+
+}
+}
 }
 */
 
