@@ -122,7 +122,8 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
                     MemoryAddress.NULL,
                     MemoryAddress.NULL,
                     MemoryAddress.NULL
-                ))
+                )
+            )
 
             println(NativeRegistry[getLastError].invoke())
 
