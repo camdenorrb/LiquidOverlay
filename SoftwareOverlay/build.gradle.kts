@@ -29,7 +29,9 @@ dependencies {
 
     // HTTP
     implementation("io.ktor:ktor-client-core:$ktorVersion")
-    implementation("io.ktor:ktor-client-cio:$ktorVersion")
+    //implementation("io.ktor:ktor-client-cio:$ktorVersion")
+    implementation("io.ktor:ktor-client-java:$ktorVersion")
+
 
     // GUI
     implementation(compose.desktop.currentOs)
@@ -67,6 +69,6 @@ testing {
 
 compose.desktop {
     application {
-        mainClass = "dev.twelveoclock.liquidoverlay.Main"
+        mainClass = "dev.twelveoclock.liquidoverlay.MainKt"
     }
 }

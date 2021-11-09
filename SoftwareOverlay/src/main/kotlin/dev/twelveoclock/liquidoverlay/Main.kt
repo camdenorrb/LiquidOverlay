@@ -2,29 +2,35 @@ package dev.twelveoclock.liquidoverlay
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Divider
-import androidx.compose.material.MaterialTheme
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.loadSvgPainter
-import androidx.compose.ui.res.useResource
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import dev.twelveoclock.liquidoverlay.speech.GoogleSpeechAPI
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import javax.sound.sampled.*
 import kotlin.system.exitProcess
 
-
 fun main() {
 
-    streamingMicRecognize()
+    //streamingMicRecognize()
 
     /*
     runBlocking {
@@ -32,79 +38,168 @@ fun main() {
     }
     */
 
-    //createApplication()
+    createApplication()
 }
 
+
+val NAVIGATION_WIDTH = 200.dp
+
+val BACKGROUND_COLOR = Color(43, 54, 72)
+
+// https://developer.android.com/jetpack/compose
 private fun createApplication() = application {
-
-    // Needs to be declared here
-    val density = LocalDensity.current
-
     Window(
         onCloseRequest = ::exitApplication,
-        title = "Compose for Desktop",
-        state = rememberWindowState(width = 1000.dp, height = 600.dp),
-        icon = useResource("Water-Drop.svg") { loadSvgPainter(it, density) }
+        title = "LiquidOverlay",
+        state = rememberWindowState(width = 1000.dp, height = 600.dp, position = WindowPosition(Alignment.Center)),
+        icon = painterResource("logo/logoOverlay.svg"),
     ) {
-
-        //val count = remember { mutableStateOf(0) }
+        
+        val section = remember { mutableStateOf(Section.HOME) }
 
         MaterialTheme {
-
-            Column(Modifier.size(200.dp, window.height.dp).background(Color(33, 41, 54))) {
-
-
-                // Header
-                Row(Modifier.height(100.dp).fillMaxWidth().offset(y = 20.dp), horizontalArrangement = Arrangement.Center) {
-                    Image(useResource("Water-Drop-Transparent.svg") { loadSvgPainter(it, density) }, "Liquid Overlay Icon")
-                }
-
-                Divider(color = Color.Transparent, thickness = 40.dp)
-
-                Row(Modifier.height(100.dp).fillMaxWidth().background(Color.Yellow)/*.offset(y = -40.dp)*/) {
-
-                }
-                // Sections
-                //Rect(Offset.Zero, Size(200.toFloat(), window.height.toFloat()))
-            }
-
+            //HomeScreen(section)
+            IconToggleButton(false, {}, Modifier.size(100.dp).background(Color.Blue)) {}
         }
     }
 }
-            /*
-                }
-                Divider(color = Color.Red, thickness = 5.dp, modifier = Modifier.size(200.dp, 200.dp))
 
-                // Sections
-            //Rect(Offset.Zero, Size(200.toFloat(), window.height.toFloat()))
-            }
-            /*
-            Column(Modifier.fillMaxSize(), Arrangement.spacedBy(5.dp)) {
+@Composable
+fun HomeScreen(section: MutableState<Section>) {
 
-                Button(modifier = Modifier.align(Alignment.CenterHorizontally),
-                    onClick = {
-                        count.value++
-                    }
-                ) {
-                    Text(if (count.value == 0) "Hello World" else "Clicked ${count.value}!")
-                }
+    NavigationMenu(section)
 
-                Button(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    onClick = {
-                        count.value = 0
-                    }
-                ) {
-                    Text("Reset")
-                }
-
-            }
-            */
-
-        }
+    Box(modifier = Modifier.offset(x = NAVIGATION_WIDTH).fillMaxSize().background(BACKGROUND_COLOR)){
+        Text("Meow")
     }
 }
-*/
+
+@Composable
+fun OverlayScreen(section: MutableState<Section>) {
+
+    NavigationMenu(section)
+
+    Box(modifier = Modifier.offset(x = NAVIGATION_WIDTH).fillMaxSize().background(BACKGROUND_COLOR)){
+        Text("Meow")
+    }
+}
+
+@Composable
+fun SettingsScreen(section: MutableState<Section>) {
+
+    NavigationMenu(section)
+
+    Box(modifier = Modifier.offset(x = NAVIGATION_WIDTH).fillMaxSize().background(BACKGROUND_COLOR)){
+        Text("Meow")
+    }
+}
+
+@Composable
+fun NavigationMenu(section: MutableState<Section>) {
+
+    val prefixIconColor = Color.White
+    val textColor = Color(86, 101, 127)
+    val selectedColor = Color(25, 118, 210)
+
+    //BitmapPainter(useResource())
+    Column(Modifier.width(NAVIGATION_WIDTH).fillMaxHeight().background(Color(33, 41, 54))) {
+
+        // Header with Icon
+        Row(
+            modifier = Modifier.height(100.dp).fillMaxWidth().offset(y = 20.dp),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Image(
+                painterResource("logo/logoTransparent.svg"),
+                "Liquid Overlay Icon"
+            )
+        }
+
+        Divider(color = Color.Transparent, thickness = 50.dp)
+
+        // Home Row
+        Row(
+            modifier = Modifier.height(30.dp).fillMaxWidth().clickable { section.value = Section.HOME },
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+
+
+            // https://developer.android.com/reference/kotlin/androidx/compose/material/icons/Icons
+            Icon(
+                imageVector = Icons.Rounded.Home,
+                contentDescription = "Home",
+                tint = if (section.value == Section.HOME) selectedColor else prefixIconColor
+            )
+
+            Spacer(Modifier.width(10.dp))
+
+            Text(
+                text = "Home",
+                color = if (section.value == Section.HOME) selectedColor else textColor,
+                fontSize = 14.sp,
+                fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+            )
+
+        }
+
+        // Overlay Row
+        Row(
+            modifier = Modifier.height(30.dp).fillMaxWidth().clickable { section.value = Section.OVERLAY },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            // https://developer.android.com/reference/kotlin/androidx/compose/material/icons/Icons
+            Icon(
+                painter = painterResource("font-icons/layers.svg"),
+                contentDescription = "Overlay",
+                tint = if (section.value == Section.OVERLAY) selectedColor else prefixIconColor
+            )
+
+            Spacer(Modifier.width(10.dp))
+
+            Text(
+                text = "Overlay",
+                color = if (section.value == Section.OVERLAY) selectedColor else textColor,
+                fontSize = 14.sp,
+                fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+            )
+
+        }
+
+        // Settings Row
+        Row(
+            modifier = Modifier.height(30.dp).fillMaxWidth().clickable { section.value = Section.SETTINGS },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            // https://developer.android.com/reference/kotlin/androidx/compose/material/icons/Icons
+            Icon(
+                imageVector = Icons.Rounded.Settings,
+                contentDescription = "Settings",
+                tint = if (section.value == Section.SETTINGS) selectedColor else prefixIconColor
+            )
+
+            Spacer(Modifier.width(10.dp))
+
+            Text(
+                text = "Settings",
+                color = if (section.value == Section.SETTINGS) selectedColor else textColor,
+                fontSize = 14.sp,
+                fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+            )
+
+        }
+
+    }
+}
+
+
+enum class Section {
+    HOME,
+    OVERLAY,
+    SETTINGS,
+}
+
 
 /** Performs microphone streaming speech recognition with a duration of 1 minute.  */
 
@@ -192,7 +287,6 @@ fun streamingMicRecognize() {
         }
         audio.close()
         targetDataLine.stop()
-        targetDataLine.close()
         targetDataLine.close()
 
         //}
