@@ -85,10 +85,10 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
             y: Int = 1,
             width: Int = 0,
             height: Int = 0,
-            parent: MemoryAddress = MemoryAddress.NULL,
+            /*parent: MemoryAddress = MemoryAddress.NULL,
             menu: MemoryAddress = MemoryAddress.NULL,
             instance: MemoryAddress = MemoryAddress.NULL,
-            param: MemoryAddress = MemoryAddress.NULL
+            param: MemoryAddress = MemoryAddress.NULL*/
         ): WindowManager {
 
             val tmpScope = ResourceScope.newConfinedScope()
@@ -99,12 +99,12 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
             val windowNameAddress = windowName?.let { CLinker.toCString(it, tmpScope) }
                 ?: MemoryAddress.NULL
 
-            val result = NativeRegistry[createWindow]
-                .invoke(exStyle, classNameAddress, windowNameAddress, style, x, y, width, height, parent, menu, instance, param) as MemoryAddress
+            /*(val result = NativeRegistry[createWindow]
+                .invoke(exStyle, classNameAddress, windowNameAddress, style, x, y, width, height, parent, menu, instance, param) as MemoryAddress()*/
 
             tmpScope.close()
 
-            return WindowManager(result)
+            return WindowManager(MemoryAddress.NULL)
         }
 
     }
