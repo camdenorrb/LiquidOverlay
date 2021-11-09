@@ -4,7 +4,8 @@ import jdk.incubator.foreign.CLinker
 import jdk.incubator.foreign.MemoryAddress
 import jdk.incubator.foreign.ResourceScope
 
-data class WindowManager(val window: MemoryAddress) : AutoCloseable {
+@JvmInline
+value class WindowManager(val window: MemoryAddress) : AutoCloseable {
 
     companion object {
 
@@ -93,18 +94,22 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
             y: Int = 1,
             width: Int = 0,
             height: Int = 0,
-            /*parent: MemoryAddress = MemoryAddress.NULL,
-            menu: MemoryAddress = MemoryAddress.NULL,
-            instance: MemoryAddress = MemoryAddress.NULL,
-            param: MemoryAddress = MemoryAddress.NULL*/
+            parent: WindowManager? = null,
+            menu: WindowManager? = null,
+            instance: Process? = null,
+            param: ExternalStorage? = null
         ): WindowManager {
 
             val tmpScope = ResourceScope.newConfinedScope()
             val windowClazz = clazz?.clazzPointer ?: MemoryAddress.NULL
 
             val windowNameAddress = windowName?.let { CLinker.toCString(it, tmpScope) } ?: MemoryAddress.NULL
+            val parentWindow = parent?.window ?: MemoryAddress.NULL
+            val menuWindow = menu?.window ?: MemoryAddress.NULL
 
+            val pidInstance = instance?.handle ?: MemoryAddress.NULL
 
+            val storage = param?.segment?.address() ?: MemoryAddress.NULL
             println(
                 NativeRegistry[createWindow].invoke(
                         exStyle,
@@ -115,10 +120,10 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
                         y,
                         width,
                         height,
-                        MemoryAddress.NULL,
-                        MemoryAddress.NULL,
-                        MemoryAddress.NULL,
-                        MemoryAddress.NULL
+                        parentWindow,
+                        menuWindow,
+                        pidInstance,
+                        storage
                     )
             )
 
