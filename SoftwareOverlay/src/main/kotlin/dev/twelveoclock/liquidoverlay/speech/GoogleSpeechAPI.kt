@@ -4,7 +4,6 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
-import javax.sound.sampled.AudioFileFormat
 
 class GoogleSpeechAPI(lang: String = "en-US", rate: Int = 16000) {
 

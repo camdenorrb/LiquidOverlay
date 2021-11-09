@@ -13,9 +13,13 @@ object NativeRegistry {
     private val symbolLookup = SymbolLookup.loaderLookup()
     private val handleLookup = MethodHandles.lookup()
     private val loadedLibs = mutableSetOf<String>()
-    private val upcallScope = ResourceScope.newConfinedScope()
+    private val upcallScope = ResourceScope.newSharedScope()
 
     val registry = mutableListOf<MethodHandle>()
+
+    operator fun get(id: Int): MethodHandle {
+        return registry[id]
+    }
 
     //val upcallRegistry = mutableListOf<MemoryAddress>()
 
@@ -80,6 +84,19 @@ object NativeRegistry {
         }
 
         registry.add(dataTypesToMethod(method.get(), descriptor))
+
+        return registry.size - 1
+    }
+
+    /**
+     * Registers a function descriptor at address
+     *
+     * @param descriptor The function descriptor to register
+     * @return The index of the descriptor
+     */
+    fun register(method: Addressable, descriptor: FunctionDescription): Int {
+
+        registry.add(dataTypesToMethod(method, descriptor))
 
         return registry.size - 1
     }

@@ -4,7 +4,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material.Divider
+import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
@@ -28,8 +31,11 @@ import dev.twelveoclock.liquidoverlay.speech.GoogleSpeechAPI
 import javax.sound.sampled.*
 import kotlin.system.exitProcess
 
-fun main() {
 
+fun main() {
+    //System.setOut(PrintStream(FileOutputStream("log.txt", true)))
+    //System.setErr(PrintStream(FileOutputStream("err.txt", true)))
+    createApplication()
     //streamingMicRecognize()
 
     /*
@@ -37,8 +43,6 @@ fun main() {
         println(Liquipedia.broadcasters(listOf(Liquipedia.Wiki.DOTA_2)))
     }
     */
-
-    createApplication()
 }
 
 
@@ -54,12 +58,12 @@ private fun createApplication() = application {
         state = rememberWindowState(width = 1000.dp, height = 600.dp, position = WindowPosition(Alignment.Center)),
         icon = painterResource("logo/logoOverlay.svg"),
     ) {
-        
+
         val section = remember { mutableStateOf(Section.HOME) }
 
         MaterialTheme {
-            //HomeScreen(section)
-            IconToggleButton(false, {}, Modifier.size(100.dp).background(Color.Blue)) {}
+            HomeScreen(section)
+            //IconToggleButton(false, {}, Modifier.size(100.dp).background(Color.Blue)) {}
         }
     }
 }
@@ -287,6 +291,7 @@ fun streamingMicRecognize() {
         }
         audio.close()
         targetDataLine.stop()
+        targetDataLine.close()
         targetDataLine.close()
 
         //}

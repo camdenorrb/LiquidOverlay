@@ -13,7 +13,7 @@ data class Process(
 ): AutoCloseable {
     override fun close() {
         if (handle != MemoryAddress.NULL) {
-            NativeRegistry.registry[Callback.closeHandle].invoke(handle)
+            NativeRegistry[Callback.closeHandle].invoke(handle)
         }
     }
 }
