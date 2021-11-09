@@ -121,7 +121,7 @@ object Callback {
     }
 
     fun isMainWindow(hwnd: MemoryAddress): Boolean {
-        return NativeRegistry.registry[isWindowVisible].invoke(hwnd) as Int != 0 && NativeRegistry.registry[getWindow].invoke(
+        return NativeRegistry[isWindowVisible].invoke(hwnd) as Int != 0 && NativeRegistry[getWindow].invoke(
             hwnd, 4
         ) as MemoryAddress == MemoryAddress.NULL
     }
@@ -157,7 +157,7 @@ object Callback {
         val id = NativeRegistry.newRegistryId(mutableListOf<MemoryAddress>())
 
         val idLocation = MemoryAddress.ofLong(id)
-        val result = NativeRegistry.registry[enumWindows].invoke(forEachWindowUpcall, idLocation.address()) as Byte
+        val result = NativeRegistry[enumWindows].invoke(forEachWindowUpcall, idLocation.address()) as Byte
 
         check(result != 0.toByte()) {
             "Callback failed"
@@ -171,15 +171,15 @@ object Callback {
         val denseProcesses = mutableListOf<Process>()
         processes.forEach { processData ->
             val intHolderSeg = MemorySegment.allocateNative(CLinker.C_INT.byteSize(), confinedStatic)
-            val pidNoReason = NativeRegistry.registry[getWindowThreadProcessId].invoke(processData, intHolderSeg.address()) as Int
+            val pidNoReason = NativeRegistry[getWindowThreadProcessId].invoke(processData, intHolderSeg.address()) as Int
             check(pidNoReason != 0) {
                 "Could not get pid"
             }
             val pid = MemoryAccess.getInt(intHolderSeg)
             val processHandle =
-                NativeRegistry.registry[openProcess].invoke(PROCESS_QUERY_INFORMATION, 0, pid) as MemoryAddress
+                NativeRegistry[openProcess].invoke(PROCESS_QUERY_INFORMATION, 0, pid) as MemoryAddress
             if (processHandle == MemoryAddress.NULL) {
-                val code = NativeRegistry.registry[getLastError].invoke() as Int
+                val code = NativeRegistry[getLastError].invoke() as Int
                 if (code == 5) {
                     return@forEach
                 }
@@ -192,7 +192,7 @@ object Callback {
 
                 if (processHandle == MemoryAddress.NULL) {
 
-                    val used = NativeRegistry.registry[getWindowModuleFileNameA].invoke(
+                    val used = NativeRegistry[getWindowModuleFileNameA].invoke(
                         processData, segment.address(), size.toInt()
                     ) as Int
 
@@ -203,12 +203,12 @@ object Callback {
                     }
                 } else {
 
-                    val used = NativeRegistry.registry[getModuleFileNameExA].invoke(
+                    val used = NativeRegistry[getModuleFileNameExA].invoke(
                         processHandle, MemoryAddress.NULL, segment.address(), size.toInt()
                     ) as Int
 
                     if (used == 0) {
-                        println(NativeRegistry.registry[getLastError].invoke())
+                        println(NativeRegistry[getLastError].invoke())
                     }
 
                     if (used >= size) {
@@ -222,13 +222,13 @@ object Callback {
             if (exeName.contains("C:\\System32") || exeName.contains("C:\\Windows")) {
                 return@forEach
             }
-            check(NativeRegistry.registry[getWindowRect].invoke(processData, rectPlaceholder.address()) != 0.toByte()) {
+            check(NativeRegistry[getWindowRect].invoke(processData, rectPlaceholder.address()) != 0.toByte()) {
                 "Could not get rect"
             }
             val rect = RectReader.fromMemorySegment(rectPlaceholder)
             if (rect.area != 0u) {
                 val clazzName = getExpanding { size, handle ->
-                    val used = NativeRegistry.registry[getClassNameA].invoke(processData, handle.address(), size.toInt()) as Int
+                    val used = NativeRegistry[getClassNameA].invoke(processData, handle.address(), size.toInt()) as Int
                     if (used >= size) {
                         null
                     } else {
@@ -237,7 +237,7 @@ object Callback {
                 }
                 val title = getExpanding { size, handle ->
 
-                    val used = NativeRegistry.registry[getWindowTextA].invoke(processData, handle.address(), size.toInt()) as Int
+                    val used = NativeRegistry[getWindowTextA].invoke(processData, handle.address(), size.toInt()) as Int
 
                     if (used >= size) {
                         null
@@ -258,6 +258,6 @@ object Callback {
 
     @JvmStatic
     fun dllCheck() {
-        println("DLL_CHECK = ${NativeRegistry.registry[Overlay.getModuleHandle].invoke(MemoryAddress.NULL)}")
+        println("DLL_CHECK = ${NativeRegistry[Overlay.getModuleHandle].invoke(MemoryAddress.NULL)}")
     }
 }

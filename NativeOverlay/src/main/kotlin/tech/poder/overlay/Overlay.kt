@@ -1,6 +1,10 @@
 package tech.poder.overlay
 
 import jdk.incubator.foreign.*
+import tech.poder.overlay.WindowManager.Companion.WS_EX_LAYERED
+import tech.poder.overlay.WindowManager.Companion.WS_EX_TOPMOST
+import tech.poder.overlay.WindowManager.Companion.WS_EX_TRANSPARENT
+import tech.poder.overlay.WindowManager.Companion.WS_POPUP
 
 class Overlay(val process: Process) : AutoCloseable {
     companion object {
@@ -47,7 +51,9 @@ class Overlay(val process: Process) : AutoCloseable {
 
         private val getWindowThreadProcessId = NativeRegistry.register(
             FunctionDescription(
-                "GetWindowThreadProcessId", Int::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
+                "GetWindowThreadProcessId",
+                Int::class.java,
+                listOf(MemoryAddress::class.java, MemoryAddress::class.java)
             )
         )
 
@@ -81,10 +87,7 @@ class Overlay(val process: Process) : AutoCloseable {
         private val getModuleBaseName = NativeRegistry.register(
             FunctionDescription(
                 "GetModuleBaseNameA", Int::class.java, listOf(
-                    MemoryAddress::class.java,
-                    MemoryAddress::class.java,
-                    MemoryAddress::class.java,
-                    Int::class.java
+                    MemoryAddress::class.java, MemoryAddress::class.java, MemoryAddress::class.java, Int::class.java
                 )
             )
         )
@@ -139,19 +142,27 @@ class Overlay(val process: Process) : AutoCloseable {
     var hook = MemoryAddress.NULL
 
     init {
+        val self = NativeRegistry[getModuleHandle].invoke(MemoryAddress.NULL)
+        /*val overlayWindow = WindowManager.createWindow(
+            WS_EX_TOPMOST or WS_EX_TRANSPARENT or WS_EX_LAYERED,
+            style = WS_POPUP.toInt(),
+            width = 1024,
+            height = 1024,
+            hInstance = self,
+        )
+        check(overlayWindow.window != MemoryAddress.NULL) { "Failed to create overlay window: ${NativeRegistry[Callback.getLastError].invoke()}" }*/
 
-        val self = NativeRegistry.registry[getModuleHandle].invoke(MemoryAddress.NULL)
         //val basic = NativeRegistry.register(dllCheckUpcall, FunctionDescription("dllCheck"))
-        //NativeRegistry.registry[basic].invoke()
-        //println(NativeRegistry.registry[getModuleHandle].invoke(MemoryAddress.NULL))
-        //val pid2 = NativeRegistry.registry[getProcessHandleFromHwnd].invoke(process.hWnd)
+        //NativeRegistry[basic].invoke()
+        //println(NativeRegistry[getModuleHandle].invoke(MemoryAddress.NULL))
+        //val pid2 = NativeRegistry[getProcessHandleFromHwnd].invoke(process.hWnd)
         //println(pid2)
-        val id = NativeRegistry.registry[getWindowThreadProcessId].invoke(process.hWnd, MemoryAddress.NULL)
+        val id = NativeRegistry[getWindowThreadProcessId].invoke(process.hWnd, MemoryAddress.NULL)
         //println(id)
-        hook = NativeRegistry.registry[setWindowsHookExA].invoke(
-            WH_SYSMSGFILTER, hookProcUpcall, self, id
+        hook = NativeRegistry[setWindowsHookExA].invoke(
+            WH_CALLWNDPROC, hookProcUpcall, self, id
         ) as MemoryAddress
-        check(hook != MemoryAddress.NULL) { "Failed to set hook: ${NativeRegistry.registry[Callback.getLastError].invoke()}" }
+        check(hook != MemoryAddress.NULL) { "Failed to set hook: ${NativeRegistry[Callback.getLastError].invoke()}" }
     }
 
     val scope = ResourceScope.newConfinedScope()
@@ -172,7 +183,7 @@ class Overlay(val process: Process) : AutoCloseable {
             "Already started painting"
         }
         zeroOut()
-        dc = NativeRegistry.registry[beginPaint].invoke(process.hWnd, paintStruct.address()) as MemoryAddress
+        dc = NativeRegistry[beginPaint].invoke(process.hWnd, paintStruct.address()) as MemoryAddress
         check(dc != MemoryAddress.NULL) {
             "Failed to get DC"
         }
@@ -185,7 +196,7 @@ class Overlay(val process: Process) : AutoCloseable {
         text.forEachIndexed { index, c ->
             MemoryAccess.setCharAtIndex(stringStorage, index.toLong(), c)
         }
-        val result = NativeRegistry.registry[textOutA].invoke(dc, x, y, stringStorage.address(), text.length)
+        val result = NativeRegistry[textOutA].invoke(dc, x, y, stringStorage.address(), text.length)
         check(result != 0) {
             "Failed to draw text"
         }
@@ -195,9 +206,9 @@ class Overlay(val process: Process) : AutoCloseable {
         check(dc != MemoryAddress.NULL) {
             "Not painting"
         }
-        NativeRegistry.registry[endPaint].invoke(process.hWnd, dc)
+        NativeRegistry[endPaint].invoke(process.hWnd, dc)
         dc = MemoryAddress.NULL
-        val result = NativeRegistry.registry[updateWindow].invoke(process.hWnd)
+        val result = NativeRegistry[updateWindow].invoke(process.hWnd)
         check(result != 0) {
             "Failed to update window!"
         }
@@ -205,7 +216,7 @@ class Overlay(val process: Process) : AutoCloseable {
 
     override fun close() {
         if (hook != MemoryAddress.NULL) {
-            val result = NativeRegistry.registry[unhookWindowsHookEx].invoke(hook) as Int
+            val result = NativeRegistry[unhookWindowsHookEx].invoke(hook) as Int
             check(result != 0) {
                 "Failed to unhook from process"
             }

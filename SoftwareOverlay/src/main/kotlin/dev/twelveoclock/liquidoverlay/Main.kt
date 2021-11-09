@@ -22,10 +22,10 @@ import kotlin.system.exitProcess
 
 
 fun main() {
-    System.setOut(PrintStream(FileOutputStream("log.txt", true)))
-    System.setErr(PrintStream(FileOutputStream("err.txt", true)))
-    createApplication()
-    //streamingMicRecognize()
+    //System.setOut(PrintStream(FileOutputStream("log.txt", true)))
+    //System.setErr(PrintStream(FileOutputStream("err.txt", true)))
+    //createApplication()
+    streamingMicRecognize()
 
     /*
     runBlocking {
