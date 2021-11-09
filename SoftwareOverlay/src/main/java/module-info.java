@@ -11,13 +11,4 @@ module LiquidOverlayModular.SoftwareOverlay.main {
     requires java.xml;
     requires java.net.http;
     requires PoderTech.overlay;
-	requires ui.desktop;
-    requires ui.graphics.desktop;
-    requires ui.unit.desktop;
-    requires material.desktop;
-    requires foundation.layout.desktop;
-    requires foundation.desktop;
-    requires runtime.desktop;
-    requires material.icons.core.desktop;
-    requires ui.text.desktop;
 }

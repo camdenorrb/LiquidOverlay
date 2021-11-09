@@ -5,7 +5,9 @@ import jdk.incubator.foreign.MemoryAddress
 import jdk.incubator.foreign.ResourceScope
 
 data class WindowManager(val window: MemoryAddress) : AutoCloseable {
+
     companion object {
+
         init {
             NativeRegistry.loadLib("User32")
         }
@@ -88,21 +90,20 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
             instance: MemoryAddress = MemoryAddress.NULL,
             param: MemoryAddress = MemoryAddress.NULL
         ): WindowManager {
+
             val tmpScope = ResourceScope.newConfinedScope()
-            val classNameAddress = if (className == null) {
-                MemoryAddress.NULL
-            } else {
-                CLinker.toCString(className, tmpScope)
-            }
-            val windowNameAddress = if (windowName == null) {
-                MemoryAddress.NULL
-            } else {
-                CLinker.toCString(windowName, tmpScope)
-            }
-            val result = NativeRegistry[createWindow].invoke(
-                exStyle, classNameAddress, windowNameAddress, style, x, y, width, height, parent, menu, instance, param
-            ) as MemoryAddress
+
+            val classNameAddress = className?.let { CLinker.toCString(it, tmpScope) }
+                ?: MemoryAddress.NULL
+
+            val windowNameAddress = windowName?.let { CLinker.toCString(it, tmpScope) }
+                ?: MemoryAddress.NULL
+
+            val result = NativeRegistry[createWindow]
+                .invoke(exStyle, classNameAddress, windowNameAddress, style, x, y, width, height, parent, menu, instance, param) as MemoryAddress
+
             tmpScope.close()
+
             return WindowManager(result)
         }
 

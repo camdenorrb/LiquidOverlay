@@ -2,9 +2,11 @@ package tech.poder.test.overlay
 
 import tech.poder.overlay.Callback
 import tech.poder.overlay.Overlay
+import tech.poder.overlay.WindowManager
 import kotlin.test.Test
 
-class TestHook {
+internal class TestHook {
+
     @Test
     fun basic() {
         val processes = Callback.getProcesses()
@@ -20,4 +22,11 @@ class TestHook {
 
         overlay.close()
     }
+
+    @Test
+    fun createWindow() {
+        WindowManager.createWindow(width = 100, height = 100)
+    }
+
+
 }
