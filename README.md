@@ -7,8 +7,9 @@ An overlay for Liquid Hacks 2021, with the goal of giving better accessibility, 
     a. [Features](#features)
 2. [The Story](#story)\
     a. [An Introduction](#intro)\
-    b. [Our Solution](#solution)\
-    c. [Extra Feauture and Gratitude](#thankyou)
+    b. [The Idea](#idea)\
+    c. [Our Solution](#solution)\
+    d. [Extra Feauture and Gratitude](#thankyou)
 
 ## Project Description <a name="pd"></a>
 
