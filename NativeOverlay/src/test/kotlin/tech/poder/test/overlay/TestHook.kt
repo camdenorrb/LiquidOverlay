@@ -25,7 +25,7 @@ internal class TestHook {
     fun createWindow() {
         //Thread.sleep(10000)
         val clazz = WindowClass.define("Kats")
-        WindowManager.createWindow(clazz = clazz, windowName = "Hello", style = WindowManager.WS_OVERLAPPEDWINDOW, width = 100, height = 100)
+        WindowManager.createWindow(WindowManager.WS_EX_TOPMOST or WindowManager.WS_EX_TRANSPARENT or WindowManager.WS_EX_LAYERED, clazz = clazz, windowName = "LiquidOverlay", style = WindowManager.WS_POPUP.toInt(), width = 100, height = 100)
         Thread.sleep(10000)
     }
 

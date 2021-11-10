@@ -11,6 +11,9 @@ value class WindowManager(val window: MemoryAddress) : AutoCloseable {
 
         //Overlay = WS_EX_TOPMOST | WS_EX_TRANSPARENT | WS_EX_LAYERED
         //EX
+        const val WS_EX_TOPMOST = 0x00000008
+        const val WS_EX_TRANSPARENT = 0x00000020
+        const val WS_EX_LAYERED = 0x00080000
         const val WS_EX_CLIENTEDGE = 0x00000200
         const val WS_EX_WINDOWEDGE = 0x00000100
         const val WS_EX_OVERLAPPEDWINDOW = WS_EX_WINDOWEDGE or WS_EX_CLIENTEDGE
@@ -22,6 +25,8 @@ value class WindowManager(val window: MemoryAddress) : AutoCloseable {
         const val WS_THICKFRAME = 0x00040000
         const val WS_MINIMIZEBOX = 0x00020000
         const val WS_MAXIMIZEBOX = 0x00010000
+        const val WS_VISIBLE = 0x10000000
+        const val WS_POPUP = 0x80000000
         const val WS_OVERLAPPEDWINDOW = WS_OVERLAPPED or WS_CAPTION or WS_SYSMENU or WS_THICKFRAME or WS_MINIMIZEBOX or WS_MAXIMIZEBOX
 
         private val createWindow = run {
@@ -89,7 +94,6 @@ value class WindowManager(val window: MemoryAddress) : AutoCloseable {
 
             val tmpScope = ResourceScope.newConfinedScope()
             val windowNameAddress = windowName?.let { ExternalStorage.fromString(windowName) }?.segment?.address() ?: MemoryAddress.NULL
-            /*val windowClazz = clazz?.clazzPointer ?: MemoryAddress.NULL
 
 
             val parentWindow = parent?.window ?: MemoryAddress.NULL
@@ -98,24 +102,24 @@ value class WindowManager(val window: MemoryAddress) : AutoCloseable {
             Overlay.init
             val pidInstance = instance?.handle ?: NativeRegistry[Overlay.getModuleHandle].invoke(MemoryAddress.NULL) as MemoryAddress
 
-            val storage = param?.segment?.address() ?: MemoryAddress.NULL*/
+            val storage = param?.segment?.address() ?: MemoryAddress.NULL
             var result = MemoryAddress.NULL
             var error = 0
             var counter = 0
             while (result == MemoryAddress.NULL && error == 0 && counter < 100) {
                 result = NativeRegistry[createWindow].invoke(
-                    0,
+                    exStyle,
                     clazz.clazzPointer,
                     windowNameAddress.address(),
-                    13565952,
-                    100,
-                    100,
-                    100,
-                    100,
-                    MemoryAddress.NULL,
-                    MemoryAddress.NULL,
-                    MemoryAddress.NULL,
-                    MemoryAddress.NULL
+                    style,
+                    x,
+                    y,
+                    width,
+                    height,
+                    parentWindow,
+                    menuWindow,
+                    pidInstance,
+                    storage
                 ) as MemoryAddress
                 error = NativeRegistry[Callback.getLastError].invoke() as Int
                 counter++
