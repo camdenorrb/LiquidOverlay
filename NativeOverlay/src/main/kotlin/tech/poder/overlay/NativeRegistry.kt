@@ -39,10 +39,12 @@ object NativeRegistry {
         return processStorage.remove(id)!!
     }
 
-    fun loadLib(lib: String) {
-        val realLib = lib.lowercase()
-        if (!loadedLibs.add(realLib)) return
-        System.loadLibrary(realLib)
+    fun loadLib(vararg libs: String) {
+        libs.forEach { lib ->
+            val realLib = lib.lowercase()
+            if (!loadedLibs.add(realLib)) return@forEach
+            System.loadLibrary(realLib)
+        }
     }
 
     private val clazzToMemoryLayout: Map<Class<*>, MemoryLayout> = mapOf(
@@ -83,9 +85,7 @@ object NativeRegistry {
             "Could not find: \"$method\""
         }
 
-        registry.add(dataTypesToMethod(method.get(), descriptor))
-
-        return registry.size - 1
+        return register(method.get(), descriptor)
     }
 
     /**

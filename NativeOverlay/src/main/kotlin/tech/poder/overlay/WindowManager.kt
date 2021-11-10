@@ -9,81 +9,42 @@ value class WindowManager(val window: MemoryAddress) : AutoCloseable {
 
     companion object {
 
-        init {
-            NativeRegistry.loadLib("User32")
-            NativeRegistry.loadLib("kernel32")
-
-        }
-
         //Overlay = WS_EX_TOPMOST | WS_EX_TRANSPARENT | WS_EX_LAYERED
-        const val WS_EX_ACCEPTFILES = 0x00000010
-        const val WS_EX_APPWINDOW = 0x00040000
+        //EX
         const val WS_EX_CLIENTEDGE = 0x00000200
-        const val WS_EX_COMPOSITED = 0x02000000
-        const val WS_EX_CONTEXTHELP = 0x00000400
-        const val WS_EX_CONTROLPARENT = 0x00010000
-        const val WS_EX_DLGMODALFRAME = 0x00000001
-        const val WS_EX_LAYERED = 0x00080000
-        const val WS_EX_LAYOUTRTL = 0x00400000
-        const val WS_EX_LEFT = 0x00000000
-        const val WS_EX_LEFTSCROLLBAR = 0x00004000
-        const val WS_EX_LTRREADING = 0x00000000
-        const val WS_EX_MDICHILD = 0x00000040
-        const val WS_EX_NOACTIVATE = 0x08000000
-        const val WS_EX_NOINHERITLAYOUT = 0x00100000
-        const val WS_EX_NOPARENTNOTIFY = 0x00000004
-        const val WS_EX_NOREDIRECTIONBITMAP = 0x00200000
-        const val WS_EX_OVERLAPPEDWINDOW = 0x00000300
-        const val WS_EX_PALETTEWINDOW = 0x00000188
-        const val WS_EX_RIGHT = 0x00001000
-        const val WS_EX_RIGHTSCROLLBAR = 0x00000000
-        const val WS_EX_RTLREADING = 0x00002000
-        const val WS_EX_STATICEDGE = 0x00020000
-        const val WS_EX_TOOLWINDOW = 0x00000080
-        const val WS_EX_TOPMOST = 0x00000008
-        const val WS_EX_TRANSPARENT = 0x00000020
         const val WS_EX_WINDOWEDGE = 0x00000100
+        const val WS_EX_OVERLAPPEDWINDOW = WS_EX_WINDOWEDGE or WS_EX_CLIENTEDGE
 
         //Normal
-        const val WS_BORDER = 0x00800000
+        const val WS_OVERLAPPED = 0x00000000
         const val WS_CAPTION = 0x00C00000
-        const val WS_CHILD = 0x40000000
-        const val WS_CHILDWINDOW = 0x40000000
-        const val WS_CLIPCHILDREN = 0x02000000
-        const val WS_CLIPSIBLINGS = 0x04000000
-        const val WS_DISABLED = 0x08000000
-        const val WS_DLGFRAME = 0x00400000
-        const val WS_GROUP = 0x00020000
-        const val WS_HSCROLL = 0x00100000
-        const val WS_ICONIC = 0x20000000
-        const val WS_MAXIMIZE = 0x01000000
-        const val WS_POPUP = 0x80000000
+        const val WS_SYSMENU = 0x00080000
+        const val WS_THICKFRAME = 0x00040000
+        const val WS_MINIMIZEBOX = 0x00020000
+        const val WS_MAXIMIZEBOX = 0x00010000
+        const val WS_OVERLAPPEDWINDOW = WS_OVERLAPPED or WS_CAPTION or WS_SYSMENU or WS_THICKFRAME or WS_MINIMIZEBOX or WS_MAXIMIZEBOX
 
-
-        private val getLastError = NativeRegistry.register(
-            FunctionDescription(
-                "GetLastError", Int::class.java
-            )
-        )
-
-        private val createWindow = NativeRegistry.register(
-            FunctionDescription(
-                "CreateWindowExW", MemoryAddress::class.java, listOf(
-                    Int::class.java,
-                    MemoryAddress::class.java,
-                    MemoryAddress::class.java,
-                    Int::class.java,
-                    Int::class.java,
-                    Int::class.java,
-                    Int::class.java,
-                    Int::class.java,
-                    MemoryAddress::class.java,
-                    MemoryAddress::class.java,
-                    MemoryAddress::class.java,
-                    MemoryAddress::class.java
+        private val createWindow = run {
+            NativeRegistry.loadLib("kernel32", "user32", "VCRUNTIME140", "api-ms-win-crt-runtime-l1-1-0", "api-ms-win-crt-math-l1-1-0", "api-ms-win-crt-stdio-l1-1-0", "api-ms-win-crt-locale-l1-1-0", "api-ms-win-crt-heap-l1-1-0")
+            NativeRegistry.register(
+                FunctionDescription(
+                    "CreateWindowExW", MemoryAddress::class.java, listOf(
+                        Int::class.java,
+                        MemoryAddress::class.java,
+                        MemoryAddress::class.java,
+                        Int::class.java,
+                        Int::class.java,
+                        Int::class.java,
+                        Int::class.java,
+                        Int::class.java,
+                        MemoryAddress::class.java,
+                        MemoryAddress::class.java,
+                        MemoryAddress::class.java,
+                        MemoryAddress::class.java
+                    )
                 )
             )
-        )
+        }
 
         fun createWindow(
             exStyle: Int = 0,
@@ -101,33 +62,35 @@ value class WindowManager(val window: MemoryAddress) : AutoCloseable {
         ): WindowManager {
 
             val tmpScope = ResourceScope.newConfinedScope()
-            val windowClazz = clazz?.clazzPointer ?: MemoryAddress.NULL
-
             val windowNameAddress = windowName?.let { CLinker.toCString(it, tmpScope) } ?: MemoryAddress.NULL
+            /*val windowClazz = clazz?.clazzPointer ?: MemoryAddress.NULL
+
+
             val parentWindow = parent?.window ?: MemoryAddress.NULL
             val menuWindow = menu?.window ?: MemoryAddress.NULL
 
-            val pidInstance = instance?.handle ?: MemoryAddress.NULL
+            Overlay.init
+            val pidInstance = instance?.handle ?: NativeRegistry[Overlay.getModuleHandle].invoke(MemoryAddress.NULL) as MemoryAddress
 
-            val storage = param?.segment?.address() ?: MemoryAddress.NULL
-            println(
-                NativeRegistry[createWindow].invoke(
-                        exStyle,
-                        windowClazz,
-                        windowNameAddress.address(),
-                        style,
-                        x,
-                        y,
-                        width,
-                        height,
-                        parentWindow,
-                        menuWindow,
-                        pidInstance,
-                        storage
-                    )
-            )
-
-            println(NativeRegistry[getLastError].invoke())
+            val storage = param?.segment?.address() ?: MemoryAddress.NULL*/
+            val result = NativeRegistry[createWindow].invoke(
+                0,
+                windowNameAddress.address(),
+                windowNameAddress.address(),
+                0xcf0000,
+                100,
+                100,
+                100,
+                100,
+                MemoryAddress.NULL,
+                MemoryAddress.NULL,
+                MemoryAddress.NULL,
+                MemoryAddress.NULL
+            ) as MemoryAddress
+            println(result)
+            check (result != MemoryAddress.NULL) {
+                "Failed to create window: ${NativeRegistry[Callback.getLastError].invoke()}"
+            }
 
             tmpScope.close()
 

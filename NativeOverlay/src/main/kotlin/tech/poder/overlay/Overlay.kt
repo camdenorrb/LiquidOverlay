@@ -4,10 +4,7 @@ import jdk.incubator.foreign.*
 
 class Overlay(val process: Process) : AutoCloseable {
     companion object {
-        init {
-            NativeRegistry.loadLib("gdi32")
-            NativeRegistry.loadLib("oleacc")
-        }
+        val init = NativeRegistry.loadLib("gdi32", "oleacc", "kernel32", "psapi")
 
         private val beginPaint = NativeRegistry.register(
             FunctionDescription(

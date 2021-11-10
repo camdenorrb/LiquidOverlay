@@ -4,11 +4,7 @@ import jdk.incubator.foreign.*
 
 object Callback {
 
-    init {
-        NativeRegistry.loadLib("user32")
-        NativeRegistry.loadLib("kernel32")
-        NativeRegistry.loadLib("psapi")
-    }
+    val init = NativeRegistry.loadLib("user32", "kernel32", "psapi")
 
     val getLastError = NativeRegistry.register(
         FunctionDescription(

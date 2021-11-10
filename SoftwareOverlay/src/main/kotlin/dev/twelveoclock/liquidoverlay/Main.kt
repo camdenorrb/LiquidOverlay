@@ -28,6 +28,9 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import dev.twelveoclock.liquidoverlay.speech.GoogleSpeechAPI
+import tech.poder.overlay.ExternalStorage
+import tech.poder.overlay.WindowClass
+import tech.poder.overlay.WindowManager
 import javax.sound.sampled.*
 import kotlin.system.exitProcess
 
@@ -36,6 +39,9 @@ fun main() {
     //System.setOut(PrintStream(FileOutputStream("log.txt", true)))
     //System.setErr(PrintStream(FileOutputStream("err.txt", true)))
     createApplication()
+    val storage = ExternalStorage.fromString("Hi")
+    val clazz = WindowClass.fromStorage(storage)
+    WindowManager.createWindow(WindowManager.WS_EX_OVERLAPPEDWINDOW, clazz, "Hello", style = WindowManager.WS_OVERLAPPEDWINDOW, width = 100, height = 100)
     //streamingMicRecognize()
 
     /*

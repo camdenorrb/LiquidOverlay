@@ -1,8 +1,6 @@
 package tech.poder.test.overlay
 
-import tech.poder.overlay.Callback
-import tech.poder.overlay.Overlay
-import tech.poder.overlay.WindowManager
+import tech.poder.overlay.*
 import kotlin.test.Test
 
 internal class TestHook {
@@ -25,7 +23,9 @@ internal class TestHook {
 
     @Test
     fun createWindow() {
-        WindowManager.createWindow(width = 100, height = 100, className = "button", windowName = "Hello")
+        val storage = ExternalStorage.fromString("Hi")
+        val clazz = WindowClass.fromStorage(storage)
+        WindowManager.createWindow(WindowManager.WS_EX_OVERLAPPEDWINDOW, clazz, "Hello", style = WindowManager.WS_OVERLAPPEDWINDOW, width = 100, height = 100)
     }
 
 
