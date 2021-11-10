@@ -46,9 +46,35 @@ value class WindowManager(val window: MemoryAddress) : AutoCloseable {
             )
         }
 
+        private val showWindow = run {
+            NativeRegistry.loadLib("user32")
+            NativeRegistry.register(
+                FunctionDescription(
+                    "ShowWindow", Boolean::class.java, listOf(
+                        MemoryAddress::class.java,
+                        Int::class.java,
+                    )
+                )
+            )
+        }
+
+        internal val defWindowProcW = run {
+            NativeRegistry.loadLib("user32")
+            NativeRegistry.register(
+                FunctionDescription(
+                    "DefWindowProcW", MemoryAddress::class.java, listOf(
+                        MemoryAddress::class.java,
+                        Int::class.java,
+                        MemoryAddress::class.java,
+                        MemoryAddress::class.java
+                    )
+                )
+            )
+        }
+
         fun createWindow(
             exStyle: Int = 0,
-            clazz: WindowClass? = null,
+            clazz: WindowClass,
             windowName: String? = null,
             style: Int = 0,
             x: Int = 1,
@@ -73,28 +99,36 @@ value class WindowManager(val window: MemoryAddress) : AutoCloseable {
             val pidInstance = instance?.handle ?: NativeRegistry[Overlay.getModuleHandle].invoke(MemoryAddress.NULL) as MemoryAddress
 
             val storage = param?.segment?.address() ?: MemoryAddress.NULL*/
-            val result = NativeRegistry[createWindow].invoke(
-                0,
-                clazz!!.clazzPointer,
-                windowNameAddress.address(),
-                0xcf0000,
-                100,
-                100,
-                100,
-                100,
-                MemoryAddress.NULL,
-                MemoryAddress.NULL,
-                MemoryAddress.NULL,
-                MemoryAddress.NULL
-            ) as MemoryAddress
-            println(result)
+            var result = MemoryAddress.NULL
+            var error = 0
+            var counter = 0
+            while (result == MemoryAddress.NULL && error == 0 && counter < 100) {
+                result = NativeRegistry[createWindow].invoke(
+                    0,
+                    clazz.clazzPointer,
+                    windowNameAddress.address(),
+                    13565952,
+                    100,
+                    100,
+                    100,
+                    100,
+                    MemoryAddress.NULL,
+                    MemoryAddress.NULL,
+                    MemoryAddress.NULL,
+                    MemoryAddress.NULL
+                ) as MemoryAddress
+                error = NativeRegistry[Callback.getLastError].invoke() as Int
+                counter++
+                println(result)
+            }
             check (result != MemoryAddress.NULL) {
                 "Failed to create window: ${NativeRegistry[Callback.getLastError].invoke()}"
             }
 
+            NativeRegistry[showWindow].invoke(result, 5)
             tmpScope.close()
 
-            return WindowManager(MemoryAddress.NULL)
+            return WindowManager(result)
         }
 
     }

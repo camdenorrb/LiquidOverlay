@@ -47,7 +47,7 @@ object NativeRegistry {
         }
     }
 
-    private val clazzToMemoryLayout: Map<Class<*>, MemoryLayout> = mapOf(
+    internal val clazzToMemoryLayout: Map<Class<*>, MemoryLayout> = mapOf(
         Boolean::class.java to CLinker.C_INT,
         Byte::class.java to CLinker.C_CHAR,
         Short::class.java to CLinker.C_SHORT,

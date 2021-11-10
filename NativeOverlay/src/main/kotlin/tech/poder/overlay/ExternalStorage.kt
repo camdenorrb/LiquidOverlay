@@ -1,6 +1,5 @@
 package tech.poder.overlay
 
-import jdk.incubator.foreign.CLinker
 import jdk.incubator.foreign.MemoryAccess
 import jdk.incubator.foreign.MemorySegment
 import jdk.incubator.foreign.ResourceScope
@@ -12,7 +11,7 @@ value class ExternalStorage(val segment: MemorySegment): AutoCloseable {
         fun fromString(str: String): ExternalStorage {
             val newScope = ResourceScope.newConfinedScope()
             str.toByteArray(Charsets.UTF_16).let { bytes ->
-                val segment = MemorySegment.allocateNative(bytes.size + nullChar.size + 0L, newScope)
+                val segment = MemorySegment.allocateNative((bytes.size + nullChar.size).toLong(), newScope)
                 bytes.forEachIndexed { index, byte ->
                     MemoryAccess.setByteAtOffset(segment, index.toLong(), byte)
                 }
@@ -23,7 +22,6 @@ value class ExternalStorage(val segment: MemorySegment): AutoCloseable {
 
                 return ExternalStorage(segment)
             }
-            return ExternalStorage(CLinker.toCString(str, newScope))
         }
     }
     override fun close() {

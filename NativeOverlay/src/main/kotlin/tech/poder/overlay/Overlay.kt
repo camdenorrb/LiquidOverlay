@@ -123,7 +123,7 @@ class Overlay(val process: Process) : AutoCloseable {
             FunctionDescription(
                 "hookProc",
                 MemoryAddress::class.java,
-                listOf(Int::class.java, MemoryAddress::class.java, MemoryAddress::class.java)
+                listOf(MemoryAddress::class.java, Int::class.java, MemoryAddress::class.java, MemoryAddress::class.java)
             ), Callback::class.java
         )
 

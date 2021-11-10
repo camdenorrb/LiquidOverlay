@@ -23,9 +23,10 @@ internal class TestHook {
 
     @Test
     fun createWindow() {
-        val storage = ExternalStorage.fromString("button")
-        val clazz = WindowClass.fromStorage(storage)
-        WindowManager.createWindow(WindowManager.WS_EX_OVERLAPPEDWINDOW, clazz, "Hello", style = WindowManager.WS_OVERLAPPEDWINDOW, width = 100, height = 100)
+        //Thread.sleep(10000)
+        val clazz = WindowClass.define("Kats")
+        WindowManager.createWindow(clazz = clazz, windowName = "Hello", style = WindowManager.WS_OVERLAPPEDWINDOW, width = 100, height = 100)
+        Thread.sleep(10000)
     }
 
 

@@ -135,9 +135,10 @@ object Callback {
     }
 
     @JvmStatic
-    fun hookProc(code: Int, wParam: MemoryAddress, lParam: MemoryAddress): MemoryAddress {
-        println("Called: $code")
-        return MemoryAddress.NULL //todo run CallNextHookEx
+    fun hookProc(hwnd: MemoryAddress, uMsg: Int, wParam: MemoryAddress, lParam: MemoryAddress): MemoryAddress {
+
+        println("Called: $uMsg")
+        return NativeRegistry[WindowManager.defWindowProcW].invoke(hwnd, uMsg, wParam, lParam) as MemoryAddress
     }
 
     private val forEachWindowUpcall = NativeRegistry.registerUpcallStatic(
