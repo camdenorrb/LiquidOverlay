@@ -62,7 +62,7 @@ value class WindowManager(val window: MemoryAddress) : AutoCloseable {
         ): WindowManager {
 
             val tmpScope = ResourceScope.newConfinedScope()
-            val windowNameAddress = windowName?.let { CLinker.toCString(it, tmpScope) } ?: MemoryAddress.NULL
+            val windowNameAddress = windowName?.let { ExternalStorage.fromString(windowName) }?.segment?.address() ?: MemoryAddress.NULL
             /*val windowClazz = clazz?.clazzPointer ?: MemoryAddress.NULL
 
 
@@ -75,7 +75,7 @@ value class WindowManager(val window: MemoryAddress) : AutoCloseable {
             val storage = param?.segment?.address() ?: MemoryAddress.NULL*/
             val result = NativeRegistry[createWindow].invoke(
                 0,
-                windowNameAddress.address(),
+                clazz!!.clazzPointer,
                 windowNameAddress.address(),
                 0xcf0000,
                 100,
