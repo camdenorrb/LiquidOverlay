@@ -13,7 +13,7 @@ data class RectReader(val segment: MemorySegment, val left: UInt, val top: UInt,
 
     companion object {
         fun createSegment(): ExternalStorage {
-            val scope = ResourceScope.newConfinedScope()
+            val scope = ResourceScope.newSharedScope()
             val rectPlaceholder = MemorySegment.allocateNative(CLinker.C_LONG.byteSize() * 4, scope)
             return ExternalStorage(rectPlaceholder)
         }
@@ -31,24 +31,6 @@ data class RectReader(val segment: MemorySegment, val left: UInt, val top: UInt,
                 MemoryAccess.getIntAtIndex(segment, 3).toUInt()
             )
         }
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as RectReader
-
-        if (width != other.width) return false
-        if (height != other.height) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = width.hashCode()
-        result = 31 * result + height.hashCode()
-        return result
     }
 
 }

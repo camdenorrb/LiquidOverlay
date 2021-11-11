@@ -21,8 +21,8 @@ dependencies {
 
 tasks {
 
-    //compileKotlin.get().destinationDirectory.set(compileJava.get().destinationDirectory.get())
-    //compileTestKotlin.get().destinationDirectory.set(compileTestJava.get().destinationDirectory.get())
+    compileKotlin.get().destinationDirectory.set(compileJava.get().destinationDirectory.get())
+    compileTestKotlin.get().destinationDirectory.set(compileTestJava.get().destinationDirectory.get())
 
     val javaVersion = JavaVersion.VERSION_17.toString()
 

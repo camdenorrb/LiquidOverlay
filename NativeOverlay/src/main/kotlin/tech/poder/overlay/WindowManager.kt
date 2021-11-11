@@ -81,7 +81,7 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
                 )
             )
         }
-        val invisible = Color(0, 0, 0, 0).rgb
+        val invisible = Color(255, 0, 0, 0).rgb
 
         private val setLayeredWindowAttributes = run {
             NativeRegistry.loadLib("user32")
@@ -122,35 +122,27 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
                 instance?.handle ?: NativeRegistry[Overlay.getModuleHandle].invoke(MemoryAddress.NULL) as MemoryAddress
 
             val storage = param?.segment?.address() ?: MemoryAddress.NULL
-            var result = MemoryAddress.NULL
-            var error = 0
-            var counter = 0
-            while (result == MemoryAddress.NULL && error == 0 && counter < 100) {
-                result = NativeRegistry[createWindow].invoke(
-                    exStyle,
-                    clazz.clazzPointer,
-                    windowNameAddress.address(),
-                    style,
-                    x,
-                    y,
-                    width,
-                    height,
-                    parentWindow,
-                    menuWindow,
-                    pidInstance,
-                    storage
-                ) as MemoryAddress
-                error = NativeRegistry[Callback.getLastError].invoke() as Int
-                counter++
-                println(result)
-            }
+            val result = NativeRegistry[createWindow].invoke(
+                exStyle,
+                clazz.clazzPointer,
+                windowNameAddress.address(),
+                style,
+                x,
+                y,
+                width,
+                height,
+                parentWindow,
+                menuWindow,
+                pidInstance,
+                storage
+            ) as MemoryAddress
+            println(result)
             check(result != MemoryAddress.NULL) {
                 "Failed to create window: ${NativeRegistry[Callback.getLastError].invoke()}"
             }
 
 
-            val result2 =
-                NativeRegistry[setLayeredWindowAttributes].invoke(result, invisible, 0.toByte(), 0x00000001) as Int
+            val result2 = NativeRegistry[setLayeredWindowAttributes].invoke(result, invisible, 0.toByte(), 0x00000001) as Int
             check(result2 != 0) {
                 "Failed to set layered window attributes: ${NativeRegistry[Callback.getLastError].invoke()}"
             }
@@ -239,6 +231,7 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
 
         val HWND_TOPMOST = WindowManager(MemoryAddress.ofLong(-1L))
     }
+
     val scope = ResourceScope.newConfinedScope()
     var dc = MemoryAddress.NULL
 

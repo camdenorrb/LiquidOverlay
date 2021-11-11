@@ -7,7 +7,7 @@ import jdk.incubator.foreign.ResourceScope
 @JvmInline
 value class ExternalStorage(val segment: MemorySegment): AutoCloseable {
     companion object {
-        val nullChar = "\u0000".toByteArray(Charsets.UTF_16)
+        val nullChar = "\u0000".toByteArray(Charsets.UTF_16LE)
         fun fromString(str: String): ExternalStorage {
             val newScope = ResourceScope.newConfinedScope()
             str.toByteArray(Charsets.UTF_16LE).let { bytes ->

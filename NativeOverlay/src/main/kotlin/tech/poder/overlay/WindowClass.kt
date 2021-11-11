@@ -11,7 +11,7 @@ value class WindowClass(val clazzPointer: MemoryAddress) : AutoCloseable {
             return WindowClass(externalStorage.segment.address())
         }
 
-        val registerClassA = kotlin.run {
+        val registerClassW = kotlin.run {
             NativeRegistry.loadLib("User32")
             NativeRegistry.register(
                 FunctionDescription(
@@ -61,7 +61,7 @@ value class WindowClass(val clazzPointer: MemoryAddress) : AutoCloseable {
             MemoryAccess.setAddressAtOffset(struct, windclassw.offset[7], invisibleBrush)
             MemoryAccess.setAddressAtOffset(struct, windclassw.offset[9], externalStorage.segment.address())
             println(struct.toByteArray().joinToString(", "))
-            val result = NativeRegistry[registerClassA].invoke(struct.address()) as MemoryAddress
+            val result = NativeRegistry[registerClassW].invoke(struct.address()) as MemoryAddress
 
             check(result != MemoryAddress.NULL) {
                 "Failed to register window class: ${NativeRegistry[Callback.getLastError].invoke()}"
