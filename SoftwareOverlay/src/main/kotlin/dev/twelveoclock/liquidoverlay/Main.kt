@@ -4,17 +4,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Divider
-import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,22 +23,22 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import dev.twelveoclock.liquidoverlay.speech.GoogleSpeechAPI
-import tech.poder.overlay.ExternalStorage
-import tech.poder.overlay.WindowClass
-import tech.poder.overlay.WindowManager
-import java.io.FileOutputStream
-import java.io.PrintStream
 import javax.sound.sampled.*
 import kotlin.system.exitProcess
 
 
+val NAVIGATION_WIDTH = 200.dp
+
+val BACKGROUND_COLOR = Color(43, 54, 72)
+
+
 fun main() {
-    System.setOut(PrintStream(FileOutputStream("log.txt", true)))
-    System.setErr(PrintStream(FileOutputStream("err.txt", true)))
-    //createApplication()
-    val storage = ExternalStorage.fromString("button")
-    val clazz = WindowClass.fromStorage(storage)
-    WindowManager.createWindow(WindowManager.WS_EX_OVERLAPPEDWINDOW, clazz, "Hello", style = WindowManager.WS_OVERLAPPEDWINDOW, width = 100, height = 100)
+    //System.setOut(PrintStream(FileOutputStream("log.txt", true)))
+    //System.setErr(PrintStream(FileOutputStream("err.txt", true)))
+    createApplication()
+    //val storage = ExternalStorage.fromString("Hi")
+    //val clazz = WindowClass.fromStorage(storage)
+    //WindowManager.createWindow(WindowManager.WS_EX_OVERLAPPEDWINDOW, clazz, "Hello", style = WindowManager.WS_OVERLAPPEDWINDOW, width = 100, height = 100)
     //streamingMicRecognize()
 
     /*
@@ -54,9 +49,7 @@ fun main() {
 }
 
 
-val NAVIGATION_WIDTH = 200.dp
 
-val BACKGROUND_COLOR = Color(43, 54, 72)
 
 // https://developer.android.com/jetpack/compose
 private fun createApplication() = application {
@@ -70,8 +63,11 @@ private fun createApplication() = application {
         val section = remember { mutableStateOf(Section.HOME) }
 
         MaterialTheme {
-            HomeScreen(section)
-            //IconToggleButton(false, {}, Modifier.size(100.dp).background(Color.Blue)) {}
+            when (section.value) {
+                Section.HOME -> HomeScreen(section)
+                Section.OVERLAY -> OverlayScreen(section)
+                Section.SETTINGS -> SettingsScreen(section)
+            }
         }
     }
 }
@@ -101,8 +97,128 @@ fun SettingsScreen(section: MutableState<Section>) {
 
     NavigationMenu(section)
 
-    Box(modifier = Modifier.offset(x = NAVIGATION_WIDTH).fillMaxSize().background(BACKGROUND_COLOR)){
-        Text("Meow")
+    val prefixColor = Color(81, 142, 240)
+    val textColor = Color.White
+    val rowColor = Color(33, 41, 54)
+    val rowHeight = 50.dp
+    val rowPadding = 20.dp
+
+    Column(modifier = Modifier.padding(start = NAVIGATION_WIDTH).fillMaxSize().background(BACKGROUND_COLOR)){
+
+        // Color blind
+        Row(
+            modifier = Modifier.padding(rowPadding).fillMaxWidth().height(rowHeight).background(rowColor),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Row {
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    text = "Color Blind",
+                    color = prefixColor,
+                    fontSize = 20.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    text = "for vibrant colors and sharper contrast",
+                    modifier = Modifier.padding(top = 5.dp),
+                    color = textColor,
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
+            }
+
+            Switch(
+                checked = true,
+                onCheckedChange = {},
+            )
+        }
+
+        // Dark/Light
+        Row(
+            modifier = Modifier.padding(rowPadding).fillMaxWidth().height(rowHeight).background(rowColor),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Row {
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    text = "Dark/Light",
+                    color = prefixColor,
+                    fontSize = 20.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    text = "to prove if you’re a true gamer",
+                    modifier = Modifier.padding(top = 5.dp),
+                    color = textColor,
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
+            }
+
+            Switch(
+                checked = true,
+                onCheckedChange = {},
+            )
+        }
+
+        // Language
+        Row(
+            modifier = Modifier.padding(rowPadding).fillMaxWidth().height(rowHeight).background(rowColor),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Row {
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    text = "Language",
+                    color = prefixColor,
+                    fontSize = 20.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    text = "for message transcription and translating",
+                    modifier = Modifier.padding(top = 5.dp),
+                    color = textColor,
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
+            }
+
+            var isExpanded by remember { mutableStateOf(false) }
+
+            Row(modifier = Modifier.padding(end = 10.dp, top = 10.dp)) {
+
+                Text(
+                    text = "English",
+                    modifier = Modifier.clickable { isExpanded = !isExpanded },
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf")),
+                )
+
+                Icon(
+                    imageVector = Icons.Rounded.ArrowDropDown,
+                    contentDescription = "DropDown",
+                    tint = Color.White,
+                    modifier = Modifier.size(30.dp)
+                )
+
+                DropdownMenu(
+                    expanded = isExpanded,
+                    onDismissRequest = { isExpanded = false },
+                    modifier = Modifier.size(20.dp).background(Color.White)
+                ) {
+
+                }
+
+            }
+        }
+
     }
 }
 

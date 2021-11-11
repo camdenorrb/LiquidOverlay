@@ -6,26 +6,22 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Serializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import java.time.LocalDate
-import java.util.*
-import kotlin.io.path.Path
-import kotlin.io.path.readText
 
 // TODO: Make sure it follows all api rules, maybe use a queue
 // TODO: Figure out webhooks
 // https://api.liquipedia.net/
 // https://api.liquipedia.net/documentation/api/v2/openapi
-class Liquipedia {
-
-
+// https://api.liquipedia.net/documentation/api/v2
+class Liquipedia(private val apiKey: String) {
 
     private fun HttpRequestBuilder.defaultHeaders() {
         header("accept", "application/json")
-        header("authorization", "Apikey ${Path("liquidToken.txt").readText()}")
+        header("authorization", "Apikey $apiKey") //Path("liquidToken.txt").readText()
     }
+
 
     suspend fun broadcasters(
         wikis: List<Wiki>,
@@ -35,30 +31,11 @@ class Liquipedia {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): BroadcastersResult {
-
-        // Example result
+    ): BroadcasterResult {
         return json.decodeFromString(
-            BroadcastersResult.serializer(),
-            """{"result":[{"pageid":100182,"pagename":"Brewmaster's_Cup","namespace":0,"objectname":"100182_broadcaster_Gareth_Caster","id":"Gareth","name":"Gareth Bateson","page":"Gareth","position":"Caster","language":"","flag":"united kingdom","weight":1118,"date":"2019-04-30","extradata":{"status":""},"wiki":"dota2"},{"pageid":100182,"pagename":"Brewmaster's_Cup","namespace":0,"objectname":"100182_broadcaster_KheZu_Caster","id":"KheZu","name":"Maurice Gutmann","page":"KheZu","position":"Caster","language":"","flag":"germany","weight":1118,"date":"2019-04-30","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_4liver_Caster","id":"4liver","name":"Anton Pavliukovets","page":"4liver","position":"Caster","language":"ru","flag":"ukraine","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_DkPhobos_Analyst","id":"DkPhobos","name":"Alexander Kucheria","page":"DkPhobos","position":"Analyst","language":"ru","flag":"ukraine","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_KVYZEE_Caster","id":"KVYZEE","name":"Vladislav Kovalchuk","page":"KVYZEE","position":"Caster","language":"ru","flag":"ukraine","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_LittleP1g_Observer","id":"LittleP1g","name":"Stas Kashpruk","page":"LittleP1g","position":"Observer","language":"ru","flag":"ua","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_Mag~_Analyst","id":"Mag~","name":"Andrey Chipenko","page":"Mag~","position":"Analyst","language":"ru","flag":"ukraine","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_SUNSfan_Observer","id":"SUNSfan","name":"Shannon Scotten","page":"SUNSfan","position":"Observer","language":"en","flag":"united states","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_Sunlight_Analyst","id":"Sunlight","name":"Kirill Kachinsky","page":"Sunlight","position":"Analyst","language":"ru","flag":"belarus","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_Tekcac_Caster","id":"Tekcac","name":"Yaroslav Petrushyn","page":"Tekcac","position":"Caster","language":"ru","flag":"ukraine","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_TrentPax_Commentator","id":"TrentPax","name":"Trent MacKenzie","page":"TrentPax","position":"Commentator","language":"en","flag":"canada","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_WarLock_Host","id":"WarLock","name":"Anton Tokarev","page":"WarLock","position":"Host","language":"ru","flag":"ua","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_Zyori_Commentator","id":"Zyori","name":"Andrew Campbell","page":"Zyori","position":"Commentator","language":"en","flag":"united states","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_jenyashy_Observer","id":"jenyashy","name":"Eugene Shytikov","page":"Jenyashy","position":"Observer","language":"ru","flag":"ua","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_md_Observer","id":"md","name":"Dmitry Melnychenko","page":"Md","position":"Observer","language":"ru","flag":"ua","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100543,"pagename":"WePlay\/Tug_of_War\/Dire\/America","namespace":0,"objectname":"100543_broadcaster_4liver_Caster","id":"4liver","name":"Anton Pavliukovets","page":"4liver","position":"Caster","language":"ru","flag":"ukraine","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100543,"pagename":"WePlay\/Tug_of_War\/Dire\/America","namespace":0,"objectname":"100543_broadcaster_DkPhobos_Analyst","id":"DkPhobos","name":"Alexander Kucheria","page":"DkPhobos","position":"Analyst","language":"ru","flag":"ukraine","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100543,"pagename":"WePlay\/Tug_of_War\/Dire\/America","namespace":0,"objectname":"100543_broadcaster_KVYZEE_Caster","id":"KVYZEE","name":"Vladislav Kovalchuk","page":"KVYZEE","position":"Caster","language":"ru","flag":"ukraine","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100543,"pagename":"WePlay\/Tug_of_War\/Dire\/America","namespace":0,"objectname":"100543_broadcaster_LittleP1g_Observer","id":"LittleP1g","name":"Stas Kashpruk","page":"LittleP1g","position":"Observer","language":"ru","flag":"ua","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100543,"pagename":"WePlay\/Tug_of_War\/Dire\/America","namespace":0,"objectname":"100543_broadcaster_Mag~_Analyst","id":"Mag~","name":"Andrey Chipenko","page":"Mag~","position":"Analyst","language":"ru","flag":"ukraine","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"}]}"""
+            BroadcasterResult.serializer(),
+            apiRequest("broadcasters", wikis, conditions, query, limit, offset, order, groupBy)
         )
-
-        /*
-        return json.decodeFromString(
-            httpClient.get("${API_URL}broadcasters") {
-                parameter("wiki", wikis.joinToString("|") { it.apiName })
-                if (conditions.isNotBlank()) parameter("conditions", conditions)
-                if (query.isNotBlank()) parameter("query", query)
-                if (limit > -1) parameter("limit", limit)
-                if (offset > -1) parameter("offset", offset)
-                if (order.isNotBlank()) parameter("order", order)
-                if (groupBy.isNotBlank()) parameter("groupby", groupBy)
-
-                userAgent(userAgent)
-                defaultHeaders()
-            }
-        )
-        */
     }
 
     suspend fun companies(
@@ -69,37 +46,233 @@ class Liquipedia {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): CompaniesResult {
-
-        // Example result
-        /*
+    ): CompanyResult {
         return json.decodeFromString(
-            BroadcastersResult.serializer(),
-            """{"result":[{"pageid":100182,"pagename":"Brewmaster's_Cup","namespace":0,"objectname":"100182_broadcaster_Gareth_Caster","id":"Gareth","name":"Gareth Bateson","page":"Gareth","position":"Caster","language":"","flag":"united kingdom","weight":1118,"date":"2019-04-30","extradata":{"status":""},"wiki":"dota2"},{"pageid":100182,"pagename":"Brewmaster's_Cup","namespace":0,"objectname":"100182_broadcaster_KheZu_Caster","id":"KheZu","name":"Maurice Gutmann","page":"KheZu","position":"Caster","language":"","flag":"germany","weight":1118,"date":"2019-04-30","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_4liver_Caster","id":"4liver","name":"Anton Pavliukovets","page":"4liver","position":"Caster","language":"ru","flag":"ukraine","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_DkPhobos_Analyst","id":"DkPhobos","name":"Alexander Kucheria","page":"DkPhobos","position":"Analyst","language":"ru","flag":"ukraine","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_KVYZEE_Caster","id":"KVYZEE","name":"Vladislav Kovalchuk","page":"KVYZEE","position":"Caster","language":"ru","flag":"ukraine","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_LittleP1g_Observer","id":"LittleP1g","name":"Stas Kashpruk","page":"LittleP1g","position":"Observer","language":"ru","flag":"ua","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_Mag~_Analyst","id":"Mag~","name":"Andrey Chipenko","page":"Mag~","position":"Analyst","language":"ru","flag":"ukraine","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_SUNSfan_Observer","id":"SUNSfan","name":"Shannon Scotten","page":"SUNSfan","position":"Observer","language":"en","flag":"united states","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_Sunlight_Analyst","id":"Sunlight","name":"Kirill Kachinsky","page":"Sunlight","position":"Analyst","language":"ru","flag":"belarus","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_Tekcac_Caster","id":"Tekcac","name":"Yaroslav Petrushyn","page":"Tekcac","position":"Caster","language":"ru","flag":"ukraine","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_TrentPax_Commentator","id":"TrentPax","name":"Trent MacKenzie","page":"TrentPax","position":"Commentator","language":"en","flag":"canada","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_WarLock_Host","id":"WarLock","name":"Anton Tokarev","page":"WarLock","position":"Host","language":"ru","flag":"ua","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_Zyori_Commentator","id":"Zyori","name":"Andrew Campbell","page":"Zyori","position":"Commentator","language":"en","flag":"united states","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_jenyashy_Observer","id":"jenyashy","name":"Eugene Shytikov","page":"Jenyashy","position":"Observer","language":"ru","flag":"ua","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100542,"pagename":"WePlay\/Tug_of_War\/Dire\/Asia","namespace":0,"objectname":"100542_broadcaster_md_Observer","id":"md","name":"Dmitry Melnychenko","page":"Md","position":"Observer","language":"ru","flag":"ua","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100543,"pagename":"WePlay\/Tug_of_War\/Dire\/America","namespace":0,"objectname":"100543_broadcaster_4liver_Caster","id":"4liver","name":"Anton Pavliukovets","page":"4liver","position":"Caster","language":"ru","flag":"ukraine","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100543,"pagename":"WePlay\/Tug_of_War\/Dire\/America","namespace":0,"objectname":"100543_broadcaster_DkPhobos_Analyst","id":"DkPhobos","name":"Alexander Kucheria","page":"DkPhobos","position":"Analyst","language":"ru","flag":"ukraine","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100543,"pagename":"WePlay\/Tug_of_War\/Dire\/America","namespace":0,"objectname":"100543_broadcaster_KVYZEE_Caster","id":"KVYZEE","name":"Vladislav Kovalchuk","page":"KVYZEE","position":"Caster","language":"ru","flag":"ukraine","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100543,"pagename":"WePlay\/Tug_of_War\/Dire\/America","namespace":0,"objectname":"100543_broadcaster_LittleP1g_Observer","id":"LittleP1g","name":"Stas Kashpruk","page":"LittleP1g","position":"Observer","language":"ru","flag":"ua","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"},{"pageid":100543,"pagename":"WePlay\/Tug_of_War\/Dire\/America","namespace":0,"objectname":"100543_broadcaster_Mag~_Analyst","id":"Mag~","name":"Andrey Chipenko","page":"Mag~","position":"Analyst","language":"ru","flag":"ukraine","weight":30000,"date":"2019-06-02","extradata":{"status":""},"wiki":"dota2"}]}"""
+            CompanyResult.serializer(),
+            apiRequest("company", wikis, conditions, query, limit, offset, order, groupBy)
         )
-        */
-
-
-        /*
-        return json.decodeFromString(
-            httpClient.get("${API_URL}broadcasters") {
-
-                parameter("wiki", wiki.apiName)
-                if (conditions.isNotBlank()) parameter("conditions", conditions)
-                if (query.isNotBlank()) parameter("query", query)
-                if (limit > -1) parameter("limit", limit)
-                if (offset > -1) parameter("offset", offset)
-                if (order.isNotBlank()) parameter("order", order)
-                if (groupBy.isNotBlank()) parameter("groupby", groupBy)
-
-                userAgent(USER_AGENT)
-                defaultHeaders()
-            }
-        )
-        */
-        TODO()
     }
 
+    suspend fun datapoint(
+        wikis: List<Wiki>,
+        conditions: String = "",
+        query: String = "",
+        limit: Int = -1,
+        offset: Int = -1,
+        order: String = "",
+        groupBy: String = "",
+    ): Datapoint {
+        return json.decodeFromString(
+            Datapoint.serializer(),
+            apiRequest("datapoint", wikis, conditions, query, limit, offset, order, groupBy)
+        )
+    }
+
+    suspend fun externalMediaLink(
+        wikis: List<Wiki>,
+        conditions: String = "",
+        query: String = "",
+        limit: Int = -1,
+        offset: Int = -1,
+        order: String = "",
+        groupBy: String = "",
+    ): ExternalMediaLink {
+        return json.decodeFromString(
+            ExternalMediaLink.serializer(),
+            apiRequest("externalmedialink", wikis, conditions, query, limit, offset, order, groupBy)
+        )
+    }
+
+    suspend fun gear(
+        wikis: List<Wiki>,
+        conditions: String = "",
+        query: String = "",
+        limit: Int = -1,
+        offset: Int = -1,
+        order: String = "",
+        groupBy: String = "",
+    ): Gear {
+        return json.decodeFromString(
+            Gear.serializer(),
+            apiRequest("gear", wikis, conditions, query, limit, offset, order, groupBy)
+        )
+    }
+
+    suspend fun match(
+        wikis: List<Wiki>,
+        conditions: String = "",
+        query: String = "",
+        limit: Int = -1,
+        offset: Int = -1,
+        order: String = "",
+        groupBy: String = "",
+    ): Match {
+        return json.decodeFromString(
+            Match.serializer(),
+            apiRequest("match", wikis, conditions, query, limit, offset, order, groupBy)
+        )
+    }
+
+    suspend fun organization(
+        wikis: List<Wiki>,
+        conditions: String = "",
+        query: String = "",
+        limit: Int = -1,
+        offset: Int = -1,
+        order: String = "",
+        groupBy: String = "",
+    ): Organization {
+        return json.decodeFromString(
+            Organization.serializer(),
+            apiRequest("organization", wikis, conditions, query, limit, offset, order, groupBy)
+        )
+    }
+
+    suspend fun placement(
+        wikis: List<Wiki>,
+        conditions: String = "",
+        query: String = "",
+        limit: Int = -1,
+        offset: Int = -1,
+        order: String = "",
+        groupBy: String = "",
+    ): Placement {
+        return json.decodeFromString(
+            Placement.serializer(),
+            apiRequest("placement", wikis, conditions, query, limit, offset, order, groupBy)
+        )
+    }
+
+    suspend fun player(
+        wikis: List<Wiki>,
+        conditions: String = "",
+        query: String = "",
+        limit: Int = -1,
+        offset: Int = -1,
+        order: String = "",
+        groupBy: String = "",
+    ): Player {
+        return json.decodeFromString(
+            Player.serializer(),
+            apiRequest("player", wikis, conditions, query, limit, offset, order, groupBy)
+        )
+    }
+
+    suspend fun series(
+        wikis: List<Wiki>,
+        conditions: String = "",
+        query: String = "",
+        limit: Int = -1,
+        offset: Int = -1,
+        order: String = "",
+        groupBy: String = "",
+    ): Series {
+        return json.decodeFromString(
+            Series.serializer(),
+            apiRequest("series", wikis, conditions, query, limit, offset, order, groupBy)
+        )
+    }
+
+    suspend fun settings(
+        wikis: List<Wiki>,
+        conditions: String = "",
+        query: String = "",
+        limit: Int = -1,
+        offset: Int = -1,
+        order: String = "",
+        groupBy: String = "",
+    ): Settings {
+        return json.decodeFromString(
+            Settings.serializer(),
+            apiRequest("settings", wikis, conditions, query, limit, offset, order, groupBy)
+        )
+    }
+
+    suspend fun squadPlayer(
+        wikis: List<Wiki>,
+        conditions: String = "",
+        query: String = "",
+        limit: Int = -1,
+        offset: Int = -1,
+        order: String = "",
+        groupBy: String = "",
+    ): SquadPlayer {
+        return json.decodeFromString(
+            SquadPlayer.serializer(),
+            apiRequest("squadplayer", wikis, conditions, query, limit, offset, order, groupBy)
+        )
+    }
+
+    suspend fun team(
+        wikis: List<Wiki>,
+        conditions: String = "",
+        query: String = "",
+        limit: Int = -1,
+        offset: Int = -1,
+        order: String = "",
+        groupBy: String = "",
+    ): Team {
+        return json.decodeFromString(
+            Team.serializer(),
+            apiRequest("team", wikis, conditions, query, limit, offset, order, groupBy)
+        )
+    }
+
+    suspend fun tournament(
+        wikis: List<Wiki>,
+        conditions: String = "",
+        query: String = "",
+        limit: Int = -1,
+        offset: Int = -1,
+        order: String = "",
+        groupBy: String = "",
+    ): Tournament {
+        return json.decodeFromString(
+            Tournament.serializer(),
+            apiRequest("tournament", wikis, conditions, query, limit, offset, order, groupBy)
+        )
+    }
+
+    suspend fun transfer(
+        wikis: List<Wiki>,
+        conditions: String = "",
+        query: String = "",
+        limit: Int = -1,
+        offset: Int = -1,
+        order: String = "",
+        groupBy: String = "",
+    ): Transfer {
+        return json.decodeFromString(
+            Transfer.serializer(),
+            apiRequest("transfer", wikis, conditions, query, limit, offset, order, groupBy)
+        )
+    }
+
+
+    private suspend fun apiRequest(
+        path: String,
+        wikis: List<Wiki>,
+        conditions: String = "",
+        query: String = "",
+        limit: Int = -1,
+        offset: Int = -1,
+        order: String = "",
+        groupBy: String = "",
+    ): String {
+        return httpClient.get("${API_URL}$path") {
+
+            parameter("wiki", wikis.joinToString("|") { it.apiName })
+            if (conditions.isNotBlank()) parameter("conditions", conditions)
+            if (query.isNotBlank()) parameter("query", query)
+            if (limit > -1) parameter("limit", limit)
+            if (offset > -1) parameter("offset", offset)
+            if (order.isNotBlank()) parameter("order", order)
+            if (groupBy.isNotBlank()) parameter("groupby", groupBy)
+
+            userAgent(USER_AGENT)
+            defaultHeaders()
+        }
+    }
 
 
     companion object {
@@ -115,6 +288,7 @@ class Liquipedia {
             ignoreUnknownKeys = true
         }
     }
+
 
     enum class Wiki(val apiName: String) {
 
@@ -141,14 +315,79 @@ class Liquipedia {
     }
 
     @Serializable
-    data class BroadcastersResult(
+    data class BroadcasterResult(
         val result: List<Broadcaster>
     )
+
     @Serializable
-    data class CompaniesResult(
+    data class CompanyResult(
         val result: List<Company>
     )
 
+    @Serializable
+    data class DatapointResult(
+        val result: List<Datapoint>
+    )
+
+    @Serializable
+    data class ExternalMediaLinkResult(
+        val result: List<ExternalMediaLink>
+    )
+
+    @Serializable
+    data class GearsResult(
+        val result: List<Gear>
+    )
+
+    @Serializable
+    data class MatchResult(
+        val result: List<Match>
+    )
+
+    @Serializable
+    data class OrganizationResult(
+        val result: List<Organization>
+    )
+
+    @Serializable
+    data class PlacementResult(
+        val result: List<Placement>
+    )
+
+    @Serializable
+    data class PlayerResult(
+        val result: List<Player>
+    )
+
+    @Serializable
+    data class SeriesResult(
+        val result: List<Series>
+    )
+
+    @Serializable
+    data class SettingsResult(
+        val result: List<Settings>
+    )
+
+    @Serializable
+    data class SquadPlayerResult(
+        val result: List<SquadPlayer>
+    )
+
+    @Serializable
+    data class TeamResult(
+        val result: List<Team>
+    )
+
+    @Serializable
+    data class TournamentResult(
+        val result: List<Tournament>
+    )
+
+    @Serializable
+    data class TransferResult(
+        val result: List<Transfer>
+    )
 
     @Serializable
     data class Broadcaster(
@@ -344,6 +583,154 @@ class Liquipedia {
         val links: JsonObject,
         val status: String,
         val earnings: Float,
+        @SerialName("extradata") val extraData: JsonObject,
+    )
+
+    @Serializable
+    data class Series(
+        @SerialName("pageid") val pageID: Int,
+        @SerialName("pagename") val pageName: String,
+        val namespace: Int,
+        @SerialName("objectname") val objectName: String,
+        val name: String,
+        val abbreviation: String,
+        val image: String,
+        @SerialName("imageurl") val imageURL: String,
+        val icon: String,
+        @SerialName("iconurl") val iconURL: String,
+        val game: String,
+        val type: String,
+        val previous: String,
+        val previous2: String,
+        val next: String,
+        val next2: String,
+        val organizers: JsonObject,
+        val location: String,
+        @SerialName("prizepool") val prizePool: Float,
+        @SerialName("liquipediatier") val liquipediaTier: String,
+        @SerialName("liquipediatiertype") val liquipediaTierType: String,
+        @SerialName("publishertier") val publisherTier: String,
+        @SerialName("foundeddate") @Serializable(LocalDateSerializer::class) val foundedDate: LocalDate,
+        @SerialName("defunctdate") @Serializable(LocalDateSerializer::class) val defunctDate: LocalDate,
+        val sponsors: JsonObject,
+        val links: JsonObject,
+        @SerialName("extradata") val extraData: JsonObject,
+    )
+
+    @Serializable
+    data class Settings(
+        @SerialName("pageid") val pageID: Int,
+        @SerialName("pagename") val pageName: String,
+        val namespace: Int,
+        @SerialName("objectname") val objectName: String,
+        val name: String,
+        val reference: String,
+        @SerialName("lastupdated") @Serializable(LocalDateSerializer::class) val lastUpdated: LocalDate,
+        val keys: JsonObject,
+        @SerialName("gamesettings") val gameSettings: JsonObject,
+        @SerialName("viewsettings") val viewSettings: JsonObject,
+        val type: String,
+    )
+
+    @Serializable
+    data class SquadPlayer(
+        @SerialName("pageid") val pageID: Int,
+        @SerialName("pagename") val pageName: String,
+        val namespace: Int,
+        @SerialName("objectname") val objectName: String,
+        val id: String,
+        val link: String,
+        val name: String,
+        val nationality: String,
+        val position: String,
+        val role: String,
+        @SerialName("newteam") val newTeam: String,
+        @SerialName("joindate") @Serializable(LocalDateSerializer::class) val joinDate: LocalDate,
+        @SerialName("joindateref") val joinDateRef: String,
+        @SerialName("leavedate") @Serializable(LocalDateSerializer::class) val leaveDate: LocalDate,
+        @SerialName("leavedateref") val leaveDateRef: String,
+        @SerialName("inactivedate") @Serializable(LocalDateSerializer::class) val inactiveDate: LocalDate,
+        @SerialName("inactivedateref") val inactiveDateRef: String,
+        @SerialName("extradata") val extraData: JsonObject,
+    )
+
+    @Serializable
+    data class Team(
+        @SerialName("pageid") val pageID: Int,
+        @SerialName("pagename") val pageName: String,
+        val namespace: Int,
+        @SerialName("objectname") val objectName: String,
+        val name: String,
+        val location: String,
+        val location2: String,
+        val region: String,
+        val logo: String,
+        @SerialName("logourl") val logoURL: String,
+        @SerialName("createdate") @Serializable(LocalDateSerializer::class) val createDate: LocalDate,
+        @SerialName("disbanddate") @Serializable(LocalDateSerializer::class) val disbandDate: LocalDate,
+        val earnings: Float,
+        val coach: String,
+        val manager: String,
+        val sponsors: String,
+        @SerialName("extradata") val extraData: JsonObject,
+    )
+
+    @Serializable
+    data class Tournament(
+        @SerialName("pageid") val pageID: Int,
+        @SerialName("pagename") val pageName: String,
+        val namespace: Int,
+        @SerialName("objectname") val objectName: String,
+        val name: String,
+        @SerialName("shortname") val shortName: String,
+        @SerialName("tickername") val tickerName: String,
+        val banner: String,
+        @SerialName("bannerurl") val bannerURL: String,
+        val icon: String,
+        @SerialName("iconurl") val iconURL: String,
+        val series: String,
+        val previous: String,
+        val previous2: String,
+        val next: String,
+        val next2: String,
+        val game: String,
+        val patch: String,
+        @SerialName("endpatch") val endPatch: String,
+        val type: String,
+        val organizers: String,
+        @SerialName("startdate") @Serializable(LocalDateSerializer::class) val startDate: LocalDate,
+        @SerialName("enddate") @Serializable(LocalDateSerializer::class) val endDate: LocalDate,
+        @SerialName("sortdate") @Serializable(LocalDateSerializer::class) val sortDate: LocalDate,
+        val location: String,
+        val location2: String,
+        val venue: String,
+        @SerialName("prizepool") val prizePool: Float,
+        @SerialName("participantsnumber") val participantsNumber: Int,
+        @SerialName("liquipediatier") val liquipediaTier: String,
+        @SerialName("liquipediatiertype") val liquipediaTierType: String,
+        @SerialName("publishertier") val publisherTier: String,
+        val status: String,
+        val maps: String,
+        val format: String,
+        val sponsors: String,
+        @SerialName("extradata") val extraData: JsonObject,
+    )
+
+    @Serializable
+    data class Transfer(
+        @SerialName("pageid") val pageID: Int,
+        @SerialName("pagename") val pageName: String,
+        val namespace: Int,
+        @SerialName("objectname") val objectName: String,
+        val player: String,
+        val nationality: String,
+        @SerialName("fromteam") val fromTeam: String,
+        @SerialName("toteam") val toTeam: String,
+        val role1: String,
+        val role2: String,
+        val reference: JsonObject,
+        @Serializable(LocalDateSerializer::class) val date: LocalDate,
+        @SerialName("wholeteam") val wholeTeam: Boolean,
         @SerialName("extradata") val extraData: JsonObject,
     )
 

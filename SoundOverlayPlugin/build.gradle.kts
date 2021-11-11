@@ -16,27 +16,15 @@ repositories {
     google()
 }
 
-val ktorVersion = "1.6.5"
-
 dependencies {
 
     // Kotlin
-    implementation(platform(kotlin("bom")))
-    implementation(kotlin("stdlib-jdk8"))
-    implementation(kotlin("reflect"))
+    compileOnly(platform(kotlin("bom")))
+    compileOnly(kotlin("stdlib-jdk8"))
+    compileOnly(kotlin("reflect"))
 
     // Sub Modules
-    implementation(project(":NativeOverlay"))
-
-    // HTTP
-    implementation("io.ktor:ktor-client-core:$ktorVersion")
-    implementation("io.ktor:ktor-client-cio:$ktorVersion")
-
-    // GUI
-    implementation(compose.desktop.currentOs)
-
-    // Serialization
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.0")
+    implementation(project(":SoftwareOverlay"))
 }
 
 tasks {
@@ -59,7 +47,6 @@ tasks {
         targetCompatibility = javaVersion
     }
 
-
 }
 
 testing {
@@ -75,8 +62,8 @@ testing {
 
 compose.desktop {
     application {
-        nativeDistributions.modules("PoderTech.overlay")
-        println(nativeDistributions.modules)
+        //nativeDistributions.modules("PoderTech.overlay")
+        //println(nativeDistributions.modules)
         //nativeDistributions.includeAllModules = true
         jvmArgs("--list-modules", "--add-modules=jdk.incubator.foreign", "--enable-native-access=PoderTech.overlay"/*, "--enable-native-access=ALL-UNNAMED"*/)
         mainClass = "dev.twelveoclock.liquidoverlay.MainKt"
