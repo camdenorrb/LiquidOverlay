@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     kotlin("jvm") version "1.6.0-RC2"
 }
@@ -18,12 +20,13 @@ dependencies {
 }
 
 tasks {
-    compileKotlin.get().destinationDirectory.set(compileJava.get().destinationDirectory.get())
-    compileTestKotlin.get().destinationDirectory.set(compileTestJava.get().destinationDirectory.get())
+
+    //compileKotlin.get().destinationDirectory.set(compileJava.get().destinationDirectory.get())
+    //compileTestKotlin.get().destinationDirectory.set(compileTestJava.get().destinationDirectory.get())
 
     val javaVersion = JavaVersion.VERSION_17.toString()
 
-    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    withType<KotlinCompile> {
         sourceCompatibility = javaVersion
         targetCompatibility = javaVersion
         kotlinOptions.jvmTarget = javaVersion
@@ -31,7 +34,7 @@ tasks {
     }
 
     withType<JavaCompile> {
-        modularity.inferModulePath.set(true)
+        //modularity.inferModulePath.set(true)
         sourceCompatibility = javaVersion
         targetCompatibility = javaVersion
     }

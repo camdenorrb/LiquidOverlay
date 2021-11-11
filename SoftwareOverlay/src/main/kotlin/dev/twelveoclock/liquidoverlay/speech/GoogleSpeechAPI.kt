@@ -7,12 +7,7 @@ import java.net.http.HttpResponse
 
 class GoogleSpeechAPI(lang: String = "en-US", rate: Int = 16000) {
 
-    companion object {
-        private val client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build()
-    }
-
     private val requestBuilder = HttpRequest.newBuilder(URI("https://www.google.com/speech-api/v2/recognize?client=chromium&lang=$lang&key=AIzaSyDu4IO4v_XZf9Z9pAmiLOCyf01W-Q7k2pQ")).setHeader("Content-Type", "audio/l16; rate=$rate")// "audio/x-flac; rate=16000")
-
 
     fun getSpeech(data: ByteArray): String {
 
@@ -25,6 +20,12 @@ class GoogleSpeechAPI(lang: String = "en-US", rate: Int = 16000) {
         }
 
         return result.body()
+    }
+
+    companion object {
+
+        private val client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build()
+
     }
 
 }
