@@ -96,8 +96,16 @@ fun OverlayScreen(section: MutableState<Section>) {
     val colWidth = 200.dp
 
     val offColor = Color(33, 41, 54)
-    //val onColor = Color(81, 142, 240)
+    val onColor = Color(81, 142, 240)
     val textColor = Color.White
+
+    var captionsActivated by remember { mutableStateOf(false) }
+    var footstepsActivated by remember { mutableStateOf(false) }
+    var gunshotsActivated by remember { mutableStateOf(false) }
+    var translateActivated by remember { mutableStateOf(false) }
+    var musicActivated by remember { mutableStateOf(false) }
+
+
 
     NavigationMenu(section)
 
@@ -109,9 +117,10 @@ fun OverlayScreen(section: MutableState<Section>) {
             horizontalArrangement = Arrangement.Center
         ) {
 
+
             // Captions
             Column(
-                modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth).background(offColor),
+                modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth).background(if (captionsActivated) onColor else offColor).clickable { captionsActivated = !captionsActivated},
                 horizontalAlignment = Alignment.CenterHorizontally){
 
                 Icon(
@@ -131,7 +140,7 @@ fun OverlayScreen(section: MutableState<Section>) {
 
             // Visual Footsteps
             Column(
-                modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth).background(offColor),
+                modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth).background(if (footstepsActivated) onColor else offColor).clickable { footstepsActivated = !footstepsActivated},
                 horizontalAlignment = Alignment.CenterHorizontally){
 
                 Icon(
@@ -151,7 +160,7 @@ fun OverlayScreen(section: MutableState<Section>) {
 
             // Visual Gunshots
             Column(
-                modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth).background(offColor),
+                modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth).background(if (gunshotsActivated) onColor else offColor).clickable { gunshotsActivated = !gunshotsActivated},
                 horizontalAlignment = Alignment.CenterHorizontally){
 
                 Icon(
@@ -171,7 +180,7 @@ fun OverlayScreen(section: MutableState<Section>) {
 
             // Translate
             Column(
-                modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth).background(offColor),
+                modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth).background(if (translateActivated) onColor else offColor).clickable { translateActivated = !translateActivated},
                 horizontalAlignment = Alignment.CenterHorizontally){
 
                 Icon(
@@ -191,7 +200,7 @@ fun OverlayScreen(section: MutableState<Section>) {
 
             // Music
             Column(
-                modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth).background(offColor),
+                modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth).background(if (musicActivated) onColor else offColor).clickable { musicActivated = !musicActivated},
                 horizontalAlignment = Alignment.CenterHorizontally){
 
                 Icon(
@@ -383,7 +392,6 @@ fun NavigationMenu(section: MutableState<Section>) {
             modifier = Modifier.height(30.dp).fillMaxWidth().clickable { section.value = Section.HOME },
             verticalAlignment = Alignment.CenterVertically,
         ) {
-
 
             // https://developer.android.com/reference/kotlin/androidx/compose/material/icons/Icons
             Icon(
