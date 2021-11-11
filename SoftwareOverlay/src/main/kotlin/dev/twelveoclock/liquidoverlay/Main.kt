@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
@@ -16,11 +17,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.consumeAllChanges
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
@@ -29,6 +33,7 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import dev.twelveoclock.liquidoverlay.speech.GoogleSpeechAPI
 import javax.sound.sampled.*
+import kotlin.math.roundToInt
 import kotlin.system.exitProcess
 
 
@@ -52,8 +57,6 @@ fun main() {
     }
     */
 }
-
-
 
 
 // https://developer.android.com/jetpack/compose
@@ -97,6 +100,10 @@ fun OverlayScreen(section: MutableState<Section>) {
 
     val offColor = Color(33, 41, 54)
     val onColor = Color(81, 142, 240)
+
+    val notActivated = 0f
+    val activated = 1f
+
     val textColor = Color.White
 
     var captionsActivated by remember { mutableStateOf(false) }
@@ -224,13 +231,77 @@ fun OverlayScreen(section: MutableState<Section>) {
             modifier = Modifier.padding(rowPadding).fillMaxWidth().fillMaxHeight(),
             horizontalArrangement = Arrangement.Center
         ) {
-            Image(
-                painterResource("image/valorant.jpg"),
-                "Valorant Gameplay Image",
-                modifier = Modifier.fillMaxHeight(),
-                contentScale = ContentScale.Crop
-            )
+
+            Box {
+                //Gameplay Image
+
+                Image(
+                    painterResource("image/valorant.jpg"),
+                    "Valorant Gameplay Image",
+                    modifier = Modifier.fillMaxHeight(),
+                    contentScale = ContentScale.Crop
+                )
+
+                var captionOffsetX by remember { mutableStateOf(0f) }
+                var captionOffsetY by remember { mutableStateOf(0f) }
+                var translateOffsetX by remember { mutableStateOf(0f) }
+                var translateOffsetY by remember { mutableStateOf(0f) }
+                var musicOffsetX by remember { mutableStateOf(0f) }
+                var musicOffsetY by remember { mutableStateOf(0f) }
+
+                // Draggable Captions
+                Image(
+                    painterResource("draggable/captions.svg"),
+                    "Draggable Captions",
+                    alpha = if (captionsActivated) activated else notActivated,
+                    modifier = Modifier
+                        .offset { IntOffset(captionOffsetX.roundToInt(), captionOffsetY.roundToInt()) }
+                        .pointerInput(Unit) {
+                            detectDragGestures { change, dragAmount ->
+                                change.consumeAllChanges()
+                                captionOffsetX += dragAmount.x
+                                captionOffsetY += dragAmount.y
+                            }
+                        }
+                )
+
+                // Draggable Translate
+                Image(
+                    painterResource("draggable/translate.svg"),
+                    "Draggable Translation",
+                    alpha = if (translateActivated) activated else notActivated,
+                    modifier = Modifier
+                        .offset { IntOffset(translateOffsetX.roundToInt(), translateOffsetY.roundToInt()) }
+                        .pointerInput(Unit) {
+                            detectDragGestures { change, dragAmount ->
+                                change.consumeAllChanges()
+                                translateOffsetX += dragAmount.x
+                                translateOffsetY += dragAmount.y
+                            }
+                        }
+                )
+
+                // Draggable Music
+                Image(
+                    painterResource("draggable/music.svg"),
+                    "Draggable Music",
+                    alpha = if (musicActivated) activated else notActivated,
+                    modifier = Modifier
+                        .offset { IntOffset(musicOffsetX.roundToInt(), musicOffsetY.roundToInt()) }
+                        .pointerInput(Unit) {
+                            detectDragGestures { change, dragAmount ->
+                                change.consumeAllChanges()
+                                musicOffsetX += dragAmount.x
+                                musicOffsetY += dragAmount.y
+                            }
+                        }
+                )
+
+            }
         }
+
+
+
     }
 }
 
