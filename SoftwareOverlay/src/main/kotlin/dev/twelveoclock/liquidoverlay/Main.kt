@@ -3,6 +3,9 @@ package dev.twelveoclock.liquidoverlay
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -13,9 +16,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
@@ -85,10 +90,138 @@ fun HomeScreen(section: MutableState<Section>) {
 @Composable
 fun OverlayScreen(section: MutableState<Section>) {
 
+    val rowPadding = 5.dp
+    val rowHeight = 150.dp
+    val colPadding = 20.dp
+    val colWidth = 200.dp
+
+    val offColor = Color(33, 41, 54)
+    //val onColor = Color(81, 142, 240)
+    val textColor = Color.White
+
     NavigationMenu(section)
 
-    Box(modifier = Modifier.offset(x = NAVIGATION_WIDTH).fillMaxSize().background(BACKGROUND_COLOR)){
-        Text("Meow")
+    Column(modifier = Modifier.padding(start = NAVIGATION_WIDTH).fillMaxSize().background(BACKGROUND_COLOR)){
+
+        // Menu
+        Row(
+            modifier = Modifier.padding(rowPadding).fillMaxWidth().height(rowHeight),
+            horizontalArrangement = Arrangement.Center
+        ) {
+
+            // Captions
+            Column(
+                modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth).background(offColor),
+                horizontalAlignment = Alignment.CenterHorizontally){
+
+                Icon(
+                    painterResource("font-icons/captions.svg"),
+                    modifier = Modifier.padding(5.dp),
+                    tint = textColor,
+                    contentDescription = "Captions",
+                )
+
+                Text(
+                    text = "Captions",
+                    color = textColor,
+                    fontSize = 20.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
+            }
+
+            // Visual Footsteps
+            Column(
+                modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth).background(offColor),
+                horizontalAlignment = Alignment.CenterHorizontally){
+
+                Icon(
+                    painterResource("font-icons/shoe.svg"),
+                    modifier = Modifier.padding(10.dp),
+                    tint = textColor,
+                    contentDescription = "Visual Footsteps",
+                )
+
+                Text(
+                    text = "Visual Footsteps",
+                    color = textColor,
+                    fontSize = 20.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
+            }
+
+            // Visual Gunshots
+            Column(
+                modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth).background(offColor),
+                horizontalAlignment = Alignment.CenterHorizontally){
+
+                Icon(
+                    painterResource("font-icons/gun.svg"),
+                    modifier = Modifier.padding(15.dp),
+                    tint = textColor,
+                    contentDescription = "Visual Gunshots",
+                )
+
+                Text(
+                    text = "Visual Gunshots",
+                    color = textColor,
+                    fontSize = 20.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
+            }
+
+            // Translate
+            Column(
+                modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth).background(offColor),
+                horizontalAlignment = Alignment.CenterHorizontally){
+
+                Icon(
+                    painterResource("font-icons/translate.svg"),
+                    modifier = Modifier.padding(5.dp),
+                    tint = textColor,
+                    contentDescription = "Translate",
+                )
+
+                Text(
+                    text = "Translate",
+                    color = textColor,
+                    fontSize = 20.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
+            }
+
+            // Music
+            Column(
+                modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth).background(offColor),
+                horizontalAlignment = Alignment.CenterHorizontally){
+
+                Icon(
+                    painterResource("font-icons/music.svg"),
+                    modifier = Modifier.padding(17.dp),
+                    tint = textColor,
+                    contentDescription = "Music"
+                )
+
+                Text(
+                    text = "Music",
+                    color = textColor,
+                    fontSize = 20.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
+            }
+        }
+
+        // Gameplay Image
+        Row(
+            modifier = Modifier.padding(rowPadding).fillMaxWidth().fillMaxHeight(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Image(
+                painterResource("image/valorant.jpg"),
+                "Valorant Gameplay Image",
+                modifier = Modifier.fillMaxHeight(),
+                contentScale = ContentScale.Crop
+            )
+        }
     }
 }
 
