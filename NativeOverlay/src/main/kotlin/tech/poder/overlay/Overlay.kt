@@ -1,186 +1,81 @@
 package tech.poder.overlay
 
-import jdk.incubator.foreign.*
+import java.awt.Color
+import java.awt.image.BufferedImage
 
-class Overlay(val process: Process) : AutoCloseable {
-    companion object {
-        val init = NativeRegistry.loadLib("gdi32", "oleacc", "kernel32", "psapi")
+// TODO: A way to listen to clicks on the overlay?
+interface Overlay {
 
-        val beginPaint = NativeRegistry.register(
-            FunctionDescription(
-                "BeginPaint", MemoryAddress::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
-            )
-        )
+    /**
+     * The width for the overlay canvas
+     */
+    var canvasWidth: Int
 
-        val endPaint = NativeRegistry.register(
-            FunctionDescription(
-                "EndPaint", Boolean::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
-            )
-        )
-
-        val textOutA = NativeRegistry.register(
-            FunctionDescription(
-                "TextOutA", Boolean::class.java, listOf(
-                    MemoryAddress::class.java,
-                    Int::class.java,
-                    Int::class.java,
-                    MemoryAddress::class.java,
-                    Int::class.java
-                )
-            )
-        )
-
-        val updateWindow = NativeRegistry.register(
-            FunctionDescription(
-                "UpdateWindow", Boolean::class.java, listOf(MemoryAddress::class.java)
-            )
-        )
-
-        private val unhookWindowsHookEx = NativeRegistry.register(
-            FunctionDescription(
-                "UnhookWindowsHookEx", Boolean::class.java, listOf(MemoryAddress::class.java)
-            )
-        )
-
-        private val getWindowThreadProcessId = NativeRegistry.register(
-            FunctionDescription(
-                "GetWindowThreadProcessId",
-                Int::class.java,
-                listOf(MemoryAddress::class.java, MemoryAddress::class.java)
-            )
-        )
-
-        private val getCurrentThreadId = NativeRegistry.register(
-            FunctionDescription(
-                "GetCurrentThreadId", Int::class.java
-            )
-        )
-
-        private val setWindowsHookExA = NativeRegistry.register(
-            FunctionDescription(
-                "SetWindowsHookExA", MemoryAddress::class.java, listOf(
-                    Int::class.java, MemoryAddress::class.java, MemoryAddress::class.java, Int::class.java
-                )
-            )
-        )
-
-        private val createThread = NativeRegistry.register(
-            FunctionDescription(
-                "CreateThread", MemoryAddress::class.java, listOf(
-                    MemoryAddress::class.java,
-                    Int::class.java,
-                    MemoryAddress::class.java,
-                    MemoryAddress::class.java,
-                    Int::class.java,
-                    MemoryAddress::class.java
-                )
-            )
-        )
-
-        private val getModuleBaseName = NativeRegistry.register(
-            FunctionDescription(
-                "GetModuleBaseNameA", Int::class.java, listOf(
-                    MemoryAddress::class.java, MemoryAddress::class.java, MemoryAddress::class.java, Int::class.java
-                )
-            )
-        )
-
-        private val getProcessHandleFromHwnd = NativeRegistry.register(
-            FunctionDescription(
-                "GetProcessHandleFromHwnd", MemoryAddress::class.java, listOf(MemoryAddress::class.java)
-            )
-        )
-
-        val getModuleHandle = NativeRegistry.register(
-            FunctionDescription(
-                "GetModuleHandleA", MemoryAddress::class.java, listOf(MemoryAddress::class.java)
-            )
-        )
-
-        val getThreadId = NativeRegistry.register(
-            FunctionDescription(
-                "GetThreadId", Int::class.java, listOf(MemoryAddress::class.java)
-            )
-        )
-
-        private const val WH_CALLWNDPROC = 4 //before process receives messages
-        private const val WH_CALLWNDPROCRET = 12 //after process receives messages
-        private const val WH_CBT = 5
-        private const val WH_DEBUG = 9
-        private const val WH_FOREGROUNDIDLE = 11
-        private const val WH_GETMESSAGE = 3
-        private const val WH_JOURNALPLAYBACK = 1
-        private const val WH_JOURNALRECORD = 0
-        private const val WH_KEYBOARD = 2
-        private const val WH_KEYBOARD_LL = 13
-        private const val WH_MOUSE = 7
-        private const val WH_MOUSE_LL = 14
-        private const val WH_MSGFILTER = -1
-        private const val WH_SHELL = 10
-        private const val WH_SYSMSGFILTER = 6
-
-        val hookProcUpcall = NativeRegistry.registerUpcallStatic(
-            FunctionDescription(
-                "hookProc",
-                MemoryAddress::class.java,
-                listOf(MemoryAddress::class.java, Int::class.java, MemoryAddress::class.java, MemoryAddress::class.java)
-            ), Callback::class.java
-        )
-
-        val dllCheckUpcall = NativeRegistry.registerUpcallStatic(
-            FunctionDescription("dllCheck"), Callback::class.java
-        )
-    }
-
-    var hook = MemoryAddress.NULL
-
-    init {
-        val self = NativeRegistry[getModuleHandle].invoke(MemoryAddress.NULL)
-        /*val overlayWindow = WindowManager.createWindow(
-            WS_EX_TOPMOST or WS_EX_TRANSPARENT or WS_EX_LAYERED,
-            style = WS_POPUP.toInt(),
-            width = 1024,
-            height = 1024,
-            hInstance = self,
-        )
-        check(overlayWindow.window != MemoryAddress.NULL) { "Failed to create overlay window: ${NativeRegistry[Callback.getLastError].invoke()}" }*/
-
-        //val basic = NativeRegistry.register(dllCheckUpcall, FunctionDescription("dllCheck"))
-        //NativeRegistry[basic].invoke()
-        //println(NativeRegistry[getModuleHandle].invoke(MemoryAddress.NULL))
-        //val pid2 = NativeRegistry[getProcessHandleFromHwnd].invoke(process.hWnd)
-        //println(pid2)
-        val id = NativeRegistry[getWindowThreadProcessId].invoke(process.hWnd, MemoryAddress.NULL)
-        //println(id)
-        hook = NativeRegistry[setWindowsHookExA].invoke(
-            WH_CALLWNDPROC, hookProcUpcall, self, id
-        ) as MemoryAddress
-        check(hook != MemoryAddress.NULL) { "Failed to set hook: ${NativeRegistry[Callback.getLastError].invoke()}" }
-    }
-
-    val scope = ResourceScope.newConfinedScope()
-    var dc = MemoryAddress.NULL
-
-    val paintStruct = MemorySegment.allocateNative(
-        CLinker.C_POINTER.byteSize() + (CLinker.C_INT.byteSize() * 7) + (CLinker.C_CHAR.byteSize() * 32), scope
-    )
-
-    val stringStorage = MemorySegment.allocateNative(CLinker.C_CHAR.byteSize() * 128, scope)
-
-    private fun zeroOut() {
-        paintStruct.fill(0)
-    }
+    /**
+     * The height for the overlay canvas
+     */
+    var canvasHeight: Int
 
 
+    /**
+     * Draws a rectangle onto the overlay
+     *
+     * @param color The color of the overlay
+     * @param first The first position for the rectangle
+     * @param second The second position for the rectangle
+     */
+    /*fun rectangle(color: Color, first: Position, second: Position)
 
-    override fun close() {
-        if (hook != MemoryAddress.NULL) {
-            val result = NativeRegistry[unhookWindowsHookEx].invoke(hook) as Int
-            check(result != 0) {
-                "Failed to unhook from process"
-            }
-            hook = MemoryAddress.NULL
-        }
-        scope.close()
-    }
+    /**
+     * Draws a circle onto the overlay
+     *
+     * @param color The color for the circle
+     * @param radius The radius of the circle
+     * @param center The center position of the circle
+     */
+    fun circle(color: Color, radius: Int, center: Position)*/
+
+    /**
+     * Draws an image onto the overlay
+     *
+     * @param image The image to be drawn
+     * @param position The top left position for it to be drawn at
+     */
+    fun image(image: BufferedImage, position: Position, width: Int, height: Int)
+
+    /**
+     * Draws text onto the overlay
+     *
+     * @param value The text value to draw onto the overlay
+     * @param fontSize The font size for the text
+     * @param color The color for the text
+     * @param start The starting position for the text
+     */
+    //fun text(value: String, fontSize: Float, color: Color, start: Position)
+
+    /**
+     * Removes all elements from the overlay gui
+     */
+    fun clear()
+
+    /**
+     * Closes the overlay
+     */
+    fun close()
+
+    /**
+     * Show the overlay
+     */
+    fun show()
+
+    fun onResize(callback: () -> Unit)
+
+    /**
+     * Used to store position information for elements
+     *
+     * @property x The x position
+     * @property y The y position
+     */
+    data class Position(val x: Int, val y: Int)
+
 }

@@ -51,12 +51,20 @@ value class WindowClass(val clazzPointer: MemoryAddress) : AutoCloseable {
             result
         }
 
+        val hookProcUpcall = NativeRegistry.registerUpcallStatic(
+            FunctionDescription(
+                "hookProc",
+                MemoryAddress::class.java,
+                listOf(MemoryAddress::class.java, Int::class.java, MemoryAddress::class.java, MemoryAddress::class.java)
+            ), Callback::class.java
+        )
+
         fun define(name: String): WindowClass {
-            val instance = NativeRegistry[Overlay.getModuleHandle].invoke(MemoryAddress.NULL) as MemoryAddress
+            val instance = NativeRegistry[Callback.getModuleHandle].invoke(MemoryAddress.NULL) as MemoryAddress
             val externalStorage = ExternalStorage.fromString(name)
             val struct = MemorySegment.allocateNative(windclassw.size, externalStorage.segment.scope())
             MemoryAccess.setInt(struct, 0x0002 or 0x0001)
-            MemoryAccess.setAddressAtOffset(struct, windclassw.offset[1], Overlay.hookProcUpcall)
+            MemoryAccess.setAddressAtOffset(struct, windclassw.offset[1], hookProcUpcall)
             MemoryAccess.setAddressAtOffset(struct, windclassw.offset[4], instance)
             MemoryAccess.setAddressAtOffset(struct, windclassw.offset[7], invisibleBrush)
             MemoryAccess.setAddressAtOffset(struct, windclassw.offset[9], externalStorage.segment.address())

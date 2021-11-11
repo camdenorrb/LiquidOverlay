@@ -1,11 +1,13 @@
 package tech.poder.overlay
 
 import jdk.incubator.foreign.*
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
 import kotlin.system.exitProcess
 
 object Callback {
 
-    val init = NativeRegistry.loadLib("user32", "kernel32", "psapi")
+    val init = NativeRegistry.loadLib("Comctl32", "user32", "kernel32", "psapi")
 
     val getLastError = NativeRegistry.register(
         FunctionDescription(
@@ -37,11 +39,17 @@ object Callback {
         )
     )
 
-    /*private val getDC = NativeRegistry.register(
+    private val getDC = NativeRegistry.register(
         FunctionDescription(
             "GetDC", MemoryAddress::class.java, listOf(MemoryAddress::class.java)
         )
-    )*/
+    )
+
+    private val releaseDC = NativeRegistry.register(
+        FunctionDescription(
+            "ReleaseDC", MemoryAddress::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
+        )
+    )
 
     private val getClassNameA = NativeRegistry.register(
         FunctionDescription(
@@ -134,7 +142,65 @@ object Callback {
 
         return 1
     }
+
+    val imageListCreate = NativeRegistry.register(
+        FunctionDescription(
+            "ImageList_Create",
+            MemoryAddress::class.java,
+            listOf(Int::class.java, Int::class.java, Int::class.java, Int::class.java, Int::class.java)
+        )
+    )
+
+    val imageListAdd = NativeRegistry.register(
+        FunctionDescription(
+            "ImageList_AddMasked",
+            Int::class.java,
+            listOf(MemoryAddress::class.java, MemoryAddress::class.java, Int::class.java)
+        )
+    )
+
+    val loadImage = NativeRegistry.register(
+        FunctionDescription(
+            "LoadImageW",
+            MemoryAddress::class.java,
+            listOf(
+                MemoryAddress::class.java,
+                MemoryAddress::class.java,
+                Int::class.java,
+                Int::class.java,
+                Int::class.java,
+                Int::class.java
+            )
+        )
+    )
+
+    val imageListDraw = NativeRegistry.register(
+        FunctionDescription(
+            "ImageList_Draw",
+            Int::class.java,
+            listOf(
+                MemoryAddress::class.java,
+                Int::class.java,
+                MemoryAddress::class.java,
+                Int::class.java,
+                Int::class.java,
+                Int::class.java
+            )
+        )
+    )
+    val lock = ReentrantReadWriteLock()
+
+    var currentImageList = MemoryAddress.NULL
+    var images = 0
+
     var lastWindow = WindowManager(MemoryAddress.NULL)
+
+    fun loadImage(pathString: ExternalStorage): ExternalPointer {
+        val res = NativeRegistry[loadImage].invoke(MemoryAddress.NULL, pathString.segment.address(), 0, 0, 0, 0x00000010) as MemoryAddress
+        check(res != MemoryAddress.NULL) { "LoadImage failed: ${NativeRegistry[getLastError].invoke()}" }
+        return ExternalPointer(res)
+    }
+
     @JvmStatic
     fun hookProc(hwnd: MemoryAddress, uMsg: Int, wParam: MemoryAddress, lParam: MemoryAddress): MemoryAddress {
         if (lastWindow.window == MemoryAddress.NULL) {
@@ -144,7 +210,27 @@ object Callback {
             0x000f -> {
                 println("PAINT EVENT!")
                 lastWindow.startPaint()
-                lastWindow.drawText("Hello World", 10, 10)
+                if (images > 0) {
+                    val dc = NativeRegistry[getDC].invoke(hwnd) as MemoryAddress
+                    lock.read {
+                        if (currentImageList != MemoryAddress.NULL) {
+                            repeat(images) {
+                                val result = NativeRegistry[imageListDraw].invoke(
+                                    currentImageList,
+                                    it,
+                                    dc,
+                                    0,
+                                    0,
+                                    0
+                                ) as Int
+                                check(result != 0) {
+                                    "ImageList_Draw failed: ${NativeRegistry[getLastError].invoke()}"
+                                }
+                            }
+                        }
+                    }
+                    NativeRegistry[releaseDC].invoke(hwnd, dc)
+                }
                 lastWindow.endPaint()
                 MemoryAddress.NULL
             }
@@ -159,6 +245,12 @@ object Callback {
 
 
     }
+
+    val getModuleHandle = NativeRegistry.register(
+        FunctionDescription(
+            "GetModuleHandleA", MemoryAddress::class.java, listOf(MemoryAddress::class.java)
+        )
+    )
 
     private val forEachWindowUpcall = NativeRegistry.registerUpcallStatic(
         FunctionDescription(
@@ -187,7 +279,8 @@ object Callback {
         val denseProcesses = mutableListOf<Process>()
         processes.forEach { processData ->
             val intHolderSeg = MemorySegment.allocateNative(CLinker.C_INT.byteSize(), confinedStatic)
-            val pidNoReason = NativeRegistry[getWindowThreadProcessId].invoke(processData, intHolderSeg.address()) as Int
+            val pidNoReason =
+                NativeRegistry[getWindowThreadProcessId].invoke(processData, intHolderSeg.address()) as Int
             check(pidNoReason != 0) {
                 "Could not get pid"
             }
@@ -274,6 +367,6 @@ object Callback {
 
     @JvmStatic
     fun dllCheck() {
-        println("DLL_CHECK = ${NativeRegistry[Overlay.getModuleHandle].invoke(MemoryAddress.NULL)}")
+        println("DLL_CHECK = ${NativeRegistry[getModuleHandle].invoke(MemoryAddress.NULL)}")
     }
 }
