@@ -16,4 +16,8 @@ data class Process(
             NativeRegistry[Callback.closeHandle].invoke(handle)
         }
     }
+
+    fun asWindow(): WindowManager {
+        return WindowManager(hWnd)
+    }
 }

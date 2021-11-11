@@ -1,6 +1,7 @@
 package tech.poder.overlay
 
 import jdk.incubator.foreign.*
+import kotlin.system.exitProcess
 
 object Callback {
 
@@ -58,7 +59,7 @@ object Callback {
         )
     )
 
-    private val getWindowRect = NativeRegistry.register(
+    val getWindowRect = NativeRegistry.register(
         FunctionDescription(
             "GetWindowRect", Boolean::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
         )
@@ -133,12 +134,30 @@ object Callback {
 
         return 1
     }
-
+    var lastWindow = WindowManager(MemoryAddress.NULL)
     @JvmStatic
     fun hookProc(hwnd: MemoryAddress, uMsg: Int, wParam: MemoryAddress, lParam: MemoryAddress): MemoryAddress {
+        if (lastWindow.window == MemoryAddress.NULL) {
+            lastWindow = WindowManager(hwnd)
+        }
+        return when (uMsg) {
+            0x000f -> {
+                println("PAINT EVENT!")
+                lastWindow.startPaint()
+                lastWindow.drawText("Hello World", 10, 10)
+                lastWindow.endPaint()
+                MemoryAddress.NULL
+            }
+            0x0002, 0x0010 -> {
+                exitProcess(0)
+            }
+            else -> {
+                println("Unhandled Called: $uMsg")
+                NativeRegistry[WindowManager.defWindowProcW].invoke(hwnd, uMsg, wParam, lParam) as MemoryAddress
+            }
+        }
 
-        println("Called: $uMsg")
-        return NativeRegistry[WindowManager.defWindowProcW].invoke(hwnd, uMsg, wParam, lParam) as MemoryAddress
+
     }
 
     private val forEachWindowUpcall = NativeRegistry.registerUpcallStatic(

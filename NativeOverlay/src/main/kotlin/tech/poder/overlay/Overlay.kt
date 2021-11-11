@@ -6,19 +6,19 @@ class Overlay(val process: Process) : AutoCloseable {
     companion object {
         val init = NativeRegistry.loadLib("gdi32", "oleacc", "kernel32", "psapi")
 
-        private val beginPaint = NativeRegistry.register(
+        val beginPaint = NativeRegistry.register(
             FunctionDescription(
                 "BeginPaint", MemoryAddress::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
             )
         )
 
-        private val endPaint = NativeRegistry.register(
+        val endPaint = NativeRegistry.register(
             FunctionDescription(
                 "EndPaint", Boolean::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
             )
         )
 
-        private val textOutA = NativeRegistry.register(
+        val textOutA = NativeRegistry.register(
             FunctionDescription(
                 "TextOutA", Boolean::class.java, listOf(
                     MemoryAddress::class.java,
@@ -30,7 +30,7 @@ class Overlay(val process: Process) : AutoCloseable {
             )
         )
 
-        private val updateWindow = NativeRegistry.register(
+        val updateWindow = NativeRegistry.register(
             FunctionDescription(
                 "UpdateWindow", Boolean::class.java, listOf(MemoryAddress::class.java)
             )
@@ -171,41 +171,7 @@ class Overlay(val process: Process) : AutoCloseable {
         paintStruct.fill(0)
     }
 
-    fun startPaint() {
-        check(dc == MemoryAddress.NULL) {
-            "Already started painting"
-        }
-        zeroOut()
-        dc = NativeRegistry[beginPaint].invoke(process.hWnd, paintStruct.address()) as MemoryAddress
-        check(dc != MemoryAddress.NULL) {
-            "Failed to get DC"
-        }
-    }
 
-    fun drawText(text: String, x: Int, y: Int) {
-        check(dc != MemoryAddress.NULL) {
-            "Not painting"
-        }
-        text.forEachIndexed { index, c ->
-            MemoryAccess.setCharAtIndex(stringStorage, index.toLong(), c)
-        }
-        val result = NativeRegistry[textOutA].invoke(dc, x, y, stringStorage.address(), text.length)
-        check(result != 0) {
-            "Failed to draw text"
-        }
-    }
-
-    fun endPaint() {
-        check(dc != MemoryAddress.NULL) {
-            "Not painting"
-        }
-        NativeRegistry[endPaint].invoke(process.hWnd, dc)
-        dc = MemoryAddress.NULL
-        val result = NativeRegistry[updateWindow].invoke(process.hWnd)
-        check(result != 0) {
-            "Failed to update window!"
-        }
-    }
 
     override fun close() {
         if (hook != MemoryAddress.NULL) {
