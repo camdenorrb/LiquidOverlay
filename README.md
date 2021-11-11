@@ -10,6 +10,7 @@ An overlay for Liquid Hacks 2021, with the goal of giving better accessibility, 
     b. [The Idea](#idea)\
     c. [Our Solution](#solution)\
     d. [Extra Feauture and Gratitude](#thankyou)
+3. [Screenshots](#ss)
 
 ## Project Description <a name="pd"></a>
 
@@ -38,7 +39,8 @@ How would we accomplish this? We decided to make an overlay that uses visual eff
 
 This idea grew and we asked ourselves, "Why stop there?" What can we add to make this a tool for even more people? This led our team to look into Speech to Text to be able to translate for people that speak different languages than those used in the game.
 
-
 ### "My Thanks" - Cypher (Valorant) <a name="thankyou"></a>
 
 Lastly, we wanted to show our appreciation for the LiquidTeam and its players. Without LiquidHacks and the Liquid Teams' support, it may have been difficult to get to the point we have in such a short time. They also opened our eyes to looking for these opportunities to make gaming something everyone can enjoy. For that, we wanted to show our thanks and decided to add a section to our overlay titled "Our Liquid". This section will allow fans to stay up to date on the latest and greatest of their favorite Liquid players, teams, and live streams.
+
+## Screenshots <a name="ss"></a>
