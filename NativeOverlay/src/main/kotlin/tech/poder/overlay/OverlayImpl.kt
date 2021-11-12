@@ -58,10 +58,12 @@ class OverlayImpl(
                     selected.getWindowRect(newRectStorage)
                     val rect = RectReader.fromMemorySegment(newRectStorage)
                     if (prev != rect) {
-                        onResize(callback)
                         self.moveWindow(
                             rect.left.toInt(), rect.top.toInt(), rect.width.toInt(), rect.height.toInt(), 1
                         )
+                        if (rect.area != prev.area) {
+                            onResize(callback)
+                        }
                         prev = rect
                     }
                     if (!Callback.firstDraw) {
