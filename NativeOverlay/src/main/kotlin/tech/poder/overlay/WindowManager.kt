@@ -299,6 +299,10 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
         }
     }
 
+    fun showWindow() {
+        NativeRegistry[showWindow].invoke(window, 5)
+    }
+
     fun setWindowPosition(
         afterOther: WindowManager? = null, x: Int = 0, y: Int = 0, cx: Int = 0, cy: Int = 0, flags: Int = 0
     ): Boolean {
