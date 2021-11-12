@@ -65,7 +65,7 @@ private fun createApplication() = application {
     Window(
         onCloseRequest = ::exitApplication,
         title = "LiquidOverlay",
-        state = rememberWindowState(width = 1000.dp, height = 600.dp, position = WindowPosition(Alignment.Center)),
+        state = rememberWindowState(width = 1000.dp, height = 1000.dp, position = WindowPosition(Alignment.Center)),
         icon = painterResource("logo/logoOverlay.svg"),
     ) {
 
@@ -128,96 +128,89 @@ fun HomeScreen(section: MutableState<Section>) {
 
             Spacer(Modifier.height(50.dp))
 
-            var playersNames = mutableListOf<String>()
-            var playerNationality = mutableListOf<String>()
-            var playerTeam = mutableListOf<String>()
+            val playersNames = mutableListOf<String>()
+            val playerNationality = mutableListOf<String>()
+            val playerTeam = mutableListOf<Float>()
 
 
             // Getting Player info
             runBlocking {
+                var num = 0
                 val playerInfo = LIQUIPEDIA.player(listOf(Liquipedia.Wiki.VALORANT))
                 for (i in 0..5){
-                    val num = Random.nextInt(0, playerInfo.result.size)
+                    num++
                     playersNames.add(playerInfo.result[num].name)
                     playerNationality.add(playerInfo.result[num].nationality)
-                    playerTeam.add(playerInfo.result[num].team)
+                    playerTeam.add(playerInfo.result[num].earnings)
                 }
             }
 
             // Top Player Box
-            Column (modifier = Modifier.height(400.dp).fillMaxWidth().background(boxColor)) {
+            Column (modifier = Modifier.height(350.dp).fillMaxWidth().background(boxColor)) {
                 Text(
                     modifier = Modifier.offset(x = 25.dp, y = 25.dp),
-                    text = "Featured Players (Valorant)",
+                    text = "Featured Players",
                     color = largeText,
-                    fontSize = 30.sp,
+                    fontSize = 27.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
+
+                Spacer(Modifier.height(30.dp))
+
+                Text(
+                    modifier = Modifier.offset(x = 25.dp, y = 30.dp),
+                    text = playersNames[0] + ", " + playerNationality[0] + ", earnings: $" + playerTeam[0],
+                    color = Color.White,
+                    fontSize = 20.sp,
                     fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
                 )
 
                 Spacer(Modifier.height(15.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(15.dp)
-                ) {
-                    Column(modifier = Modifier.padding(colPadding).fillMaxHeight().width(250.dp)) {
-                        Text(
-                            text = playersNames[0],
-                            color = Color.White,
-                            fontSize = 20.sp,
-                            fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
-                        )
-                    }
-                    Column(modifier = Modifier.padding(colPadding).fillMaxSize()) {
-                        Text(
-                            text = playersNames[1],
-                            color = Color.White,
-                            fontSize = 20.sp,
-                            fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
-                        )
-                    }
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(15.dp)
-                ) {
-                    Column(modifier = Modifier.padding(colPadding).fillMaxHeight().width(250.dp)) {
-                        Text(
-                            text = playersNames[2],
-                            color = Color.White,
-                            fontSize = 20.sp,
-                            fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
-                        )
-                    }
-                    Column(modifier = Modifier.padding(colPadding).fillMaxSize()) {
-                        Text(
-                            text = playersNames[3],
-                            color = Color.White,
-                            fontSize = 20.sp,
-                            fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
-                        )
-                    }
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(15.dp)
-                ) {
-                    Column(modifier = Modifier.padding(colPadding).fillMaxHeight().width(250.dp)) {
-                        Text(
-                            text = playersNames[4],
-                            color = Color.White,
-                            fontSize = 20.sp,
-                            fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
-                        )
-                    }
-                    Column(modifier = Modifier.padding(colPadding).fillMaxSize()) {
-                        Text(
-                            text = playersNames[5],
-                            color = Color.White,
-                            fontSize = 20.sp,
-                            fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
-                        )
-                    }
-                }
+                Text(
+                    modifier = Modifier.offset(x = 25.dp, y = 30.dp),
+                    text = playersNames[1] + ", " + playerNationality[1] + ", earnings: $" + playerTeam[1],
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
+                Spacer(Modifier.height(15.dp))
+                Text(
+                    modifier = Modifier.offset(x = 25.dp, y = 30.dp),
+                    text = playersNames[2] + ", " + playerNationality[2] + ", earnings: $" + playerTeam[2],
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
+                Spacer(Modifier.height(15.dp))
+                Text(
+                    modifier = Modifier.offset(x = 25.dp, y = 30.dp),
+                    text = playersNames[3] + ", " + playerNationality[3] + ", earnings: $" + playerTeam[3],
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
+                Spacer(Modifier.height(15.dp))
 
+                Text(
+                    modifier = Modifier.offset(x = 25.dp, y = 30.dp),
+                    text = playersNames[4] + ", " + playerNationality[4] + ", earnings: $" + playerTeam[4],
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
+                Spacer(Modifier.height(15.dp))
+
+                Text(
+                    modifier = Modifier.offset(x = 25.dp, y = 30.dp),
+                    text = playersNames[5] + ", " + playerNationality[5] + ", earnings: $" + playerTeam[5],
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
             }
+
+            // For last item bottom left
         }
 
         // Holder column for right
@@ -229,21 +222,14 @@ fun HomeScreen(section: MutableState<Section>) {
                 contentScale = ContentScale.Crop
             )
 
-            Spacer(Modifier.height(50.dp))
+            Spacer(Modifier.height(20.dp))
 
-            Column (modifier = Modifier.fillMaxSize().background(boxColor)) {
-                Text(
-                    modifier = Modifier.offset(x = 25.dp, y = 25.dp),
-                    text = "Upcoming Events (Valorant)",
-                    color = largeText,
-                    fontSize = 30.sp,
-                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
-                )
-
-                Spacer(Modifier.height(30.dp))
-
-            }
-
+            Image(
+                painterResource("image/upcoming.png"),
+                "Upcoming Events",
+                modifier = Modifier.fillMaxWidth(),
+                contentScale = ContentScale.Crop
+            )
         }
     }
 }
