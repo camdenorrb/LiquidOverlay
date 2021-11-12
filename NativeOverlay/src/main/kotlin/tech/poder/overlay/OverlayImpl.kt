@@ -54,7 +54,7 @@ class OverlayImpl(val selected: WindowManager) : Overlay {
     }
 
     override fun hide() {
-        TODO()
+        selected.hideWindow()
     }
 
     override fun onResize(callback: (Overlay) -> Unit) {

@@ -303,6 +303,10 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
         NativeRegistry[showWindow].invoke(window, 5)
     }
 
+    fun hideWindow() {
+        NativeRegistry[showWindow].invoke(window, 0)
+    }
+
     fun setWindowPosition(
         afterOther: WindowManager? = null, x: Int = 0, y: Int = 0, cx: Int = 0, cy: Int = 0, flags: Int = 0
     ): Boolean {
