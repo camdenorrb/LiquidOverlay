@@ -70,6 +70,8 @@ interface Overlay {
 
     fun hide()
 
+    fun publish()
+
     fun onResize(callback: (Overlay) -> Unit)
 
     /**

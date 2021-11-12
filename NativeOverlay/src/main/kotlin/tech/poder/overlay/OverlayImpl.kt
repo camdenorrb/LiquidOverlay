@@ -1,6 +1,10 @@
 package tech.poder.overlay
 
+import jdk.incubator.foreign.MemoryAddress
 import java.awt.image.BufferedImage
+import java.nio.file.Paths
+import javax.imageio.ImageIO
+import kotlin.concurrent.write
 
 class OverlayImpl(val selected: WindowManager) : Overlay {
 
@@ -12,11 +16,16 @@ class OverlayImpl(val selected: WindowManager) : Overlay {
         rectStorage
     }
 
+    val storageBitmap = Paths.get("test.bmp").toAbsolutePath()
+    val pathString = ExternalStorage.fromString(storageBitmap.toString())
+
     private var rectReader = RectReader.fromMemorySegment(currentRectStorage)
 
     override var canvasWidth: Int = rectReader.width.toInt()
 
     override var canvasHeight: Int = rectReader.height.toInt()
+
+    private var prevList = NativeRegistry[Callback.imageListCreate].invoke(canvasWidth, canvasHeight, 0x00000001, 1, 1) as MemoryAddress
 
     private var internal = BufferedImage(canvasWidth, canvasHeight, BufferedImage.TYPE_INT_ARGB)
     private var internalGraphics = internal.graphics
@@ -57,8 +66,27 @@ class OverlayImpl(val selected: WindowManager) : Overlay {
         selected.hideWindow()
     }
 
+    override fun publish() {
+        ImageIO.write(internal, "bmp", storageBitmap.toFile())
+        val bitmap = Callback.loadImage(pathString)
+
+        prevList = NativeRegistry[Callback.imageListCreate].invoke(canvasWidth, canvasHeight, 0x00000001, 1, 1) as MemoryAddress
+        NativeRegistry[Callback.imageListAdd].invoke(prevList, bitmap, WindowManager.invisible)
+        val old = Callback.currentImageList
+        Callback.lock.write {
+            Callback.currentImageList = prevList
+        }
+        val count = Callback.redrawCount
+        selected.updateWindow()
+        while (count == Callback.redrawCount) {
+            Thread.sleep(1)
+        }
+        NativeRegistry[Callback.imageListDestroy].invoke(old)
+    }
+
     override fun onResize(callback: (Overlay) -> Unit) {
         remake()
         callback.invoke(this)
+        publish()
     }
 }

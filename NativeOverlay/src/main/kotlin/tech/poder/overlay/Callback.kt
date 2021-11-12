@@ -151,6 +151,14 @@ object Callback {
         )
     )
 
+    val imageListDestroy = NativeRegistry.register(
+        FunctionDescription(
+            "ImageList_Destroy",
+            Boolean::class.java,
+            listOf(MemoryAddress::class.java)
+        )
+    )
+
     val imageListAdd = NativeRegistry.register(
         FunctionDescription(
             "ImageList_AddMasked",
@@ -195,12 +203,13 @@ object Callback {
 
     var lastWindow = WindowManager(MemoryAddress.NULL)
 
-    fun loadImage(pathString: ExternalStorage): ExternalPointer {
+    fun loadImage(pathString: ExternalStorage): MemoryAddress {
         val res = NativeRegistry[loadImage].invoke(MemoryAddress.NULL, pathString.segment.address(), 0, 0, 0, 0x00000010) as MemoryAddress
         check(res != MemoryAddress.NULL) { "LoadImage failed: ${NativeRegistry[getLastError].invoke()}" }
-        return ExternalPointer(res)
+        return res
     }
 
+    var redrawCount = 0
     @JvmStatic
     fun hookProc(hwnd: MemoryAddress, uMsg: Int, wParam: MemoryAddress, lParam: MemoryAddress): MemoryAddress {
         if (lastWindow.window == MemoryAddress.NULL) {
@@ -208,7 +217,6 @@ object Callback {
         }
         return when (uMsg) {
             0x000f -> {
-                println("PAINT EVENT!")
                 lastWindow.startPaint()
                 if (images > 0) {
                     val dc = NativeRegistry[getDC].invoke(hwnd) as MemoryAddress
@@ -232,6 +240,7 @@ object Callback {
                     NativeRegistry[releaseDC].invoke(hwnd, dc)
                 }
                 lastWindow.endPaint()
+                redrawCount++
                 MemoryAddress.NULL
             }
             0x0002, 0x0010 -> {

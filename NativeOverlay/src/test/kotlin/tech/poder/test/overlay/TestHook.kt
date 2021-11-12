@@ -67,7 +67,7 @@ internal class TestHook {
         val hbitmap = Callback.loadImage(pathString)
         Callback.lock.write {
             Callback.currentImageList = NativeRegistry[Callback.imageListCreate].invoke(prev.width.toInt(), prev.height.toInt(), 0x00000001, 1, 1) as MemoryAddress
-            NativeRegistry[Callback.imageListAdd].invoke(Callback.currentImageList, hbitmap.pointer, WindowManager.invisible)
+            NativeRegistry[Callback.imageListAdd].invoke(Callback.currentImageList, hbitmap, WindowManager.invisible)
             Callback.images = 1
         }
         window.setWindowPosition(WindowManager.HWND_TOPMOST)

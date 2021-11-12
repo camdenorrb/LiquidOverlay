@@ -264,6 +264,12 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
             )
         )
 
+        val updateWindow = NativeRegistry.register(
+            FunctionDescription(
+                "UpdateWindow", Boolean::class.java, listOf(MemoryAddress::class.java)
+            )
+        )
+
         val textOutA = NativeRegistry.register(
             FunctionDescription(
                 "TextOutA", Boolean::class.java, listOf(
@@ -361,6 +367,10 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
         check(result != 0) {
             "Failed to draw text"
         }
+    }
+
+    fun updateWindow() {
+        NativeRegistry[updateWindow].invoke(window)
     }
 
     fun endPaint() {
