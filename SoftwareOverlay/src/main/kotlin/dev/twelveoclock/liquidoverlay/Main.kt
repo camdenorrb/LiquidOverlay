@@ -132,13 +132,11 @@ fun HomeScreen(section: MutableState<Section>) {
             val playerNationality = mutableListOf<String>()
             val playerTeam = mutableListOf<Float>()
 
-
             // Getting Player info
             runBlocking {
-                var num = 0
                 val playerInfo = LIQUIPEDIA.player(listOf(Liquipedia.Wiki.VALORANT))
                 for (i in 0..5){
-                    num++
+                    var num = Random.nextInt(0, playerInfo.result.size)
                     playersNames.add(playerInfo.result[num].name)
                     playerNationality.add(playerInfo.result[num].nationality)
                     playerTeam.add(playerInfo.result[num].earnings)
@@ -210,7 +208,64 @@ fun HomeScreen(section: MutableState<Section>) {
                 )
             }
 
+
             // For last item bottom left
+            var sponsor = mutableListOf<String>()
+
+            runBlocking {
+                val tournamentInfo = LIQUIPEDIA.tournament(listOf(Liquipedia.Wiki.VALORANT))
+                for (i in 0..3) {
+                    sponsor.add(tournamentInfo.result[Random.nextInt(0, tournamentInfo.result.size)].sponsors)
+                }
+            }
+
+            Spacer(Modifier.height(50.dp))
+
+            Column (modifier = Modifier.height(350.dp).fillMaxWidth().background(boxColor)) {
+                Text(
+                    modifier = Modifier.offset(x = 25.dp, y = 25.dp),
+                    text = "Featured Sponsors",
+                    color = largeText,
+                    fontSize = 27.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
+
+                Spacer(Modifier.height(20.dp))
+                Text(
+                    modifier = Modifier.offset(x = 25.dp, y = 25.dp),
+                    text = sponsor[0],
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
+
+                Spacer(Modifier.height(15.dp))
+                Text(
+                    modifier = Modifier.offset(x = 25.dp, y = 25.dp),
+                    text = sponsor[1],
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
+
+                Spacer(Modifier.height(15.dp))
+                Text(
+                    modifier = Modifier.offset(x = 25.dp, y = 25.dp),
+                    text = sponsor[2],
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
+
+                Spacer(Modifier.height(15.dp))
+                Text(
+                    modifier = Modifier.offset(x = 25.dp, y = 25.dp),
+                    text = sponsor[3],
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
+            }
         }
 
         // Holder column for right
