@@ -75,6 +75,7 @@ class OverlayImpl(val selected: WindowManager) : Overlay {
         val old = Callback.currentImageList
         Callback.lock.write {
             Callback.currentImageList = prevList
+            Callback.images = 1
         }
         val count = Callback.redrawCount
         selected.updateWindow()
