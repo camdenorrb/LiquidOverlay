@@ -110,16 +110,14 @@ internal class TestHook {
         val processes = Callback.getProcesses()
         var i = 0
         processes.forEachIndexed { index, process ->
-            if (process.exeLocation.contains("Overwatch.exe")) {
+            if (process.exeLocation.contains("notepad++.exe")) {
                 i = index
             }
             println("$index: ${process.title}(${process.exeLocation})")
         }
         println("Choose: $i")
         val selected = processes[i]
-        //Thread.sleep(10000)
         val clazz = WindowClass.define("Kats")
-        println(selected.rect)
         val window = WindowManager.createWindow(
             WindowManager.WS_EX_TOPMOST or WindowManager.WS_EX_TRANSPARENT or WindowManager.WS_EX_LAYERED,
             clazz = clazz,
@@ -130,9 +128,7 @@ internal class TestHook {
             width = selected.rect.width.toInt(),
             height = selected.rect.height.toInt()
         )
-        val rectScope = RectReader.createSegment()
         val selectedWindow = selected.asWindow()
-
 
         val overlay = OverlayImpl(window, selectedWindow) {
 
@@ -148,7 +144,10 @@ internal class TestHook {
 
         }
 
+
         window.doLoop()
+
+        overlay.close()
     }
 
 

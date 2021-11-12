@@ -153,9 +153,7 @@ object Callback {
 
     val imageListDestroy = NativeRegistry.register(
         FunctionDescription(
-            "ImageList_Destroy",
-            Boolean::class.java,
-            listOf(MemoryAddress::class.java)
+            "ImageList_Destroy", Boolean::class.java, listOf(MemoryAddress::class.java)
         )
     )
 
@@ -169,9 +167,7 @@ object Callback {
 
     val loadImage = NativeRegistry.register(
         FunctionDescription(
-            "LoadImageW",
-            MemoryAddress::class.java,
-            listOf(
+            "LoadImageW", MemoryAddress::class.java, listOf(
                 MemoryAddress::class.java,
                 MemoryAddress::class.java,
                 Int::class.java,
@@ -184,9 +180,7 @@ object Callback {
 
     val imageListDraw = NativeRegistry.register(
         FunctionDescription(
-            "ImageList_Draw",
-            Int::class.java,
-            listOf(
+            "ImageList_Draw", Int::class.java, listOf(
                 MemoryAddress::class.java,
                 Int::class.java,
                 MemoryAddress::class.java,
@@ -204,13 +198,41 @@ object Callback {
     var lastWindow = WindowManager(MemoryAddress.NULL)
 
     fun loadImage(pathString: ExternalStorage): MemoryAddress {
-        val res = NativeRegistry[loadImage].invoke(MemoryAddress.NULL, pathString.segment.address(), 0, 0, 0, 0x00000010) as MemoryAddress
+        val res = NativeRegistry[loadImage].invoke(
+            MemoryAddress.NULL,
+            pathString.segment.address(),
+            0,
+            0,
+            0,
+            0x00000010
+        ) as MemoryAddress
         check(res != MemoryAddress.NULL) { "LoadImage failed: ${NativeRegistry[getLastError].invoke()}" }
         return res
     }
 
-    var redrawCount = 0
-    val redrawList = mutableListOf<OverlayImpl>()
+    var firstDraw = false
+
+
+    private fun repaint(hwnd: MemoryAddress) {
+        lastWindow.startPaint()
+        if (images > 0) {
+            firstDraw = true
+            val dc = NativeRegistry[getDC].invoke(hwnd) as MemoryAddress
+            lock.read {
+                repeat(images) {
+                    val result = NativeRegistry[imageListDraw].invoke(
+                        currentImageList, it, dc, 0, 0, 0
+                    ) as Int
+                    check(result != 0) {
+                        "ImageList_Draw failed: ${NativeRegistry[getLastError].invoke()}"
+                    }
+                }
+            }
+            NativeRegistry[releaseDC].invoke(hwnd, dc)
+        }
+        lastWindow.endPaint()
+    }
+
     @JvmStatic
     fun hookProc(hwnd: MemoryAddress, uMsg: Int, wParam: MemoryAddress, lParam: MemoryAddress): MemoryAddress {
         if (lastWindow.window == MemoryAddress.NULL) {
@@ -218,30 +240,7 @@ object Callback {
         }
         return when (uMsg) {
             0x000f -> {
-                lastWindow.startPaint()
-                if (images > 0) {
-                    val dc = NativeRegistry[getDC].invoke(hwnd) as MemoryAddress
-                    lock.read {
-                        if (currentImageList != MemoryAddress.NULL) {
-                            repeat(images) {
-                                val result = NativeRegistry[imageListDraw].invoke(
-                                    currentImageList,
-                                    it,
-                                    dc,
-                                    0,
-                                    0,
-                                    0
-                                ) as Int
-                                check(result != 0) {
-                                    "ImageList_Draw failed: ${NativeRegistry[getLastError].invoke()}"
-                                }
-                            }
-                        }
-                    }
-                    NativeRegistry[releaseDC].invoke(hwnd, dc)
-                }
-                lastWindow.endPaint()
-                redrawCount++
+                repaint(hwnd)
                 MemoryAddress.NULL
             }
             0x0002, 0x0010 -> {
@@ -295,8 +294,7 @@ object Callback {
                 "Could not get pid"
             }
             val pid = MemoryAccess.getInt(intHolderSeg)
-            val processHandle =
-                NativeRegistry[openProcess].invoke(PROCESS_QUERY_INFORMATION, 0, pid) as MemoryAddress
+            val processHandle = NativeRegistry[openProcess].invoke(PROCESS_QUERY_INFORMATION, 0, pid) as MemoryAddress
             if (processHandle == MemoryAddress.NULL) {
                 val code = NativeRegistry[getLastError].invoke() as Int
                 if (code == 5) {

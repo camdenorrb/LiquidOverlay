@@ -6,13 +6,15 @@ import java.nio.file.Paths
 import javax.imageio.ImageIO
 import kotlin.concurrent.write
 
-class OverlayImpl(val selected: WindowManager, val self: WindowManager, val callback: (Overlay) -> Unit) : Overlay {
+class OverlayImpl(
+    private val self: WindowManager, private val selected: WindowManager, private val callback: (Overlay) -> Unit
+) : Overlay {
 
 
     private val currentRectStorage = run {
         val rectStorage = RectReader.createSegment()
 
-        selected.getWindowRect(rectStorage)
+        self.getWindowRect(rectStorage)
 
         rectStorage
     }
@@ -26,23 +28,27 @@ class OverlayImpl(val selected: WindowManager, val self: WindowManager, val call
 
     override var canvasHeight: Int = rectReader.height.toInt()
 
-    private var prevList = NativeRegistry[Callback.imageListCreate].invoke(canvasWidth, canvasHeight, 0x00000001, 1, 1) as MemoryAddress
+    private var prevList =
+        NativeRegistry[Callback.imageListCreate].invoke(canvasWidth, canvasHeight, 0x00000001, 1, 1) as MemoryAddress
 
-    private var internal = BufferedImage(canvasWidth, canvasHeight, BufferedImage.TYPE_INT_ARGB)
+    private var internal = BufferedImage(canvasWidth, canvasHeight, BufferedImage.TYPE_INT_RGB)
     private var internalGraphics = internal.graphics
 
     private var visible = self.isVisible()
-    private val INSTANCE = this
-    val checker = Thread {
+
+    private val checker = Thread {
         val newRectStorage = run {
             val rectStorage = RectReader.createSegment()
 
-            selected.getWindowRect(rectStorage)
+            self.getWindowRect(rectStorage)
 
             rectStorage
         }
+
         var prev = rectReader
         while (selected.isAlive()) {
+
+            visible = true
             Thread.sleep(10)
             if (visible) {
                 if (selected.isVisible()) {
@@ -52,13 +58,14 @@ class OverlayImpl(val selected: WindowManager, val self: WindowManager, val call
                     selected.getWindowRect(newRectStorage)
                     val rect = RectReader.fromMemorySegment(newRectStorage)
                     if (prev != rect) {
+                        onResize(callback)
                         self.moveWindow(
                             rect.left.toInt(), rect.top.toInt(), rect.width.toInt(), rect.height.toInt(), 1
                         )
                         prev = rect
-                        if (prev.area != rect.area) {
-                            INSTANCE.onResize(callback)
-                        }
+                    }
+                    if (!Callback.firstDraw) {
+                        onResize(callback)
                     }
                 } else {
                     self.hideWindow()
@@ -70,22 +77,31 @@ class OverlayImpl(val selected: WindowManager, val self: WindowManager, val call
 
     init {
         self.setWindowPosition(WindowManager.HWND_TOPMOST)
-        Callback.redrawList.add(this)
         checker.start()
-        onResize(callback)
     }
 
-    private fun remake() {
-        selected.getWindowRect(currentRectStorage)
+    fun remake(): Boolean {
+        self.getWindowRect(currentRectStorage)
         rectReader = RectReader.fromMemorySegment(currentRectStorage)
-        canvasWidth = rectReader.width.toInt()
-        canvasHeight = rectReader.height.toInt()
-        val old = internalGraphics
-        val scaled = internal.getScaledInstance(canvasWidth, canvasHeight, BufferedImage.SCALE_SMOOTH)
-        internal = BufferedImage(canvasWidth, canvasHeight, BufferedImage.TYPE_INT_ARGB)
-        internalGraphics = internal.graphics
-        internalGraphics.drawImage(scaled, 0, 0, null)
-        old.dispose()
+        return if (rectReader.width > 0u && rectReader.height > 0u) {
+            canvasWidth = rectReader.width.toInt()
+            canvasHeight = rectReader.height.toInt()
+            if (internal.width > 0 && internal.height > 0) {
+                val old = internalGraphics
+                val scaled = internal.getScaledInstance(canvasWidth, canvasHeight, BufferedImage.SCALE_SMOOTH)
+                internal = BufferedImage(canvasWidth, canvasHeight, BufferedImage.TYPE_INT_RGB)
+                internalGraphics = internal.graphics
+                internalGraphics.drawImage(scaled, 0, 0, null)
+                old.dispose()
+                true
+            } else {
+                internal = BufferedImage(canvasWidth, canvasHeight, BufferedImage.TYPE_INT_RGB)
+                internalGraphics = internal.graphics
+                true
+            }
+        } else {
+            false
+        }
     }
 
     override fun image(image: BufferedImage, position: Overlay.Position, width: Int, height: Int) {
@@ -98,6 +114,7 @@ class OverlayImpl(val selected: WindowManager, val self: WindowManager, val call
     }
 
     override fun close() {
+        checker.interrupt()
         internalGraphics.dispose()
         currentRectStorage.close()
     }
@@ -116,24 +133,27 @@ class OverlayImpl(val selected: WindowManager, val self: WindowManager, val call
         ImageIO.write(internal, "bmp", storageBitmap.toFile())
         val bitmap = Callback.loadImage(pathString)
 
-        prevList = NativeRegistry[Callback.imageListCreate].invoke(canvasWidth, canvasHeight, 0x00000001, 1, 1) as MemoryAddress
+        prevList = NativeRegistry[Callback.imageListCreate].invoke(
+            canvasWidth, canvasHeight, 0x00000001, 1, 1
+        ) as MemoryAddress
         NativeRegistry[Callback.imageListAdd].invoke(prevList, bitmap, WindowManager.invisible)
         val old = Callback.currentImageList
         Callback.lock.write {
             Callback.currentImageList = prevList
             Callback.images = 1
         }
-        val count = Callback.redrawCount
-        selected.updateWindow()
-        while (count == Callback.redrawCount) {
-            Thread.sleep(1)
+        check(self.updateWindow()) {
+            "Failed to update window: ${NativeRegistry[Callback.getLastError].invoke()}"
         }
         NativeRegistry[Callback.imageListDestroy].invoke(old)
     }
 
-    private fun onResize(callback: (Overlay) -> Unit) {
-        remake()
-        callback.invoke(this)
-        publish()
+    private fun onResize(callback: (Overlay) -> Unit): Boolean {
+        if (remake()) {
+            callback.invoke(this)
+            publish()
+            return true
+        }
+        return false
     }
 }

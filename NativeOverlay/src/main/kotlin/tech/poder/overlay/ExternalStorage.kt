@@ -12,7 +12,7 @@ value class ExternalStorage(val segment: MemorySegment): AutoCloseable {
 
         fun fromString(str: String): ExternalStorage {
 
-            val newScope = ResourceScope.newConfinedScope()
+            val newScope = ResourceScope.newSharedScope()
 
             str.toByteArray(Charsets.UTF_16LE).let { bytes ->
 

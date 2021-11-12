@@ -282,6 +282,16 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
             )
         )
 
+        val invalidateRect = NativeRegistry.register(
+            FunctionDescription(
+                "InvalidateRect", Boolean::class.java, listOf(
+                    MemoryAddress::class.java,
+                    MemoryAddress::class.java,
+                    Boolean::class.java
+                )
+            )
+        )
+
         val HWND_TOPMOST = WindowManager(MemoryAddress.ofLong(-1L))
         val HWND_BOTTOM = WindowManager(MemoryAddress.ofLong(1L))
     }
@@ -369,8 +379,12 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
         }
     }
 
-    fun updateWindow() {
-        NativeRegistry[updateWindow].invoke(window)
+    fun updateWindow(): Boolean {
+        val res1 = NativeRegistry[invalidateRect].invoke(window, MemoryAddress.NULL, 0)
+        if (res1 == 0) {
+            return false
+        }
+        return NativeRegistry[updateWindow].invoke(window) != 0
     }
 
     fun endPaint() {
