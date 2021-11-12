@@ -39,25 +39,25 @@ val NAVIGATION_WIDTH = 250.dp
 
 val BACKGROUND_COLOR = Color(43, 54, 72)
 
-val LIQUIPEDIA = Liquipedia("")
+val LIQUIPEDIA = Liquipedia("nvmrGupnGNOg1CdjXLRKtGkhCQfHAx8PXfuPiKRC0uU7ANzfoylvkx67ZgS0489VSiDvRfAkM1R714Z29e5kPYYnY6dHauejH12MJ5rtG412OYrEE9ccr7j8L0eDhyb4")
 
 fun main() {
 
     //System.setOut(PrintStream(FileOutputStream("log.txt", true)))
     //System.setErr(PrintStream(FileOutputStream("err.txt", true)))
-    //createApplication()
+    createApplication()
     //val storage = ExternalStorage.fromString("Hi")
     //val clazz = WindowClass.fromStorage(storage)
     //WindowManager.createWindow(WindowManager.WS_EX_OVERLAPPEDWINDOW, clazz, "Hello", style = WindowManager.WS_OVERLAPPEDWINDOW, width = 100, height = 100)
     //streamingMicRecognize()
 
-
+    /*
     runBlocking {
-        println(LIQUIPEDIA.gear(listOf(Liquipedia.Wiki.DOTA_2)))
+        println(LIQUIPEDIA.player(listOf(Liquipedia.Wiki.VALORANT)))
     }
+    */
 
 }
-
 
 // https://developer.android.com/jetpack/compose
 private fun createApplication() = application {
@@ -82,8 +82,6 @@ private fun createApplication() = application {
 
 @Composable
 fun HomeScreen(section: MutableState<Section>) {
-
-    val rowPadding = 20.dp
 
     val colPadding = 25.dp
     val firstColumnWidth = 800.dp
@@ -497,37 +495,40 @@ fun SettingsScreen(section: MutableState<Section>) {
                 )
             }
 
-            var isExpanded by remember { mutableStateOf(false) }
             val languages = listOf("English", "中文", "Español")
+            var language : String by remember {mutableStateOf(languages[0])}
+            var expanded by remember { mutableStateOf(false) }
 
-            Row(modifier = Modifier.padding(end = 10.dp, top = 10.dp), horizontalArrangement = Arrangement.Center) {
+            Row (modifier = Modifier.padding(end = 10.dp, top = 10.dp).clickable{ expanded = !expanded }, horizontalArrangement = Arrangement.Center) {
 
-                Text(
-                    text = "English",
-                    modifier = Modifier.clickable { isExpanded = !isExpanded },
+                Text(text = language,
+                    modifier = Modifier.clickable { expanded = !expanded },
                     color = Color.White,
                     fontSize = 14.sp,
-                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf")),
-                )
-
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf")),)
                 Icon(
                     imageVector = Icons.Rounded.ArrowDropDown,
                     contentDescription = "DropDown",
                     tint = Color.White,
-                    modifier = Modifier.size(30.dp).offset(x = 0.dp, y = -7.dp).clickable { isExpanded = !isExpanded}
+                    modifier = Modifier.size(30.dp).offset(x = 0.dp, y = -7.dp).clickable { expanded = !expanded}
                 )
 
                 DropdownMenu(
-                    expanded = isExpanded,
-                    onDismissRequest = { isExpanded = false },
-                    modifier = Modifier.size(20.dp).background(Color.White)
-                ) {
-
-                }
-
+                    expanded = expanded,
+                    onDismissRequest = {
+                        expanded = false
+                    }) {
+                        languages.forEach { mylanguage ->
+                            DropdownMenuItem(onClick = {
+                                expanded = false
+                                language = mylanguage
+                            }) {
+                                Text(mylanguage)
+                            }
+                        }
+                    }
             }
         }
-
     }
 }
 
