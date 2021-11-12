@@ -32,6 +32,7 @@ import dev.twelveoclock.liquidoverlay.speech.GoogleSpeechAPI
 import kotlinx.coroutines.runBlocking
 import javax.sound.sampled.*
 import kotlin.math.roundToInt
+import kotlin.random.Random
 import kotlin.system.exitProcess
 
 
@@ -83,11 +84,12 @@ private fun createApplication() = application {
 @Composable
 fun HomeScreen(section: MutableState<Section>) {
 
-    val colPadding = 25.dp
+    val colPadding = 35.dp
     val firstColumnWidth = 800.dp
 
     val boxColor = Color(33, 41, 54)
     val iconColor = Color(86, 101, 127)
+    val largeText = Color(175, 189, 209)
 
     NavigationMenu(section)
 
@@ -97,15 +99,15 @@ fun HomeScreen(section: MutableState<Section>) {
         Column(modifier = Modifier.fillMaxHeight().padding(colPadding).width(firstColumnWidth)) {
 
             // Notification Box
-            Column (modifier = Modifier.height(200.dp).fillMaxWidth().background(boxColor), horizontalAlignment = Alignment.CenterHorizontally){
+            Column (modifier = Modifier.height(170.dp).fillMaxWidth().background(boxColor), horizontalAlignment = Alignment.CenterHorizontally){
 
-                Spacer(Modifier.height(15.dp))
+                Spacer(Modifier.height(10.dp))
                 Icon(
                     painterResource("logo/notifications.svg"),
                     tint = iconColor,
                     contentDescription = "Notifications Icon"
                 )
-                Spacer(Modifier.height(15.dp))
+                Spacer(Modifier.height(10.dp))
 
                 Text(
                     text = "0",
@@ -114,7 +116,7 @@ fun HomeScreen(section: MutableState<Section>) {
                     fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
                 )
 
-                Spacer(Modifier.height(15.dp))
+                Spacer(Modifier.height(10.dp))
 
                 Text(
                     text = "Notifications",
@@ -124,25 +126,102 @@ fun HomeScreen(section: MutableState<Section>) {
                 )
             }
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(50.dp))
+
+            var playersNames = mutableListOf<String>()
+            var playerNationality = mutableListOf<String>()
+            var playerTeam = mutableListOf<String>()
+
+
+            // Getting Player info
+            runBlocking {
+                val playerInfo = LIQUIPEDIA.player(listOf(Liquipedia.Wiki.VALORANT))
+                for (i in 0..5){
+                    val num = Random.nextInt(0, playerInfo.result.size)
+                    playersNames.add(playerInfo.result[num].name)
+                    playerNationality.add(playerInfo.result[num].nationality)
+                    playerTeam.add(playerInfo.result[num].team)
+                }
+            }
 
             // Top Player Box
             Column (modifier = Modifier.height(400.dp).fillMaxWidth().background(boxColor)) {
                 Text(
                     modifier = Modifier.offset(x = 25.dp, y = 25.dp),
-                    text = "Top Players",
-                    color = Color.White,
-                    fontSize = 35.sp,
+                    text = "Featured Players (Valorant)",
+                    color = largeText,
+                    fontSize = 30.sp,
                     fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
                 )
 
-                Spacer(Modifier.height(30.dp))
+                Spacer(Modifier.height(15.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(15.dp)
+                ) {
+                    Column(modifier = Modifier.padding(colPadding).fillMaxHeight().width(250.dp)) {
+                        Text(
+                            text = playersNames[0],
+                            color = Color.White,
+                            fontSize = 20.sp,
+                            fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                        )
+                    }
+                    Column(modifier = Modifier.padding(colPadding).fillMaxSize()) {
+                        Text(
+                            text = playersNames[1],
+                            color = Color.White,
+                            fontSize = 20.sp,
+                            fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                        )
+                    }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(15.dp)
+                ) {
+                    Column(modifier = Modifier.padding(colPadding).fillMaxHeight().width(250.dp)) {
+                        Text(
+                            text = playersNames[2],
+                            color = Color.White,
+                            fontSize = 20.sp,
+                            fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                        )
+                    }
+                    Column(modifier = Modifier.padding(colPadding).fillMaxSize()) {
+                        Text(
+                            text = playersNames[3],
+                            color = Color.White,
+                            fontSize = 20.sp,
+                            fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                        )
+                    }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(15.dp)
+                ) {
+                    Column(modifier = Modifier.padding(colPadding).fillMaxHeight().width(250.dp)) {
+                        Text(
+                            text = playersNames[4],
+                            color = Color.White,
+                            fontSize = 20.sp,
+                            fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                        )
+                    }
+                    Column(modifier = Modifier.padding(colPadding).fillMaxSize()) {
+                        Text(
+                            text = playersNames[5],
+                            color = Color.White,
+                            fontSize = 20.sp,
+                            fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                        )
+                    }
+                }
 
             }
         }
 
         // Holder column for right
-        Column(modifier = Modifier.padding(colPadding).fillMaxHeight().width(firstColumnWidth)) {
+        Column(modifier = Modifier.padding(colPadding).fillMaxSize()) {
             Image(
                 painterResource("image/calendar.svg"),
                 "Calendar Image of Current Date",
@@ -150,14 +229,14 @@ fun HomeScreen(section: MutableState<Section>) {
                 contentScale = ContentScale.Crop
             )
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(50.dp))
 
             Column (modifier = Modifier.fillMaxSize().background(boxColor)) {
                 Text(
                     modifier = Modifier.offset(x = 25.dp, y = 25.dp),
-                    text = "Upcoming Events",
-                    color = Color.White,
-                    fontSize = 35.sp,
+                    text = "Upcoming Events (Valorant)",
+                    color = largeText,
+                    fontSize = 30.sp,
                     fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
                 )
 
