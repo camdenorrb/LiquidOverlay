@@ -12,6 +12,7 @@ import kotlin.test.Test
 
 internal class TestHook {
 
+    /*
     @Test
     fun createWindow() {
         val processes = Callback.getProcesses()
@@ -101,6 +102,53 @@ internal class TestHook {
         checker.interrupt()
         println("Window End")
         Thread.sleep(10000)
+    }*/
+
+    @Test
+    fun drawCat() {
+
+        val processes = Callback.getProcesses()
+        var i = 0
+        processes.forEachIndexed { index, process ->
+            if (process.exeLocation.contains("Overwatch.exe")) {
+                i = index
+            }
+            println("$index: ${process.title}(${process.exeLocation})")
+        }
+        println("Choose: $i")
+        val selected = processes[i]
+        //Thread.sleep(10000)
+        val clazz = WindowClass.define("Kats")
+        println(selected.rect)
+        val window = WindowManager.createWindow(
+            WindowManager.WS_EX_TOPMOST or WindowManager.WS_EX_TRANSPARENT or WindowManager.WS_EX_LAYERED,
+            clazz = clazz,
+            windowName = "LiquidOverlay",
+            style = WindowManager.WS_POPUP.toInt(),
+            x = selected.rect.left.toInt(),
+            y = selected.rect.top.toInt(),
+            width = selected.rect.width.toInt(),
+            height = selected.rect.height.toInt()
+        )
+        val rectScope = RectReader.createSegment()
+        val selectedWindow = selected.asWindow()
+
+
+        val overlay = OverlayImpl(window, selectedWindow) {
+
+            val bufferedImage = BufferedImage(it.canvasWidth, it.canvasHeight, BufferedImage.TYPE_INT_RGB)
+            val graphics = bufferedImage.createGraphics()
+
+            graphics.color = Color(0, 100, 0)
+            graphics.fillRect(0, 0, bufferedImage.width, bufferedImage.height)
+
+            it.image(bufferedImage, Overlay.Position(0, 0), it.canvasWidth, it.canvasHeight)
+
+            graphics.dispose()
+
+        }
+
+        window.doLoop()
     }
 
 
