@@ -7,7 +7,15 @@ import tech.poder.overlay.Overlay
 
 abstract class OverlayPlugin : BasicModule() {
 
-    val overlays = mutableListOf<Overlay>()
+    lateinit var overlay: Overlay
+        internal set
+
+
+    /**
+     * This will automatically be called on resize,
+     * otherwise manually calling after clear is necessary
+     */
+    abstract fun draw()
 
 
     @Serializable

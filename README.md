@@ -4,7 +4,8 @@ An overlay for Liquid Hacks 2021, with the goal of giving better accessibility, 
 ## Table of Contents
 
 1. [Project Description](#pd)\
-    a. [Features](#features)
+    a. [Requirements](#requirements)\
+    b. [Features](#features)
 2. [The Story](#story)\
     a. [An Introduction](#intro)\
     b. [The Idea](#idea)\
@@ -15,6 +16,10 @@ An overlay for Liquid Hacks 2021, with the goal of giving better accessibility, 
 ## Project Description <a name="pd"></a>
 
 The purpose of the project is to help improve accessibility in games while showing their support for Team Liquid. We do this by utilizing the following features:
+
+### Requirements <a name="requirements"></a>
+- Windows
+- Java 17+
 
 ### Features <a name="features"></a>
 

@@ -25,6 +25,7 @@ dependencies {
 
     // Sub Modules
     implementation(project(":SoftwareOverlay"))
+    implementation(project(":NativeOverlay"))
 }
 
 tasks {

@@ -452,7 +452,7 @@ class Liquipedia(private val apiKey: String) {
         @SerialName("translatedtitle") val translatedTitle: String,
         val link: String,
         @Serializable(LocalDateSerializer::class) val date: LocalDate,
-        val authors: JsonObject? = null,
+        val authors: JsonObject,
         val language: String,
         val publisher: String,
         val type: String,
@@ -467,11 +467,11 @@ class Liquipedia(private val apiKey: String) {
         @SerialName("objectname") val objectName: String,
         @Serializable(LocalDateSerializer::class) val date: LocalDate,
         val reference: String,
-        val input: JsonObject? = null,
-        val display: JsonObject? = null,
-        val audio: JsonObject? = null,
-        val chair: JsonObject? = null,
-        @SerialName("extradata") val extraData: JsonObject? = null,
+        val input: JsonObject,
+        val display: JsonObject,
+        val audio: JsonObject,
+        val chair: JsonObject,
+        @SerialName("extradata") val extraData: JsonObject,
     )
 
     @Serializable

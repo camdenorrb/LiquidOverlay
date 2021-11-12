@@ -38,6 +38,7 @@ internal class TestHook {
             width = selected.rect.width.toInt(),
             height = selected.rect.height.toInt()
         )
+
         val rectScope = RectReader.createSegment()
         val selectedWindow = selected.asWindow()
 
@@ -110,7 +111,7 @@ internal class TestHook {
         val processes = Callback.getProcesses()
         var i = 0
         processes.forEachIndexed { index, process ->
-            if (process.exeLocation.contains("notepad++.exe")) {
+            if (process.exeLocation.contains("Overwatch.exe")) {
                 i = index
             }
             println("$index: ${process.title}(${process.exeLocation})")
@@ -141,12 +142,58 @@ internal class TestHook {
             it.image(bufferedImage, Overlay.Position(0, 0), it.canvasWidth, it.canvasHeight)
 
             graphics.dispose()
-
         }
 
 
         window.doLoop()
 
+        overlay.close()
+    }
+
+    @Test
+    fun nateDraw() {
+
+        val processes = Callback.getProcesses()
+        var i = 0
+        processes.forEachIndexed { index, process ->
+            if (process.exeLocation.contains("Overwatch.exe")) {
+                i = index
+            }
+            println("$index: ${process.title}(${process.exeLocation})")
+        }
+        println("Choose: $i")
+        val selected = processes[i]
+        val clazz = WindowClass.define("Kats")
+        val window = WindowManager.createWindow(
+            WindowManager.WS_EX_TOPMOST or WindowManager.WS_EX_TRANSPARENT or WindowManager.WS_EX_LAYERED,
+            clazz = clazz,
+            windowName = "LiquidOverlay",
+            style = WindowManager.WS_POPUP.toInt(),
+            x = selected.rect.left.toInt(),
+            y = selected.rect.top.toInt(),
+            width = selected.rect.width.toInt(),
+            height = selected.rect.height.toInt()
+        )
+        val selectedWindow = selected.asWindow()
+
+        fun draw(overlay: Overlay) {
+
+            val bufferedImage = BufferedImage(overlay.canvasWidth, overlay.canvasHeight, BufferedImage.TYPE_INT_RGB)
+            val graphics = bufferedImage.createGraphics()
+
+            graphics.color = Color(0, 100, 0)
+            graphics.fillRect(0, 0, bufferedImage.width, bufferedImage.height)
+
+            overlay.image(bufferedImage, Overlay.Position(0, 0), overlay.canvasWidth, overlay.canvasHeight)
+
+            graphics.dispose()
+        }
+
+        val overlay = OverlayImpl(window, selectedWindow) {
+            draw(it)
+        }
+
+        window.doLoop()
         overlay.close()
     }
 
