@@ -35,14 +35,14 @@ import kotlin.math.roundToInt
 import kotlin.system.exitProcess
 
 
-val NAVIGATION_WIDTH = 200.dp
+val NAVIGATION_WIDTH = 250.dp
 
 val BACKGROUND_COLOR = Color(43, 54, 72)
 
-val liquipedia = Liquipedia("")
+val LIQUIPEDIA = Liquipedia("")
 
 fun main() {
-    
+
     //System.setOut(PrintStream(FileOutputStream("log.txt", true)))
     //System.setErr(PrintStream(FileOutputStream("err.txt", true)))
     createApplication()
@@ -53,9 +53,12 @@ fun main() {
 
     /*
     runBlocking {
-        println(Liquipedia.broadcasters(listOf(Liquipedia.Wiki.DOTA_2)))
+        println(LIQUIPEDIA.gear(listOf(Liquipedia.Wiki.DOTA_2)))
     }
     */
+
+
+
 }
 
 
@@ -83,10 +86,91 @@ private fun createApplication() = application {
 @Composable
 fun HomeScreen(section: MutableState<Section>) {
 
+    val rowPadding = 20.dp
+
+    val colPadding = 25.dp
+    val firstColumnWidth = 800.dp
+
+    val boxColor = Color(33, 41, 54)
+    val iconColor = Color(86, 101, 127)
+
     NavigationMenu(section)
 
-    Box(modifier = Modifier.offset(x = NAVIGATION_WIDTH).fillMaxSize().background(BACKGROUND_COLOR)){
-        Text("Meow")
+    Row(modifier = Modifier.padding(start = NAVIGATION_WIDTH).fillMaxSize().background(BACKGROUND_COLOR)) {
+
+        // Holder column for left
+        Column(modifier = Modifier.fillMaxHeight().padding(colPadding).width(firstColumnWidth)) {
+
+            // Notification Box
+            Column (modifier = Modifier.height(200.dp).fillMaxWidth().background(boxColor), horizontalAlignment = Alignment.CenterHorizontally){
+
+                Spacer(Modifier.height(15.dp))
+                Icon(
+                    painterResource("logo/notifications.svg"),
+                    tint = iconColor,
+                    contentDescription = "Notifications Icon"
+                )
+                Spacer(Modifier.height(15.dp))
+
+                Text(
+                    text = "0",
+                    color = Color.White,
+                    fontSize = 35.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
+
+                Spacer(Modifier.height(15.dp))
+
+                Text(
+                    text = "Notifications",
+                    color = iconColor,
+                    fontSize = 25.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+            // Top Player Box
+            Column (modifier = Modifier.height(400.dp).fillMaxWidth().background(boxColor)) {
+                Text(
+                    modifier = Modifier.offset(x = 25.dp, y = 25.dp),
+                    text = "Top Players",
+                    color = Color.White,
+                    fontSize = 35.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
+
+                Spacer(Modifier.height(30.dp))
+
+            }
+        }
+
+        // Holder column for right
+        Column(modifier = Modifier.padding(colPadding).fillMaxHeight().width(firstColumnWidth)) {
+            Image(
+                painterResource("image/calendar.svg"),
+                "Calendar Image of Current Date",
+                modifier = Modifier.fillMaxWidth(),
+                contentScale = ContentScale.Crop
+            )
+
+            Spacer(Modifier.height(20.dp))
+
+            Column (modifier = Modifier.fillMaxSize().background(boxColor)) {
+                Text(
+                    modifier = Modifier.offset(x = 25.dp, y = 25.dp),
+                    text = "Upcoming Events",
+                    color = Color.White,
+                    fontSize = 35.sp,
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
+                )
+
+                Spacer(Modifier.height(30.dp))
+
+            }
+
+        }
     }
 }
 
@@ -100,25 +184,21 @@ fun OverlayScreen(section: MutableState<Section>) {
 
     val offColor = Color(33, 41, 54)
     val onColor = Color(81, 142, 240)
+    val textColor = Color.White
 
     val notActivated = 0f
     val activated = 1f
 
     val footstepsOffsetX = 0.dp
     val footstepsOffsetY = 225.dp
-
     val gunshotsOffsetX = 0.dp
     val gunshotsOffsetY = 175.dp
-
-    val textColor = Color.White
 
     var captionsActivated by remember { mutableStateOf(false) }
     var footstepsActivated by remember { mutableStateOf(false) }
     var gunshotsActivated by remember { mutableStateOf(false) }
     var translateActivated by remember { mutableStateOf(false) }
     var musicActivated by remember { mutableStateOf(false) }
-
-
 
     NavigationMenu(section)
 
@@ -461,6 +541,11 @@ fun NavigationMenu(section: MutableState<Section>) {
     val textColor = Color(86, 101, 127)
     val selectedColor = Color(25, 118, 210)
 
+    val rowHeight = 40.dp
+
+    val moveRight = 10.dp
+    val fontSize = 17.sp
+
     //BitmapPainter(useResource())
     Column(Modifier.width(NAVIGATION_WIDTH).fillMaxHeight().background(Color(33, 41, 54))) {
 
@@ -479,12 +564,13 @@ fun NavigationMenu(section: MutableState<Section>) {
 
         // Home Row
         Row(
-            modifier = Modifier.height(30.dp).fillMaxWidth().clickable { section.value = Section.HOME },
+            modifier = Modifier.height(rowHeight).fillMaxWidth().clickable { section.value = Section.HOME },
             verticalAlignment = Alignment.CenterVertically,
         ) {
 
             // https://developer.android.com/reference/kotlin/androidx/compose/material/icons/Icons
             Icon(
+                modifier = Modifier.offset(x = moveRight),
                 imageVector = Icons.Rounded.Home,
                 contentDescription = "Home",
                 tint = if (section.value == Section.HOME) selectedColor else prefixIconColor
@@ -493,9 +579,10 @@ fun NavigationMenu(section: MutableState<Section>) {
             Spacer(Modifier.width(10.dp))
 
             Text(
+                modifier = Modifier.offset(x = moveRight),
                 text = "Home",
                 color = if (section.value == Section.HOME) selectedColor else textColor,
-                fontSize = 14.sp,
+                fontSize = fontSize,
                 fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
             )
 
@@ -503,12 +590,13 @@ fun NavigationMenu(section: MutableState<Section>) {
 
         // Overlay Row
         Row(
-            modifier = Modifier.height(30.dp).fillMaxWidth().clickable { section.value = Section.OVERLAY },
+            modifier = Modifier.height(rowHeight).fillMaxWidth().clickable { section.value = Section.OVERLAY },
             verticalAlignment = Alignment.CenterVertically
         ) {
 
             // https://developer.android.com/reference/kotlin/androidx/compose/material/icons/Icons
             Icon(
+                modifier = Modifier.offset(x = moveRight),
                 painter = painterResource("font-icons/layers.svg"),
                 contentDescription = "Overlay",
                 tint = if (section.value == Section.OVERLAY) selectedColor else prefixIconColor
@@ -517,9 +605,10 @@ fun NavigationMenu(section: MutableState<Section>) {
             Spacer(Modifier.width(10.dp))
 
             Text(
+                modifier = Modifier.offset(x = moveRight),
                 text = "Overlay",
                 color = if (section.value == Section.OVERLAY) selectedColor else textColor,
-                fontSize = 14.sp,
+                fontSize = fontSize,
                 fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
             )
 
@@ -527,12 +616,13 @@ fun NavigationMenu(section: MutableState<Section>) {
 
         // Settings Row
         Row(
-            modifier = Modifier.height(30.dp).fillMaxWidth().clickable { section.value = Section.SETTINGS },
+            modifier = Modifier.height(rowHeight).fillMaxWidth().clickable { section.value = Section.SETTINGS },
             verticalAlignment = Alignment.CenterVertically
         ) {
 
             // https://developer.android.com/reference/kotlin/androidx/compose/material/icons/Icons
             Icon(
+                modifier = Modifier.offset(x = moveRight),
                 imageVector = Icons.Rounded.Settings,
                 contentDescription = "Settings",
                 tint = if (section.value == Section.SETTINGS) selectedColor else prefixIconColor
@@ -541,13 +631,15 @@ fun NavigationMenu(section: MutableState<Section>) {
             Spacer(Modifier.width(10.dp))
 
             Text(
+                modifier = Modifier.offset(x = moveRight),
                 text = "Settings",
                 color = if (section.value == Section.SETTINGS) selectedColor else textColor,
-                fontSize = 14.sp,
+                fontSize = fontSize,
                 fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
             )
-
         }
+
+        Divider(modifier = Modifier.offset(y = 10.dp), color = textColor, thickness = 1.dp)
 
     }
 }
