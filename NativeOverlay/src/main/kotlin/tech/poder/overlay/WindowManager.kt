@@ -79,8 +79,10 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
                 )
             )
         }
-        val invisible = Color(0, 0, 255, 0).rgb
-        val invisibleRGB = Color(255, 0, 0, 0).rgb
+
+        val invisibleColor = Color(255, 0, 0, 0)
+        val invisibleRGB = Color(invisibleColor.red, invisibleColor.green, invisibleColor.blue, invisibleColor.alpha).rgb
+        val invisible = Color(invisibleColor.blue, invisibleColor.green, invisibleColor.red, invisibleColor.alpha).rgb
 
         private val setLayeredWindowAttributes = run {
             NativeRegistry.loadLib("user32")
