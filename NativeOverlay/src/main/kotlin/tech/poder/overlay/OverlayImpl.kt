@@ -72,6 +72,7 @@ class OverlayImpl(val selected: WindowManager, val self: WindowManager, val call
         self.setWindowPosition(WindowManager.HWND_TOPMOST)
         Callback.redrawList.add(this)
         checker.start()
+        onResize(callback)
     }
 
     private fun remake() {
