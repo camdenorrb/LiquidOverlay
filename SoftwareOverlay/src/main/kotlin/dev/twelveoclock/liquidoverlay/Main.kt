@@ -3,10 +3,7 @@ package dev.twelveoclock.liquidoverlay
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -23,7 +20,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -104,6 +100,12 @@ fun OverlayScreen(section: MutableState<Section>) {
     val notActivated = 0f
     val activated = 1f
 
+    val footstepsOffsetX = 0.dp
+    val footstepsOffsetY = 225.dp
+
+    val gunshotsOffsetX = 0.dp
+    val gunshotsOffsetY = 175.dp
+
     val textColor = Color.White
 
     var captionsActivated by remember { mutableStateOf(false) }
@@ -123,7 +125,6 @@ fun OverlayScreen(section: MutableState<Section>) {
             modifier = Modifier.padding(rowPadding).fillMaxWidth().height(rowHeight),
             horizontalArrangement = Arrangement.Center
         ) {
-
 
             // Captions
             Column(
@@ -297,11 +298,24 @@ fun OverlayScreen(section: MutableState<Section>) {
                         }
                 )
 
+                // Footsteps Toggle
+                Image(
+                    painterResource("image/footprints.svg"),
+                    "Visual Footprints",
+                    alpha = if (footstepsActivated) activated else notActivated,
+                    modifier = Modifier.padding(horizontal = footstepsOffsetX, vertical = footstepsOffsetY)
+                )
+
+                // Gunshots Toggle
+                Image(
+                    painterResource("image/gunshots.svg"),
+                    "Visual Gunshots",
+                    alpha = if (gunshotsActivated) activated else notActivated,
+                    modifier = Modifier.padding(horizontal = gunshotsOffsetX, vertical = gunshotsOffsetY)
+                )
+
             }
         }
-
-
-
     }
 }
 
@@ -403,8 +417,9 @@ fun SettingsScreen(section: MutableState<Section>) {
             }
 
             var isExpanded by remember { mutableStateOf(false) }
+            val languages = listOf("English", "中文", "Español")
 
-            Row(modifier = Modifier.padding(end = 10.dp, top = 10.dp)) {
+            Row(modifier = Modifier.padding(end = 10.dp, top = 10.dp), horizontalArrangement = Arrangement.Center) {
 
                 Text(
                     text = "English",
@@ -418,7 +433,7 @@ fun SettingsScreen(section: MutableState<Section>) {
                     imageVector = Icons.Rounded.ArrowDropDown,
                     contentDescription = "DropDown",
                     tint = Color.White,
-                    modifier = Modifier.size(30.dp)
+                    modifier = Modifier.size(30.dp).offset(x = 0.dp, y = -7.dp).clickable { isExpanded = !isExpanded}
                 )
 
                 DropdownMenu(
