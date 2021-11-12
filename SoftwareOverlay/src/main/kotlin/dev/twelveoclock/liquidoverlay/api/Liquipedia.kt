@@ -61,9 +61,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): Datapoint {
+    ): DatapointResult {
         return json.decodeFromString(
-            Datapoint.serializer(),
+            DatapointResult.serializer(),
             apiRequest("datapoint", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -76,9 +76,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): ExternalMediaLink {
+    ): ExternalMediaLinkResult {
         return json.decodeFromString(
-            ExternalMediaLink.serializer(),
+            ExternalMediaLinkResult.serializer(),
             apiRequest("externalmedialink", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -91,9 +91,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): Gear {
+    ): GearsResult {
         return json.decodeFromString(
-            Gear.serializer(),
+            GearsResult.serializer(),
             apiRequest("gear", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -106,9 +106,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): Match {
+    ): MatchResult {
         return json.decodeFromString(
-            Match.serializer(),
+            MatchResult.serializer(),
             apiRequest("match", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -121,9 +121,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): Organization {
+    ): OrganizationResult {
         return json.decodeFromString(
-            Organization.serializer(),
+            OrganizationResult.serializer(),
             apiRequest("organization", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -136,9 +136,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): Placement {
+    ): PlacementResult {
         return json.decodeFromString(
-            Placement.serializer(),
+            PlacementResult.serializer(),
             apiRequest("placement", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -151,9 +151,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): Player {
+    ): PlayerResult {
         return json.decodeFromString(
-            Player.serializer(),
+            PlayerResult.serializer(),
             apiRequest("player", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -166,9 +166,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): Series {
+    ): SeriesResult {
         return json.decodeFromString(
-            Series.serializer(),
+            SeriesResult.serializer(),
             apiRequest("series", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -181,9 +181,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): Settings {
+    ): SettingsResult {
         return json.decodeFromString(
-            Settings.serializer(),
+            SettingsResult.serializer(),
             apiRequest("settings", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -196,9 +196,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): SquadPlayer {
+    ): SquadPlayerResult {
         return json.decodeFromString(
-            SquadPlayer.serializer(),
+            SquadPlayerResult.serializer(),
             apiRequest("squadplayer", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -211,9 +211,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): Team {
+    ): TeamResult {
         return json.decodeFromString(
-            Team.serializer(),
+            TeamResult.serializer(),
             apiRequest("team", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -226,9 +226,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): Tournament {
+    ): TournamentResult {
         return json.decodeFromString(
-            Tournament.serializer(),
+            TournamentResult.serializer(),
             apiRequest("tournament", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -241,9 +241,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): Transfer {
+    ): TransferResult {
         return json.decodeFromString(
-            Transfer.serializer(),
+            TransferResult.serializer(),
             apiRequest("transfer", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }

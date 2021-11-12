@@ -45,19 +45,16 @@ fun main() {
 
     //System.setOut(PrintStream(FileOutputStream("log.txt", true)))
     //System.setErr(PrintStream(FileOutputStream("err.txt", true)))
-    createApplication()
+    //createApplication()
     //val storage = ExternalStorage.fromString("Hi")
     //val clazz = WindowClass.fromStorage(storage)
     //WindowManager.createWindow(WindowManager.WS_EX_OVERLAPPEDWINDOW, clazz, "Hello", style = WindowManager.WS_OVERLAPPEDWINDOW, width = 100, height = 100)
     //streamingMicRecognize()
 
-    /*
+
     runBlocking {
         println(LIQUIPEDIA.gear(listOf(Liquipedia.Wiki.DOTA_2)))
     }
-    */
-
-
 
 }
 
