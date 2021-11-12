@@ -6,7 +6,8 @@ import java.nio.file.Paths
 import javax.imageio.ImageIO
 import kotlin.concurrent.write
 
-class OverlayImpl(val selected: WindowManager) : Overlay {
+class OverlayImpl(val selected: WindowManager, val self: WindowManager, val callback: (Overlay) -> Unit) : Overlay {
+
 
     private val currentRectStorage = run {
         val rectStorage = RectReader.createSegment()
@@ -30,6 +31,48 @@ class OverlayImpl(val selected: WindowManager) : Overlay {
     private var internal = BufferedImage(canvasWidth, canvasHeight, BufferedImage.TYPE_INT_ARGB)
     private var internalGraphics = internal.graphics
 
+    private var visible = self.isVisible()
+    private val INSTANCE = this
+    val checker = Thread {
+        val newRectStorage = run {
+            val rectStorage = RectReader.createSegment()
+
+            selected.getWindowRect(rectStorage)
+
+            rectStorage
+        }
+        var prev = rectReader
+        while (selected.isAlive()) {
+            Thread.sleep(10)
+            if (visible) {
+                if (selected.isVisible()) {
+                    if (!self.isVisible()) {
+                        self.showWindow()
+                    }
+                    selected.getWindowRect(newRectStorage)
+                    val rect = RectReader.fromMemorySegment(newRectStorage)
+                    if (prev != rect) {
+                        self.moveWindow(
+                            rect.left.toInt(), rect.top.toInt(), rect.width.toInt(), rect.height.toInt(), 1
+                        )
+                        prev = rect
+                        if (prev.area != rect.area) {
+                            INSTANCE.onResize(callback)
+                        }
+                    }
+                } else {
+                    self.hideWindow()
+                }
+            }
+        }
+        newRectStorage.close()
+    }
+
+    init {
+        self.setWindowPosition(WindowManager.HWND_TOPMOST)
+        Callback.redrawList.add(this)
+        checker.start()
+    }
 
     private fun remake() {
         selected.getWindowRect(currentRectStorage)
@@ -55,15 +98,17 @@ class OverlayImpl(val selected: WindowManager) : Overlay {
 
     override fun close() {
         internalGraphics.dispose()
-        currentRectStorage.segment.scope().close()
+        currentRectStorage.close()
     }
 
     override fun show() {
-        selected.showWindow()
+        visible = true
+        self.showWindow()
     }
 
     override fun hide() {
-        selected.hideWindow()
+        visible = false
+        self.hideWindow()
     }
 
     override fun publish() {
@@ -85,7 +130,7 @@ class OverlayImpl(val selected: WindowManager) : Overlay {
         NativeRegistry[Callback.imageListDestroy].invoke(old)
     }
 
-    override fun onResize(callback: (Overlay) -> Unit) {
+    private fun onResize(callback: (Overlay) -> Unit) {
         remake()
         callback.invoke(this)
         publish()

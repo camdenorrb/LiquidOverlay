@@ -210,6 +210,7 @@ object Callback {
     }
 
     var redrawCount = 0
+    val redrawList = mutableListOf<OverlayImpl>()
     @JvmStatic
     fun hookProc(hwnd: MemoryAddress, uMsg: Int, wParam: MemoryAddress, lParam: MemoryAddress): MemoryAddress {
         if (lastWindow.window == MemoryAddress.NULL) {

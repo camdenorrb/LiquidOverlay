@@ -72,8 +72,6 @@ interface Overlay {
 
     fun publish()
 
-    fun onResize(callback: (Overlay) -> Unit)
-
     /**
      * Used to store position information for elements
      *
