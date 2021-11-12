@@ -5,7 +5,7 @@ import dev.twelveoclock.liquidoverlay.api.OverlayPlugin
 object SoundOverlayPlugin : OverlayPlugin() {
 
     override fun onEnable() {
-
-        //overlayModule.overlays["SoundOverlay"] = Overla
+        overlayModule.overlays["SoundOverlay"] = Overla
     }
+
 }

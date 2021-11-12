@@ -6,7 +6,6 @@ import java.nio.file.Path
 
 class OverlayModule(pluginsFolder: Path) : BasicModule() {
 
-
     val pluginModule = PluginModule(this, pluginsFolder)
 
 

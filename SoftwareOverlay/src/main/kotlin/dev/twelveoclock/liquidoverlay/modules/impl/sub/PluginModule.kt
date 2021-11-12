@@ -23,7 +23,7 @@ class PluginModule(val overlayModule: OverlayModule, val pluginsFolder: Path) : 
             val config = Json.decodeFromString(OverlayPlugin.Config.serializer(), pluginClassLoader.getResource("plugin.json")!!.readText())
 
             (pluginClassLoader.loadClass(config.mainClassPath).kotlin as KClass<OverlayPlugin>).objectInstance!!.also {
-                it.overlayModule = overlayModule
+                //it.overlayModule = overlayModule
                 it.enable()
             }
         }

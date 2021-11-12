@@ -3,12 +3,11 @@ package dev.twelveoclock.liquidoverlay.api
 import dev.twelveoclock.liquidoverlay.modules.BasicModule
 import dev.twelveoclock.liquidoverlay.modules.impl.OverlayModule
 import kotlinx.serialization.Serializable
+import tech.poder.overlay.Overlay
 
 abstract class OverlayPlugin : BasicModule() {
 
-    // Set by the plugin loader
-    lateinit var overlayModule: OverlayModule
-        internal set
+    val overlays = mutableListOf<Overlay>()
 
 
     @Serializable

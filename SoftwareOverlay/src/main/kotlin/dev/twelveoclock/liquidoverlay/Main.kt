@@ -31,7 +31,9 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import dev.twelveoclock.liquidoverlay.api.Liquipedia
 import dev.twelveoclock.liquidoverlay.speech.GoogleSpeechAPI
+import kotlinx.coroutines.runBlocking
 import javax.sound.sampled.*
 import kotlin.math.roundToInt
 import kotlin.system.exitProcess
@@ -41,8 +43,10 @@ val NAVIGATION_WIDTH = 200.dp
 
 val BACKGROUND_COLOR = Color(43, 54, 72)
 
+val liquipedia = Liquipedia("")
 
 fun main() {
+    
     //System.setOut(PrintStream(FileOutputStream("log.txt", true)))
     //System.setErr(PrintStream(FileOutputStream("err.txt", true)))
     createApplication()
