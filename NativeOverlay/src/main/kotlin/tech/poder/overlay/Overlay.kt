@@ -24,7 +24,7 @@ interface Overlay {
      * @param first The first position for the rectangle
      * @param second The second position for the rectangle
      */
-    fun rectangle(color: Color, first: Position, second: Position)
+    //fun rectangle(color: Color, first: Position, second: Position)
 
     /**
      * Draws a circle onto the overlay
@@ -33,7 +33,7 @@ interface Overlay {
      * @param radius The radius of the circle
      * @param center The center position of the circle
      */
-    fun circle(color: Color, radius: Int, center: Position)
+    ///fun circle(color: Color, radius: Int, center: Position)
 
     /**
      * Draws an image onto the overlay
@@ -51,7 +51,7 @@ interface Overlay {
      * @param color The color for the text
      * @param start The starting position for the text
      */
-    fun text(value: String, fontSize: Float, color: Color, start: Position)
+    //fun text(value: String, fontSize: Float, color: Color, start: Position)
 
     /**
      * Removes all elements from the overlay gui
@@ -68,7 +68,9 @@ interface Overlay {
      */
     fun show()
 
-    fun onResize(callback: () -> Unit)
+    fun hide()
+
+    fun onResize(callback: (Overlay) -> Unit)
 
     /**
      * Used to store position information for elements
