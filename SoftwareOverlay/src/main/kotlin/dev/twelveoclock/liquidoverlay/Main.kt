@@ -53,6 +53,7 @@ object Main {
     @JvmStatic
     fun main(args: Array<String>) {
 
+        /*
         val processes = Callback.getProcesses()
         var i = 0
         processes.forEachIndexed { index, process ->
@@ -94,7 +95,9 @@ object Main {
         PluginModule(Path("plugins"), overlay).enable()
         //System.setOut(PrintStream(FileOutputStream("log.txt", true)))
         //System.setErr(PrintStream(FileOutputStream("err.txt", true)))
+        */
         createApplication()
+
 
 
         //val storage = ExternalStorage.fromString("Hi")
