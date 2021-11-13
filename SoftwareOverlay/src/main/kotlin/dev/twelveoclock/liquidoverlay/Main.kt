@@ -29,9 +29,13 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import dev.twelveoclock.liquidoverlay.api.Liquipedia
+import dev.twelveoclock.liquidoverlay.modules.impl.sub.PluginModule
 import dev.twelveoclock.liquidoverlay.speech.GoogleSpeechAPI
 import kotlinx.coroutines.runBlocking
+import tech.poder.overlay.*
+import java.awt.image.BufferedImage
 import javax.sound.sampled.*
+import kotlin.io.path.Path
 import kotlin.math.roundToInt
 import kotlin.random.Random
 import kotlin.system.exitProcess
@@ -43,28 +47,74 @@ val BACKGROUND_COLOR = Color(43, 54, 72)
 
 val LIQUIPEDIA = Liquipedia("nvmrGupnGNOg1CdjXLRKtGkhCQfHAx8PXfuPiKRC0uU7ANzfoylvkx67ZgS0489VSiDvRfAkM1R714Z29e5kPYYnY6dHauejH12MJ5rtG412OYrEE9ccr7j8L0eDhyb4")
 
-fun main() {
 
-    //System.setOut(PrintStream(FileOutputStream("log.txt", true)))
-    //System.setErr(PrintStream(FileOutputStream("err.txt", true)))
-    createApplication()
-    //val storage = ExternalStorage.fromString("Hi")
-    //val clazz = WindowClass.fromStorage(storage)
-    //WindowManager.createWindow(WindowManager.WS_EX_OVERLAPPEDWINDOW, clazz, "Hello", style = WindowManager.WS_OVERLAPPEDWINDOW, width = 100, height = 100)
-    //streamingMicRecognize()
+object Main {
 
-    /*
+    @JvmStatic
+    fun main(args: Array<String>) {
+
+        val processes = Callback.getProcesses()
+        var i = 0
+        processes.forEachIndexed { index, process ->
+            if (process.exeLocation.contains("Overwatch.exe")) {
+                i = index
+            }
+            println("$index: ${process.title}(${process.exeLocation})")
+        }
+        println("Choose: $i")
+        val selected = processes[i]
+        val clazz = WindowClass.define("Kats")
+
+        val window = WindowManager.createWindow(
+            WindowManager.WS_EX_TOPMOST or WindowManager.WS_EX_TRANSPARENT or WindowManager.WS_EX_LAYERED,
+            clazz = clazz,
+            windowName = "LiquidOverlay",
+            style = WindowManager.WS_POPUP.toInt(),
+            x = selected.rect.left.toInt(),
+            y = selected.rect.top.toInt(),
+            width = selected.rect.width.toInt(),
+            height = selected.rect.height.toInt()
+        )
+
+        val selectedWindow = selected.asWindow()
+
+        val overlay = OverlayImpl(window, selectedWindow) {
+
+            val bufferedImage = BufferedImage(it.canvasWidth, it.canvasHeight, BufferedImage.TYPE_INT_RGB)
+            val graphics = bufferedImage.createGraphics()
+
+            graphics.color = java.awt.Color(0, 100, 0)
+            graphics.fillRect(0, 0, bufferedImage.width, bufferedImage.height)
+
+            it.image(bufferedImage, Overlay.Position(0, 0), it.canvasWidth, it.canvasHeight)
+
+            graphics.dispose()
+        }
+
+        PluginModule(Path("plugins"), overlay).enable()
+        //System.setOut(PrintStream(FileOutputStream("log.txt", true)))
+        //System.setErr(PrintStream(FileOutputStream("err.txt", true)))
+        createApplication()
+
+
+        //val storage = ExternalStorage.fromString("Hi")
+        //val clazz = WindowClass.fromStorage(storage)
+        //WindowManager.createWindow(WindowManager.WS_EX_OVERLAPPEDWINDOW, clazz, "Hello", style = WindowManager.WS_OVERLAPPEDWINDOW, width = 100, height = 100)
+        //streamingMicRecognize()
+
+        /*
     runBlocking {
         println(LIQUIPEDIA.player(listOf(Liquipedia.Wiki.VALORANT)))
     }
     */
 
-}
+    }
 
 private fun createOverlay(){
     println("hi")
 }
 
+}
 // https://developer.android.com/jetpack/compose
 private fun createApplication() = application {
     Window(
@@ -767,7 +817,7 @@ fun NavigationMenu(section: MutableState<Section>) {
         Spacer(Modifier.height(20.dp))
 
         Row(
-            modifier = Modifier.height(rowHeight).fillMaxWidth().clickable { createOverlay() },
+            modifier = Modifier.height(rowHeight).fillMaxWidth().clickable { /*createOverlay()*/ },
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(

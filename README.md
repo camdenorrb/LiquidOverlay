@@ -5,7 +5,8 @@ An overlay for Liquid Hacks 2021, with the goal of giving better accessibility, 
 
 1. [Project Description](#pd)\
     a. [Requirements](#requirements)\
-    b. [Features](#features)
+    b. [Libraries](#libraries)\
+    c. [Features](#features)
 2. [The Story](#story)\
     a. [An Introduction](#intro)\
     b. [The Idea](#idea)\
@@ -19,7 +20,15 @@ The purpose of the project is to help improve accessibility in games while showi
 
 ### Requirements <a name="requirements"></a>
 - Windows
-- Java 17+
+- Java 17+ (If the file is a .jar, .exe should work fine regardless)
+
+### Libraries <a name="libraries"></a>
+- Kotlin stdlib
+- Kotlin reflect
+- Ktor
+- Jetbrains Compose
+- KotlinX serialization
+
 
 ### Features <a name="features"></a>
 
