@@ -75,7 +75,7 @@ testing {
 
 compose.desktop {
     application {
-        nativeDistributions.modules("PoderTech.overlay")
+        //nativeDistributions.modules("PoderTech.overlay")
         println(nativeDistributions.modules)
         //nativeDistributions.includeAllModules = true
         jvmArgs("--list-modules", "--add-modules=jdk.incubator.foreign", "--enable-native-access=PoderTech.overlay", "--enable-native-access=ALL-UNNAMED")

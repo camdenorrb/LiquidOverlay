@@ -21,6 +21,7 @@ The purpose of the project is to help improve accessibility in games while showi
 ### Requirements <a name="requirements"></a>
 - Windows
 - Java 17+ (If the file is a .jar, .exe should work fine regardless)
+- If jar the do `java -jar <JarFile>`
 
 ### Libraries <a name="libraries"></a>
 - Kotlin stdlib
