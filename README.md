@@ -1,4 +1,4 @@
-# **LiquidOverlay**
+# **LiquidOverlay <img src="SoftwareOverlay/src\main/resources/logo/logoTransparent.svg" width="30">**
 
 An overlay for Liquid Hacks 2021, with the goal of giving better accessibility, features, and ways to keep up to date with Team Liquid.
 ## Table of Contents
