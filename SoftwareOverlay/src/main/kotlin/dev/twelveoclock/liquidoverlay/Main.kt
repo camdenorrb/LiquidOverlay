@@ -50,7 +50,8 @@ val LIQUIPEDIA = Liquipedia("nvmrGupnGNOg1CdjXLRKtGkhCQfHAx8PXfuPiKRC0uU7ANzfoyl
 
 object Main {
 
-    fun main() {
+    @JvmStatic
+    fun main(args: Array<String>) {
 
         val processes = Callback.getProcesses()
         var i = 0
@@ -816,7 +817,7 @@ fun NavigationMenu(section: MutableState<Section>) {
         Spacer(Modifier.height(20.dp))
 
         Row(
-            modifier = Modifier.height(rowHeight).fillMaxWidth().clickable { createOverlay() },
+            modifier = Modifier.height(rowHeight).fillMaxWidth().clickable { /*createOverlay()*/ },
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
