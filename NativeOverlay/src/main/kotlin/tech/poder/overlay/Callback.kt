@@ -655,6 +655,16 @@ object Callback {
         )
     )
 
+    val failed = NativeRegistry.register(
+        FunctionDescription(
+            "Failed",
+            Int::class.java,
+            listOf(
+                Int::class.java
+            )
+        )
+    )
+
     fun getEnumerator(): MemoryAddress {
         if (!initCo) {
             val res = NativeRegistry[coInitializeEx].invoke(MemoryAddress.NULL, 0)
@@ -704,7 +714,7 @@ object Callback {
     fun getMixFormat(client: MemoryAddress, REFTIMES_PER_SEC: Int = 10000000): MemoryAddress {
         val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newConfinedScope())
         val result = NativeRegistry[getMixFormat].invoke(client, tmp.address(), REFTIMES_PER_SEC) as Int
-        check(result == 0) {
+        check(NativeRegistry[failed].invoke(result) != 0) {
             "GetMixFormat failed: $result ${NativeRegistry[getLastError].invoke()}"
         }
         val res = MemoryAccess.getAddress(tmp)

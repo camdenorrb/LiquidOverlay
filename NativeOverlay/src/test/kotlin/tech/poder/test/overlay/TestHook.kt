@@ -3,6 +3,7 @@ package tech.poder.test.overlay
 import tech.poder.overlay.*
 import java.awt.Color
 import java.awt.image.BufferedImage
+import kotlin.math.ceil
 import kotlin.test.Test
 
 internal class TestHook {
@@ -195,8 +196,17 @@ internal class TestHook {
 
     @Test
     fun basicAudio() {
-        val audio = Callback.getDefaultAudioDevice()
-        println(audio)
+        val pDevice = Callback.getDefaultAudioDevice()
+        val pAudioClient = Callback.activateAudioClient(pDevice)
+        val mixInfo = Callback.getMixFormat(pAudioClient)
+        val bufferFrameCount = Callback.getBufferSize(pAudioClient)
+        val pRenderClient = Callback.getService(pAudioClient)
+        Callback.start(pRenderClient)
+        val hnsPeriod = Callback.getActualDuration(mixInfo, bufferFrameCount)
+        while (true) {
+            Thread.sleep(ceil(hnsPeriod).toLong())
+
+        }
     }
 
 }
