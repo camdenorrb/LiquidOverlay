@@ -566,6 +566,95 @@ object Callback {
         )
     )
 
+    val getBufferSize = NativeRegistry.register(
+        FunctionDescription(
+            "GetBufferSize",
+            Int::class.java,
+            listOf(
+                MemoryAddress::class.java,
+                MemoryAddress::class.java
+            )
+        )
+    )
+
+    val getService = NativeRegistry.register(
+        FunctionDescription(
+            "GetService",
+            Int::class.java,
+            listOf(
+                MemoryAddress::class.java,
+                MemoryAddress::class.java
+            )
+        )
+    )
+
+    val getHNSActualDuration = NativeRegistry.register(
+        FunctionDescription(
+            "GetHNSActualDuration",
+            Double::class.java,
+            listOf(
+                MemoryAddress::class.java,
+                Int::class.java,
+                Int::class.java
+            )
+        )
+    )
+
+    val clientStart = NativeRegistry.register(
+        FunctionDescription(
+            "Start",
+            Int::class.java,
+            listOf(
+                MemoryAddress::class.java
+            )
+        )
+    )
+
+    val clientStop = NativeRegistry.register(
+        FunctionDescription(
+            "Stop",
+            Int::class.java,
+            listOf(
+                MemoryAddress::class.java
+            )
+        )
+    )
+
+    val getNextPacketSize = NativeRegistry.register(
+        FunctionDescription(
+            "GetNextPacketSize",
+            Int::class.java,
+            listOf(
+                MemoryAddress::class.java,
+                MemoryAddress::class.java
+            )
+        )
+    )
+
+    val getBuffer = NativeRegistry.register(
+        FunctionDescription(
+            "GetBuffer",
+            Int::class.java,
+            listOf(
+                MemoryAddress::class.java,
+                MemoryAddress::class.java,
+                MemoryAddress::class.java,
+                MemoryAddress::class.java
+            )
+        )
+    )
+
+    val releaseBuffer = NativeRegistry.register(
+        FunctionDescription(
+            "ReleaseBuffer",
+            Int::class.java,
+            listOf(
+                MemoryAddress::class.java,
+                Int::class.java
+            )
+        )
+    )
+
     fun getEnumerator(): MemoryAddress {
         if (!initCo) {
             val res = NativeRegistry[coInitializeEx].invoke(MemoryAddress.NULL, 0)
@@ -621,5 +710,78 @@ object Callback {
         val res = MemoryAccess.getAddress(tmp)
         tmp.scope().close()
         return res
+    }
+
+    fun getBufferSize(client: MemoryAddress): UInt {
+        val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newConfinedScope())
+        val result = NativeRegistry[getBufferSize].invoke(client, tmp.address()) as Int
+        check(result == 0) {
+            "GetBufferSize failed: $result ${NativeRegistry[getLastError].invoke()}"
+        }
+        val res = MemoryAccess.getInt(tmp)
+        tmp.scope().close()
+        return res.toUInt()
+    }
+
+    fun getService(client: MemoryAddress): MemoryAddress {
+        val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newConfinedScope())
+        val result = NativeRegistry[getService].invoke(client, tmp.address()) as Int
+        check(result == 0) {
+            "DeviceGetService failed: $result ${NativeRegistry[getLastError].invoke()}"
+        }
+        val res = MemoryAccess.getAddress(tmp)
+        tmp.scope().close()
+        return res
+    }
+
+    fun getActualDuration(format: MemoryAddress, bufferSize: UInt, REFTIMES_PER_SEC: Int = 1000000): Double {
+        val result = NativeRegistry[getService].invoke(format, bufferSize.toInt(), REFTIMES_PER_SEC) as Double
+        return result
+    }
+
+
+    fun start(client: MemoryAddress) {
+        val result = NativeRegistry[clientStart].invoke(client) as Int
+        check(result == 0) {
+            "Start failed: $result ${NativeRegistry[getLastError].invoke()}"
+        }
+    }
+
+    fun stop(client: MemoryAddress) {
+        val result = NativeRegistry[clientStop].invoke(client) as Int
+        check(result == 0) {
+            "Stop failed: $result ${NativeRegistry[getLastError].invoke()}"
+        }
+    }
+
+    fun getNextPacketSize(service: MemoryAddress): UInt {
+        val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newConfinedScope())
+        val result = NativeRegistry[getNextPacketSize].invoke(service, tmp.address()) as Int
+        check(result == 0) {
+            "GetNextPacketSize failed: $result ${NativeRegistry[getLastError].invoke()}"
+        }
+        val res = MemoryAccess.getInt(tmp)
+        tmp.scope().close()
+        return res.toUInt()
+    }
+
+    fun getPacket(service: MemoryAddress): NativeBuffer {
+        val pData = MemorySegment.allocateNative(CLinker.C_CHAR.byteSize(), ResourceScope.newConfinedScope())
+        val numFramesAvailable = MemorySegment.allocateNative(CLinker.C_INT.byteSize(), pData.scope())
+        val flags = MemorySegment.allocateNative(CLinker.C_INT.byteSize(), pData.scope())
+        val result = NativeRegistry[getBuffer].invoke(service, pData.address(), numFramesAvailable.address(), flags.address()) as Int
+        check(result == 0) {
+            "GetPacket failed: $result ${NativeRegistry[getLastError].invoke()}"
+        }
+        val res = NativeBuffer(MemoryAccess.getByte(pData), MemoryAccess.getInt(flags), MemoryAccess.getInt(numFramesAvailable).toUInt())
+        pData.scope().close()
+        return res
+    }
+
+    fun deletePacket(service: MemoryAddress, buffer: NativeBuffer) {
+        val result = NativeRegistry[releaseBuffer].invoke(service, buffer.numFramesAvailable) as Int
+        check(result == 0) {
+            "DeletePacket failed: $result ${NativeRegistry[getLastError].invoke()}"
+        }
     }
 }
