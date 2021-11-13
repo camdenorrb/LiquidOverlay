@@ -4,6 +4,7 @@ import jdk.incubator.foreign.*
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
 
@@ -44,6 +45,14 @@ object NativeRegistry {
             val realLib = lib.lowercase()
             if (!loadedLibs.add(realLib)) return@forEach
             System.loadLibrary(realLib)
+        }
+    }
+
+    fun loadLib(vararg libs: Path) {
+        libs.forEach { lib ->
+            val realLib = lib.toAbsolutePath().toString().lowercase()
+            if (!loadedLibs.add(realLib)) return@forEach
+            System.load(lib.toAbsolutePath().toString())
         }
     }
 

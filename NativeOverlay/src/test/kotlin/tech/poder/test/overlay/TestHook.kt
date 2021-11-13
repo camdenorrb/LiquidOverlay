@@ -1,13 +1,8 @@
 package tech.poder.test.overlay
 
-import jdk.incubator.foreign.MemoryAddress
 import tech.poder.overlay.*
 import java.awt.Color
-import java.awt.Graphics2D
 import java.awt.image.BufferedImage
-import java.nio.file.Paths
-import javax.imageio.ImageIO
-import kotlin.concurrent.write
 import kotlin.test.Test
 
 internal class TestHook {
@@ -197,5 +192,11 @@ internal class TestHook {
         overlay.close()
     }
 
+
+    @Test
+    fun basicAudio() {
+        val audio = Callback.getDefaultAudioDevice()
+        println(audio)
+    }
 
 }

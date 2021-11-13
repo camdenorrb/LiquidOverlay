@@ -621,11 +621,13 @@ fun SettingsScreen(section: MutableState<Section>) {
 
             Row (modifier = Modifier.padding(end = 10.dp, top = 10.dp).clickable{ expanded = !expanded }, horizontalArrangement = Arrangement.Center) {
 
-                Text(text = language,
+                Text(
+                    text = language,
                     modifier = Modifier.clickable { expanded = !expanded },
                     color = Color.White,
                     fontSize = 14.sp,
-                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf")),)
+                    fontFamily = FontFamily(Font("font/Roboto-Medium.ttf")),
+                )
                 Icon(
                     imageVector = Icons.Rounded.ArrowDropDown,
                     contentDescription = "DropDown",
@@ -826,10 +828,16 @@ fun streamingMicRecognize() {
 
         val audioFormat = AudioFormat(16000f, 16, 1, true, false)
         val bytesPerSecond = (audioFormat.sampleRate * audioFormat.sampleSizeInBits) / 8.0
-
+        val mixer = AudioSystem.getMixer(AudioSystem.getMixerInfo().filter { it.name.contains("Port GNV32DB-DP") }.first())
+        if (!mixer.isOpen) {
+            mixer.open()
+        }
         val targetInfo = DataLine.Info(
             TargetDataLine::class.java, audioFormat
         )
+
+        val targetDataLine = mixer.getLine(targetInfo) as TargetDataLine
+
         // Set the system information to read from the microphone audio stream
         if (!AudioSystem.isLineSupported(targetInfo)) {
             println("Microphone not supported")
@@ -837,7 +845,7 @@ fun streamingMicRecognize() {
         }
 
         // Target data line captures the audio stream the microphone produces.
-        val targetDataLine = AudioSystem.getLine(targetInfo) as TargetDataLine
+        //val targetDataLine = AudioSystem.getLine(targetInfo) as TargetDataLine
         targetDataLine.open(audioFormat)
         targetDataLine.start()
 

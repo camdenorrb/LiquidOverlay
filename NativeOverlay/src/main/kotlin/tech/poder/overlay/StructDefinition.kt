@@ -28,4 +28,8 @@ data class StructDefinition(val offset: List<Long>, val size: Long) {
             return StructDefinition(list, offset)
         }
     }
+
+    operator fun get(index: Int): Long {
+        return offset[index]
+    }
 }
