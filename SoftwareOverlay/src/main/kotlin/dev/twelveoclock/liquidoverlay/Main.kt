@@ -9,6 +9,7 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -58,6 +59,10 @@ fun main() {
     }
     */
 
+}
+
+private fun createOverlay(){
+    println("hi")
 }
 
 // https://developer.android.com/jetpack/compose
@@ -207,8 +212,6 @@ fun HomeScreen(section: MutableState<Section>) {
                     fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
                 )
             }
-
-
             // For last item bottom left
             var sponsor = mutableListOf<String>()
 
@@ -761,6 +764,29 @@ fun NavigationMenu(section: MutableState<Section>) {
 
         Divider(modifier = Modifier.offset(y = 10.dp), color = textColor, thickness = 1.dp)
 
+        Spacer(Modifier.height(20.dp))
+
+        Row(
+            modifier = Modifier.height(rowHeight).fillMaxWidth().clickable { createOverlay() },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                modifier = Modifier.offset(x = moveRight),
+                imageVector = Icons.Rounded.PlayArrow,
+                contentDescription = "Start Overlay",
+                tint = prefixIconColor
+            )
+
+            Spacer(Modifier.width(10.dp))
+
+            Text(
+                modifier = Modifier.offset(x = moveRight),
+                text = "Start Overlay",
+                fontSize = fontSize,
+                fontFamily = FontFamily(Font("font/Roboto-Medium.ttf")),
+                color = textColor
+            )
+        }
     }
 }
 
