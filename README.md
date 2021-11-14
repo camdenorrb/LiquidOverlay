@@ -64,11 +64,10 @@ Lastly, we wanted to show our appreciation for the LiquidTeam and its players. W
 ## Screenshots <a name="ss"></a>
 
 ### Homescreen
-<img src="SoftwareOverlay/src\main/resources/image/HomeScreen.png">
+<img src="SoftwareOverlay/src\main/resources/image/HomeScreen.PNG">
 
 ### Overlay
-<img src="SoftwareOverlay/src\main/resources/image/Overlay-min.png">
-<br class=”blank” />
+<img src="SoftwareOverlay/src\main/resources/image/Overlay-min.PNG">
 
 ### Settings
-<img src="SoftwareOverlay/src\main/resources/image/Settings.png">
+<img src="SoftwareOverlay/src\main/resources/image/Settings.PNG">
