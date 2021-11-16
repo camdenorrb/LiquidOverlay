@@ -667,8 +667,8 @@ object Callback {
 
     fun getEnumerator(): MemoryAddress {
         if (!initCo) {
-            val res = NativeRegistry[coInitializeEx].invoke(MemoryAddress.NULL, 0)
-            check(res == 0) {
+            val res = NativeRegistry[coInitializeEx].invoke(MemoryAddress.NULL, 0) as Int
+            check(res >= 0) {
                 "CoInitializeEx failed: $res ${NativeRegistry[getLastError].invoke()}"
             }
             initCo = true
@@ -680,8 +680,8 @@ object Callback {
             CLSCTX_ALL,
             IID_IMMDeviceEnumerator.address(),
             enumerator.address()
-        )
-        check(result == 0) {
+        ) as Int
+        check(result >= 0) {
             "CoCreateInstance failed: $result ${NativeRegistry[getLastError].invoke()}"
         }
 
@@ -692,7 +692,7 @@ object Callback {
         val enumerator = getEnumerator()
         val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newConfinedScope())
         val result = NativeRegistry[getAudioDeviceEndpoint].invoke(enumerator, tmp.address()) as Int
-        check(result == 0) {
+        check(result >= 0) {
             "GetAudioDeviceEndpoint failed: $result ${NativeRegistry[getLastError].invoke()}"
         }
         val res = MemoryAccess.getAddress(tmp)
@@ -703,7 +703,7 @@ object Callback {
     fun activateAudioClient(device: MemoryAddress): MemoryAddress {
         val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newConfinedScope())
         val result = NativeRegistry[deviceActivate].invoke(device, tmp.address()) as Int
-        check(result == 0) {
+        check(result >= 0) {
             "DeviceActivate failed: $result ${NativeRegistry[getLastError].invoke()}"
         }
         val res = MemoryAccess.getAddress(tmp)
@@ -714,7 +714,7 @@ object Callback {
     fun getMixFormat(client: MemoryAddress, REFTIMES_PER_SEC: Int = 10000000): MemoryAddress {
         val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newConfinedScope())
         val result = NativeRegistry[getMixFormat].invoke(client, tmp.address(), REFTIMES_PER_SEC) as Int
-        check(NativeRegistry[failed].invoke(result) != 0) {
+        check (result >= 0) {
             "GetMixFormat failed: $result ${NativeRegistry[getLastError].invoke()}"
         }
         val res = MemoryAccess.getAddress(tmp)
@@ -725,7 +725,7 @@ object Callback {
     fun getBufferSize(client: MemoryAddress): UInt {
         val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newConfinedScope())
         val result = NativeRegistry[getBufferSize].invoke(client, tmp.address()) as Int
-        check(result == 0) {
+        check(result >= 0) {
             "GetBufferSize failed: $result ${NativeRegistry[getLastError].invoke()}"
         }
         val res = MemoryAccess.getInt(tmp)
@@ -736,7 +736,7 @@ object Callback {
     fun getService(client: MemoryAddress): MemoryAddress {
         val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newConfinedScope())
         val result = NativeRegistry[getService].invoke(client, tmp.address()) as Int
-        check(result == 0) {
+        check (result >= 0) {
             "DeviceGetService failed: $result ${NativeRegistry[getLastError].invoke()}"
         }
         val res = MemoryAccess.getAddress(tmp)
@@ -752,14 +752,14 @@ object Callback {
 
     fun start(client: MemoryAddress) {
         val result = NativeRegistry[clientStart].invoke(client) as Int
-        check(result == 0) {
+        check(result >= 0) {
             "Start failed: $result ${NativeRegistry[getLastError].invoke()}"
         }
     }
 
     fun stop(client: MemoryAddress) {
         val result = NativeRegistry[clientStop].invoke(client) as Int
-        check(result == 0) {
+        check(result >= 0) {
             "Stop failed: $result ${NativeRegistry[getLastError].invoke()}"
         }
     }
@@ -767,7 +767,7 @@ object Callback {
     fun getNextPacketSize(service: MemoryAddress): UInt {
         val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newConfinedScope())
         val result = NativeRegistry[getNextPacketSize].invoke(service, tmp.address()) as Int
-        check(result == 0) {
+        check(result >= 0) {
             "GetNextPacketSize failed: $result ${NativeRegistry[getLastError].invoke()}"
         }
         val res = MemoryAccess.getInt(tmp)
@@ -780,7 +780,7 @@ object Callback {
         val numFramesAvailable = MemorySegment.allocateNative(CLinker.C_INT.byteSize(), pData.scope())
         val flags = MemorySegment.allocateNative(CLinker.C_INT.byteSize(), pData.scope())
         val result = NativeRegistry[getBuffer].invoke(service, pData.address(), numFramesAvailable.address(), flags.address()) as Int
-        check(result == 0) {
+        check(result >= 0) {
             "GetPacket failed: $result ${NativeRegistry[getLastError].invoke()}"
         }
         val res = NativeBuffer(MemoryAccess.getByte(pData), MemoryAccess.getInt(flags), MemoryAccess.getInt(numFramesAvailable).toUInt())
@@ -790,7 +790,7 @@ object Callback {
 
     fun deletePacket(service: MemoryAddress, buffer: NativeBuffer) {
         val result = NativeRegistry[releaseBuffer].invoke(service, buffer.numFramesAvailable) as Int
-        check(result == 0) {
+        check(result >= 0) {
             "DeletePacket failed: $result ${NativeRegistry[getLastError].invoke()}"
         }
     }
