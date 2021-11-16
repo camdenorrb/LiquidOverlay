@@ -45,7 +45,7 @@ val NAVIGATION_WIDTH = 250.dp
 
 val BACKGROUND_COLOR = Color(43, 54, 72)
 
-val LIQUIPEDIA = Liquipedia("nvmrGupnGNOg1CdjXLRKtGkhCQfHAx8PXfuPiKRC0uU7ANzfoylvkx67ZgS0489VSiDvRfAkM1R714Z29e5kPYYnY6dHauejH12MJ5rtG412OYrEE9ccr7j8L0eDhyb4")
+val LIQUIPEDIA = Liquipedia(TODO())
 
 
 object Main {
