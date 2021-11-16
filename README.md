@@ -27,7 +27,6 @@ The purpose of the project is to help improve accessibility in games while showi
 ### Libraries <a name="libraries"></a>
 - Kotlin stdlib
 - Kotlin reflect
-- Ktor
 - Jetbrains Compose
 - KotlinX serialization
 
