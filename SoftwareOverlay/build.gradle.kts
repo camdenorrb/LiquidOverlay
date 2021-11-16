@@ -39,13 +39,13 @@ tasks {
     //compileKotlin.get().destinationDirectory.set(compileJava.get().destinationDirectory.get())
     //compileTestKotlin.get().destinationDirectory.set(compileTestJava.get().destinationDirectory.get())
 
-    //val javaVersionCompat = JavaVersion.VERSION_17.toString()
+    val javaVersionCompat = JavaVersion.VERSION_17.toString()
     val javaVersion = JavaVersion.VERSION_17.toString()
 
     withType<KotlinCompile> {
         sourceCompatibility = javaVersion
         targetCompatibility = javaVersion
-        //kotlinOptions.jvmTarget = javaVersionCompat
+        kotlinOptions.jvmTarget = javaVersionCompat
     }
 
     withType<JavaCompile> {
