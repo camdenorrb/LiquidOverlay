@@ -1,14 +1,19 @@
 package dev.twelveoclock.liquidoverlay.api
 
 import dev.twelveoclock.liquidoverlay.serializer.LocalDateSerializer
-import io.ktor.client.*
-import io.ktor.client.request.*
-import io.ktor.http.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+import java.time.Duration
 import java.time.LocalDate
+import java.util.zip.GZIPInputStream
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 // TODO: Make sure it follows all api rules, maybe use a queue
 // TODO: Figure out webhooks
@@ -16,12 +21,6 @@ import java.time.LocalDate
 // https://api.liquipedia.net/documentation/api/v2/openapi
 // https://api.liquipedia.net/documentation/api/v2
 class Liquipedia(private val apiKey: String) {
-
-    private fun HttpRequestBuilder.defaultHeaders() {
-        header("accept", "application/json")
-        header("authorization", "Apikey $apiKey") //Path("liquidToken.txt").readText()
-    }
-
 
     suspend fun broadcasters(
         wikis: List<Wiki>,
@@ -259,19 +258,51 @@ class Liquipedia(private val apiKey: String) {
         order: String = "",
         groupBy: String = "",
     ): String {
-        return httpClient.get("${API_URL}$path") {
+        return request("$API_URL$path",
+            "wiki" to wikis.joinToString("|") { it.apiName },
+            ("conditions" to conditions).takeIf { conditions.isNotBlank() },
+            ("query" to query).takeIf { query.isNotBlank() },
+            ("limit" to limit).takeIf { limit > -1 },
+            ("offset" to offset).takeIf { offset > -1 },
+            ("order" to order).takeIf { order.isNotBlank() },
+            ("groupby" to groupBy).takeIf { order.isNotBlank() },
+        ).also { println(it) }
+    }
 
-            parameter("wiki", wikis.joinToString("|") { it.apiName })
-            if (conditions.isNotBlank()) parameter("conditions", conditions)
-            if (query.isNotBlank()) parameter("query", query)
-            if (limit > -1) parameter("limit", limit)
-            if (offset > -1) parameter("offset", offset)
-            if (order.isNotBlank()) parameter("order", order)
-            if (groupBy.isNotBlank()) parameter("groupby", groupBy)
 
-            userAgent(USER_AGENT)
-            defaultHeaders()
+    private suspend fun request(url: String, vararg parameters: Pair<String, Any?>?): String {
+
+        val urlWithParameters = buildString {
+
+            append(url)
+
+            if (parameters.isNotEmpty()) {
+                append('?')
+                append(parameters.filterNotNull().joinToString("&") { (key, value) -> "$key=$value" })
+            }
         }
+
+        val httpRequest = HttpRequest.newBuilder()
+            .uri(URI(urlWithParameters))
+            .setHeader("User-Agent", USER_AGENT)
+            .setHeader("accept", "application/json")
+            .setHeader("Accept-Encoding", "gzip")
+            .setHeader("authorization", "Apikey $apiKey")
+            .timeout(Duration.ofSeconds(30))
+            .GET()
+            .build()
+
+        return suspendCoroutine { continuation ->
+            httpClient
+                .sendAsync(httpRequest) {
+                    HttpResponse.BodySubscribers.ofInputStream()
+                }
+                .thenAccept {
+                    @Suppress("BlockingMethodInNonBlockingContext")
+                    continuation.resume(GZIPInputStream(it.body()).readAllBytes().decodeToString())
+                }
+        }
+
     }
 
 
@@ -279,10 +310,12 @@ class Liquipedia(private val apiKey: String) {
 
         const val API_URL = "https://api.liquipedia.net/api/v2/"
 
-        const val USER_AGENT = "User-Agent: LiquidOverlay/1.0 (camdenorrb@me.com)"
+        const val USER_AGENT = "LiquidOverlay/1.0 (camdenorrb@me.com)"
 
-
-        val httpClient = HttpClient()
+        val httpClient = HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_2)
+            .followRedirects(HttpClient.Redirect.NORMAL)
+            .build()
 
         val json = Json {
             ignoreUnknownKeys = true

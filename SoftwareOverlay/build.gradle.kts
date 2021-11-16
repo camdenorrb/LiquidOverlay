@@ -24,19 +24,14 @@ dependencies {
     implementation(platform(kotlin("bom")))
     implementation(kotlin("stdlib-jdk8"))
     implementation(kotlin("reflect"))
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.0")
 
     // Sub Modules
     implementation(project(":NativeOverlay"))
 
-    // HTTP
-    implementation("io.ktor:ktor-client-core:$ktorVersion")
-    implementation("io.ktor:ktor-client-cio:$ktorVersion")
-
     // GUI
     implementation(compose.desktop.currentOs)
 
-    // Serialization
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.0")
 }
 
 tasks {
@@ -44,13 +39,13 @@ tasks {
     //compileKotlin.get().destinationDirectory.set(compileJava.get().destinationDirectory.get())
     //compileTestKotlin.get().destinationDirectory.set(compileTestJava.get().destinationDirectory.get())
 
-    val javaVersionCompat = JavaVersion.VERSION_16.toString()
+    //val javaVersionCompat = JavaVersion.VERSION_17.toString()
     val javaVersion = JavaVersion.VERSION_17.toString()
 
     withType<KotlinCompile> {
         sourceCompatibility = javaVersion
         targetCompatibility = javaVersion
-        kotlinOptions.jvmTarget = javaVersionCompat
+        //kotlinOptions.jvmTarget = javaVersionCompat
     }
 
     withType<JavaCompile> {
