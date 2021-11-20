@@ -67,7 +67,7 @@ compose.desktop {
         //println(nativeDistributions.modules)
         //nativeDistributions.includeAllModules = true
         jvmArgs("--list-modules", "--add-modules=jdk.incubator.foreign", "--enable-native-access=PoderTech.overlay"/*, "--enable-native-access=ALL-UNNAMED"*/)
-        mainClass = "dev.twelveoclock.liquidoverlay.MainKt"
+        mainClass = "dev.twelveoclock.liquidoverlay.Main"
         //javaHome = System.getenv("JAVA_HOME")
     }
 }
