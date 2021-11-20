@@ -1,7 +1,7 @@
 package dev.twelveoclock.liquidoverlay.api
 
 import dev.twelveoclock.liquidoverlay.Main
-import dev.twelveoclock.liquidoverlay.modules.BasicModule
+import dev.twelveoclock.liquidoverlay.modules.base.BasicModule
 import kotlinx.serialization.Serializable
 import tech.poder.overlay.Overlay
 

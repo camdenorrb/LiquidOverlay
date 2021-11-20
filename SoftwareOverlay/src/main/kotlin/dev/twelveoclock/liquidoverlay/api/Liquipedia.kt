@@ -4,11 +4,14 @@ import dev.twelveoclock.liquidoverlay.serializer.LocalDateSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import java.net.URI
+import java.net.URLEncoder
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.time.LocalDate
 import java.util.zip.GZIPInputStream
@@ -30,9 +33,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): BroadcasterResult {
+    ): Result.BroadcasterResult {
         return json.decodeFromString(
-            BroadcasterResult.serializer(),
+            Result.BroadcasterResult.serializer(),
             apiRequest("broadcasters", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -45,9 +48,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): CompanyResult {
+    ): Result.CompanyResult {
         return json.decodeFromString(
-            CompanyResult.serializer(),
+            Result.CompanyResult.serializer(),
             apiRequest("company", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -60,9 +63,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): DatapointResult {
+    ): Result.DatapointResult {
         return json.decodeFromString(
-            DatapointResult.serializer(),
+            Result.DatapointResult.serializer(),
             apiRequest("datapoint", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -75,9 +78,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): ExternalMediaLinkResult {
+    ): Result.ExternalMediaLinkResult {
         return json.decodeFromString(
-            ExternalMediaLinkResult.serializer(),
+            Result.ExternalMediaLinkResult.serializer(),
             apiRequest("externalmedialink", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -90,9 +93,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): GearsResult {
+    ): Result.GearsResult {
         return json.decodeFromString(
-            GearsResult.serializer(),
+            Result.GearsResult.serializer(),
             apiRequest("gear", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -105,9 +108,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): MatchResult {
+    ): Result.MatchResult {
         return json.decodeFromString(
-            MatchResult.serializer(),
+            Result.MatchResult.serializer(),
             apiRequest("match", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -120,9 +123,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): OrganizationResult {
+    ): Result.OrganizationResult {
         return json.decodeFromString(
-            OrganizationResult.serializer(),
+            Result.OrganizationResult.serializer(),
             apiRequest("organization", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -135,9 +138,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): PlacementResult {
+    ): Result.PlacementResult {
         return json.decodeFromString(
-            PlacementResult.serializer(),
+            Result.PlacementResult.serializer(),
             apiRequest("placement", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -150,9 +153,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): PlayerResult {
+    ): Result.PlayerResult {
         return json.decodeFromString(
-            PlayerResult.serializer(),
+            Result.PlayerResult.serializer(),
             apiRequest("player", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -165,9 +168,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): SeriesResult {
+    ): Result.SeriesResult {
         return json.decodeFromString(
-            SeriesResult.serializer(),
+            Result.SeriesResult.serializer(),
             apiRequest("series", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -180,9 +183,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): SettingsResult {
+    ): Result.SettingsResult {
         return json.decodeFromString(
-            SettingsResult.serializer(),
+            Result.SettingsResult.serializer(),
             apiRequest("settings", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -195,9 +198,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): SquadPlayerResult {
+    ): Result.SquadPlayerResult {
         return json.decodeFromString(
-            SquadPlayerResult.serializer(),
+            Result.SquadPlayerResult.serializer(),
             apiRequest("squadplayer", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -210,9 +213,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): TeamResult {
+    ): Result.TeamResult {
         return json.decodeFromString(
-            TeamResult.serializer(),
+            Result.TeamResult.serializer(),
             apiRequest("team", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -225,9 +228,9 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): TournamentResult {
+    ): Result.TournamentResult {
         return json.decodeFromString(
-            TournamentResult.serializer(),
+            Result.TournamentResult.serializer(),
             apiRequest("tournament", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
@@ -240,13 +243,12 @@ class Liquipedia(private val apiKey: String) {
         offset: Int = -1,
         order: String = "",
         groupBy: String = "",
-    ): TransferResult {
+    ): Result.TransferResult {
         return json.decodeFromString(
-            TransferResult.serializer(),
+            Result.TransferResult.serializer(),
             apiRequest("transfer", wikis, conditions, query, limit, offset, order, groupBy)
         )
     }
-
 
     private suspend fun apiRequest(
         path: String,
@@ -266,7 +268,7 @@ class Liquipedia(private val apiKey: String) {
             ("offset" to offset).takeIf { offset > -1 },
             ("order" to order).takeIf { order.isNotBlank() },
             ("groupby" to groupBy).takeIf { order.isNotBlank() },
-        ).also { println(it) }
+        )//.also { println("$it\n\n\n\n\n\n\n\n\n") }
     }
 
 
@@ -277,10 +279,17 @@ class Liquipedia(private val apiKey: String) {
             append(url)
 
             if (parameters.isNotEmpty()) {
+
                 append('?')
-                append(parameters.filterNotNull().joinToString("&") { (key, value) -> "$key=$value" })
+
+                append(parameters.filterNotNull().joinToString("&") { (key, value) ->
+                    "$key=${URLEncoder.encode("$value", StandardCharsets.UTF_8)}"
+                })
             }
         }
+
+
+        println(urlWithParameters)
 
         val httpRequest = HttpRequest.newBuilder()
             .uri(URI(urlWithParameters))
@@ -310,16 +319,21 @@ class Liquipedia(private val apiKey: String) {
 
         const val API_URL = "https://api.liquipedia.net/api/v2/"
 
-        const val USER_AGENT = "LiquidOverlay/1.0 (camdenorrb@me.com)"
+        const val USER_AGENT = "LiquidOverlay/1.0 (liquidoverlay@12oclock.dev)"
+
 
         val httpClient = HttpClient.newBuilder()
             .version(HttpClient.Version.HTTP_2)
             .followRedirects(HttpClient.Redirect.NORMAL)
-            .build()
+            .build()!!
 
         val json = Json {
+
+            //isLenient = true
+            //coerceInputValues = true
             ignoreUnknownKeys = true
         }
+
     }
 
 
@@ -347,80 +361,84 @@ class Liquipedia(private val apiKey: String) {
 
     }
 
-    @Serializable
-    data class BroadcasterResult(
-        val result: List<Broadcaster>
-    )
+    sealed class Result {
 
-    @Serializable
-    data class CompanyResult(
-        val result: List<Company>
-    )
+        @Serializable
+        data class BroadcasterResult(
+            val result: List<Broadcaster>
+        ) : Result()
 
-    @Serializable
-    data class DatapointResult(
-        val result: List<Datapoint>
-    )
+        @Serializable
+        data class CompanyResult(
+            val result: List<Company>
+        ) : Result()
 
-    @Serializable
-    data class ExternalMediaLinkResult(
-        val result: List<ExternalMediaLink>
-    )
+        @Serializable
+        data class DatapointResult(
+            val result: List<Datapoint>
+        ) : Result()
 
-    @Serializable
-    data class GearsResult(
-        val result: List<Gear>
-    )
+        @Serializable
+        data class ExternalMediaLinkResult(
+            val result: List<ExternalMediaLink>
+        ) : Result()
 
-    @Serializable
-    data class MatchResult(
-        val result: List<Match>
-    )
+        @Serializable
+        data class GearsResult(
+            val result: List<Gear>
+        ) : Result()
 
-    @Serializable
-    data class OrganizationResult(
-        val result: List<Organization>
-    )
+        @Serializable
+        data class MatchResult(
+            val result: List<Match>
+        ) : Result()
 
-    @Serializable
-    data class PlacementResult(
-        val result: List<Placement>
-    )
+        @Serializable
+        data class OrganizationResult(
+            val result: List<Organization>
+        ) : Result()
 
-    @Serializable
-    data class PlayerResult(
-        val result: List<Player>
-    )
+        @Serializable
+        data class PlacementResult(
+            val result: List<Placement>
+        ) : Result()
 
-    @Serializable
-    data class SeriesResult(
-        val result: List<Series>
-    )
+        @Serializable
+        data class PlayerResult(
+            val result: List<Player>
+        ) : Result()
 
-    @Serializable
-    data class SettingsResult(
-        val result: List<Settings>
-    )
+        @Serializable
+        data class SeriesResult(
+            val result: List<Series>
+        ) : Result()
 
-    @Serializable
-    data class SquadPlayerResult(
-        val result: List<SquadPlayer>
-    )
+        @Serializable
+        data class SettingsResult(
+            val result: List<Settings>
+        ) : Result()
 
-    @Serializable
-    data class TeamResult(
-        val result: List<Team>
-    )
+        @Serializable
+        data class SquadPlayerResult(
+            val result: List<SquadPlayer>
+        ) : Result()
 
-    @Serializable
-    data class TournamentResult(
-        val result: List<Tournament>
-    )
+        @Serializable
+        data class TeamResult(
+            val result: List<Team>
+        ) : Result()
 
-    @Serializable
-    data class TransferResult(
-        val result: List<Transfer>
-    )
+        @Serializable
+        data class TournamentResult(
+            val result: List<Tournament>
+        ) : Result()
+
+        @Serializable
+        data class TransferResult(
+            val result: List<Transfer>
+        ) : Result()
+
+    }
 
     @Serializable
     data class Broadcaster(
@@ -434,9 +452,10 @@ class Liquipedia(private val apiKey: String) {
         val position: String,
         val language: String,
         val flag: String,
-        val weight: Int,
+        val weight: Float,
         @Serializable(LocalDateSerializer::class) val date: LocalDate,
-        @SerialName("extradata") val extraData: JsonObject
+        @SerialName("extradata") val extraData: JsonObject?,
+        val wiki: String,
     )
 
     @Serializable
@@ -456,8 +475,9 @@ class Liquipedia(private val apiKey: String) {
         @SerialName("foundeddate") @Serializable(LocalDateSerializer::class) val foundedDate: LocalDate,
         @SerialName("defunctdate") @Serializable(LocalDateSerializer::class) val defunctDate: LocalDate,
         @SerialName("numberofemployees") val numberOfEmployees: String,
-        val links: JsonObject,
-        @SerialName("extradata") val extraData: JsonObject,
+        val links: JsonObject?,
+        @SerialName("extradata") val extraData: JsonObject?,
+        val wiki: String,
     )
 
     @Serializable
@@ -472,7 +492,8 @@ class Liquipedia(private val apiKey: String) {
         val image: String,
         @SerialName("imageurl") val imageURL: String,
         @Serializable(LocalDateSerializer::class) val date: LocalDate,
-        @SerialName("extradata") val extraData: JsonObject,
+        @SerialName("extradata") val extraData: JsonObject?,
+        val wiki: String,
     )
 
     @Serializable
@@ -485,11 +506,12 @@ class Liquipedia(private val apiKey: String) {
         @SerialName("translatedtitle") val translatedTitle: String,
         val link: String,
         @Serializable(LocalDateSerializer::class) val date: LocalDate,
-        val authors: JsonObject,
+        val authors: JsonObject?,
         val language: String,
         val publisher: String,
         val type: String,
-        @SerialName("extradata") val extraData: JsonObject,
+        @SerialName("extradata") val extraData: JsonObject?,
+        val wiki: String,
     )
 
     @Serializable
@@ -500,11 +522,12 @@ class Liquipedia(private val apiKey: String) {
         @SerialName("objectname") val objectName: String,
         @Serializable(LocalDateSerializer::class) val date: LocalDate,
         val reference: String,
-        val input: JsonObject,
-        val display: JsonObject,
-        val audio: JsonObject,
-        val chair: JsonObject,
-        @SerialName("extradata") val extraData: JsonObject,
+        val input: JsonObject?,
+        val display: JsonObject?,
+        val audio: JsonObject?,
+        val chair: JsonObject?,
+        @SerialName("extradata") val extraData: JsonObject?,
+        val wiki: String,
     )
 
     @Serializable
@@ -518,15 +541,15 @@ class Liquipedia(private val apiKey: String) {
         val winner: String,
         @SerialName("walkover") val walkOver: String,
         @SerialName("resulttype") val resultType: String,
-        val finished: Boolean,
+        val finished: Byte,
         val mode: String,
         val type: String,
         val game: String,
-        val links: JsonObject,
+        val links: JsonElement?,
         @SerialName("bestof") val bestOf: String,
         @Serializable(LocalDateSerializer::class) val date: LocalDate,
-        @SerialName("dateexact") val dateExact: Boolean,
-        val stream: JsonObject,
+        @SerialName("dateexact") val dateExact: Byte,
+        val stream: JsonElement?,
         @SerialName("lrthread") val lrThread: String,
         val vod: String,
         val tournament: String,
@@ -540,8 +563,9 @@ class Liquipedia(private val apiKey: String) {
         @SerialName("liquipediatier") val liquipediaTier: String,
         @SerialName("liquipediatiertype") val liquipediaTierType: String,
         @SerialName("publishertier") val publisherTier: String,
-        @SerialName("extradata") val extraData: JsonObject,
-        @SerialName("match2bracketdata") val matchToBracketData: JsonObject,
+        @SerialName("extradata") val extraData: JsonObject?,
+        @SerialName("match2bracketdata") val matchToBracketData: JsonObject?,
+        val wiki: String,
     )
 
     @Serializable
@@ -556,6 +580,7 @@ class Liquipedia(private val apiKey: String) {
         @SerialName("teampage") val teamPage: String,
         val position: String,
         val active: String,
+        val wiki: String,
     )
 
     @Serializable
@@ -575,10 +600,10 @@ class Liquipedia(private val apiKey: String) {
         @Serializable(LocalDateSerializer::class) val date: LocalDate,
         val participant: String,
         @SerialName("participantflag") val participantFlag: String,
-        val players: JsonObject,
+        val players: JsonElement,
         val placement: String,
         @SerialName("prizemoney") val prizeMoney: Float,
-        val weight: Int,
+        val weight: Float,
         val mode: String,
         val type: String,
         @SerialName("liquipediatier") val liquipediaTier: String,
@@ -590,8 +615,9 @@ class Liquipedia(private val apiKey: String) {
         @SerialName("lastvs") val lastVS: String,
         @SerialName("lastvsscore") val lastVSScore: String,
         @SerialName("groupscore") val groupScore: String,
-        val qualified: Boolean,
-        @SerialName("extradata") val extraData: JsonObject,
+        val qualified: Byte,
+        @SerialName("extradata") val extraData: JsonObject?,
+        val wiki: String,
     )
 
     @Serializable
@@ -613,10 +639,11 @@ class Liquipedia(private val apiKey: String) {
         @SerialName("birthdate") @Serializable(LocalDateSerializer::class) val birthDate: LocalDate,
         @SerialName("deathdate") @Serializable(LocalDateSerializer::class) val deathDate: LocalDate,
         val team: String,
-        val links: JsonObject,
+        val links: JsonObject?,
         val status: String,
         val earnings: Float,
-        @SerialName("extradata") val extraData: JsonObject,
+        @SerialName("extradata") val extraData: JsonObject?,
+        val wiki: String,
     )
 
     @Serializable
@@ -637,17 +664,18 @@ class Liquipedia(private val apiKey: String) {
         val previous2: String,
         val next: String,
         val next2: String,
-        val organizers: JsonObject,
+        val organizers: JsonElement?,
         val location: String,
         @SerialName("prizepool") val prizePool: Float,
         @SerialName("liquipediatier") val liquipediaTier: String,
         @SerialName("liquipediatiertype") val liquipediaTierType: String,
         @SerialName("publishertier") val publisherTier: String,
-        @SerialName("foundeddate") @Serializable(LocalDateSerializer::class) val foundedDate: LocalDate,
+        //@SerialName("foundeddate") @Serializable(LocalDateSerializer::class) val foundedDate: LocalDate,
         @SerialName("defunctdate") @Serializable(LocalDateSerializer::class) val defunctDate: LocalDate,
-        val sponsors: JsonObject,
-        val links: JsonObject,
-        @SerialName("extradata") val extraData: JsonObject,
+        val sponsors: JsonElement?,
+        val links: JsonElement?,
+        @SerialName("extradata") val extraData: JsonElement?,
+        val wiki: String,
     )
 
     @Serializable
@@ -659,10 +687,11 @@ class Liquipedia(private val apiKey: String) {
         val name: String,
         val reference: String,
         @SerialName("lastupdated") @Serializable(LocalDateSerializer::class) val lastUpdated: LocalDate,
-        val keys: JsonObject,
-        @SerialName("gamesettings") val gameSettings: JsonObject,
-        @SerialName("viewsettings") val viewSettings: JsonObject,
+        val keys: JsonObject?,
+        @SerialName("gamesettings") val gameSettings: JsonObject?,
+        @SerialName("viewsettings") val viewSettings: JsonObject?,
         val type: String,
+        val wiki: String,
     )
 
     @Serializable
@@ -684,7 +713,8 @@ class Liquipedia(private val apiKey: String) {
         @SerialName("leavedateref") val leaveDateRef: String,
         @SerialName("inactivedate") @Serializable(LocalDateSerializer::class) val inactiveDate: LocalDate,
         @SerialName("inactivedateref") val inactiveDateRef: String,
-        @SerialName("extradata") val extraData: JsonObject,
+        @SerialName("extradata") val extraData: JsonObject?,
+        val wiki: String,
     )
 
     @Serializable
@@ -705,7 +735,8 @@ class Liquipedia(private val apiKey: String) {
         val coach: String,
         val manager: String,
         val sponsors: String,
-        @SerialName("extradata") val extraData: JsonObject,
+        @SerialName("extradata") val extraData: JsonElement?,
+        val wiki: String,
     )
 
     @Serializable
@@ -746,7 +777,8 @@ class Liquipedia(private val apiKey: String) {
         val maps: String,
         val format: String,
         val sponsors: String,
-        @SerialName("extradata") val extraData: JsonObject,
+        @SerialName("extradata") val extraData: JsonObject?,
+        val wiki: String,
     )
 
     @Serializable
@@ -763,8 +795,9 @@ class Liquipedia(private val apiKey: String) {
         val role2: String,
         val reference: JsonObject,
         @Serializable(LocalDateSerializer::class) val date: LocalDate,
-        @SerialName("wholeteam") val wholeTeam: Boolean,
-        @SerialName("extradata") val extraData: JsonObject,
+        @SerialName("wholeteam") val wholeTeam: Byte,
+        @SerialName("extradata") val extraData: JsonObject?,
+        val wiki: String,
     )
 
 }

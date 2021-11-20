@@ -1,7 +1,7 @@
-package dev.twelveoclock.liquidoverlay.modules.impl
+package dev.twelveoclock.liquidoverlay.modules
 
-import dev.twelveoclock.liquidoverlay.modules.BasicModule
-import dev.twelveoclock.liquidoverlay.modules.impl.sub.PluginModule
+import dev.twelveoclock.liquidoverlay.modules.base.BasicModule
+import dev.twelveoclock.liquidoverlay.modules.sub.PluginModule
 import tech.poder.overlay.Overlay
 import tech.poder.overlay.OverlayImpl
 import tech.poder.overlay.WindowManager

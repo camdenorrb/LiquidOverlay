@@ -1,6 +1,6 @@
 package dev.twelveoclock.soundoverlayplugin.modules
 
-import dev.twelveoclock.liquidoverlay.modules.BasicModule
+import dev.twelveoclock.liquidoverlay.modules.base.BasicModule
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
@@ -17,6 +17,7 @@ class SoundModule : BasicModule() {
 
 
     override fun onEnable() {
+
     }
 
     override fun onDisable() {
@@ -24,10 +25,6 @@ class SoundModule : BasicModule() {
         peakRights.clear()
     }
 
-    data class TickData(
-        val leftPeak: Double,
-        val rightPeak: Double,
-    )
 
     fun tick(audioFormat: AudioFormat, byteArray: ByteArray): TickData {
 
@@ -100,7 +97,7 @@ class SoundModule : BasicModule() {
         val samples = ByteBuffer.wrap(input).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer()
 
         var sumOfSampleSq = 0.0 // sum of square of normalized samples.
-        var peakSample = 0.0 // peak sample.
+        var peakSample = 0.0    // peak sample.
 
         val maxNumberInBits = floor(highestNumberWithNBits(audioFormat.sampleSizeInBits) / 2)
 
@@ -131,6 +128,12 @@ class SoundModule : BasicModule() {
         const val SAMPLE_SIZE = 100
 
     }
+
+
+    data class TickData(
+        val leftPeak: Double,
+        val rightPeak: Double,
+    )
 
     data class PeakAndRms(
         val rms: Double,

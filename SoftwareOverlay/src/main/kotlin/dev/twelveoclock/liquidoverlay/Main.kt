@@ -29,13 +29,10 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import dev.twelveoclock.liquidoverlay.api.Liquipedia
-import dev.twelveoclock.liquidoverlay.modules.impl.sub.PluginModule
 import dev.twelveoclock.liquidoverlay.speech.GoogleSpeechAPI
 import kotlinx.coroutines.runBlocking
-import tech.poder.overlay.*
-import java.awt.image.BufferedImage
+import tech.poder.overlay.Callback
 import javax.sound.sampled.*
-import kotlin.io.path.Path
 import kotlin.math.roundToInt
 import kotlin.random.Random
 import kotlin.system.exitProcess

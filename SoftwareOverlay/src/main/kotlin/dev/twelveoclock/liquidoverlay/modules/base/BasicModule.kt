@@ -1,4 +1,4 @@
-package dev.twelveoclock.liquidoverlay.modules
+package dev.twelveoclock.liquidoverlay.modules.base
 
 abstract class BasicModule {
 

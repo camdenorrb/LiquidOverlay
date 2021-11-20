@@ -1,11 +1,9 @@
-package dev.twelveoclock.liquidoverlay.modules.impl.sub
+package dev.twelveoclock.liquidoverlay.modules.sub
 
 import dev.twelveoclock.liquidoverlay.api.OverlayPlugin
-import dev.twelveoclock.liquidoverlay.modules.BasicModule
-import dev.twelveoclock.liquidoverlay.modules.impl.OverlayModule
+import dev.twelveoclock.liquidoverlay.modules.base.BasicModule
 import kotlinx.serialization.json.Json
 import tech.poder.overlay.Overlay
-import tech.poder.overlay.WindowManager
 import java.net.URLClassLoader
 import java.nio.file.Path
 import kotlin.io.path.listDirectoryEntries
