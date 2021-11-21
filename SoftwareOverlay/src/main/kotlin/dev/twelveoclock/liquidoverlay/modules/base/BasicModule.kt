@@ -12,14 +12,14 @@ abstract class BasicModule {
 
 
     fun enable() {
-        if (isEnabled) {
+        if (!isEnabled) {
             onEnable()
             isEnabled = true
         }
     }
 
     fun disable() {
-        if (!isEnabled) {
+        if (isEnabled) {
             onDisable()
             isEnabled = false
         }

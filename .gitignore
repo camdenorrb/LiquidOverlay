@@ -33,3 +33,4 @@ gradle-app.setting
 # The secret sauce
 /liquidToken.txt
 /google_credentials.json
+Plugins/

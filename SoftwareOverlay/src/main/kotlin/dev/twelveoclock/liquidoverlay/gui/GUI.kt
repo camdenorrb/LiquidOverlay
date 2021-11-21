@@ -28,15 +28,18 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import dev.twelveoclock.liquidoverlay.BACKGROUND_COLOR
 import dev.twelveoclock.liquidoverlay.LIQUIPEDIA
-import dev.twelveoclock.liquidoverlay.NAVIGATION_WIDTH
 import dev.twelveoclock.liquidoverlay.api.Liquipedia
 import kotlinx.coroutines.runBlocking
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
 object GUI {
+
+	val NAVIGATION_WIDTH = 250.dp
+
+	val BACKGROUND_COLOR = Color(43, 54, 72)
+
 
 	// https://developer.android.com/jetpack/compose
 	internal fun createApplication() = application {

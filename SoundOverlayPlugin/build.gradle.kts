@@ -4,7 +4,7 @@ plugins {
     kotlin("jvm") version "1.5.31"
     kotlin("plugin.serialization") version "1.5.31"
     id("com.github.johnrengelman.shadow") version "7.1.0"
-    id("org.jetbrains.compose") version "1.0.0-beta5"
+    //id("org.jetbrains.compose") version "1.0.0-beta5"
 }
 
 group = "dev.twelveoclock"
@@ -12,7 +12,7 @@ version = "1.0.0"
 
 repositories {
     mavenCentral()
-    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+    //maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     google()
 }
 
@@ -60,6 +60,7 @@ testing {
     }
 }
 
+/*
 
 compose.desktop {
     application {
@@ -71,3 +72,4 @@ compose.desktop {
         //javaHome = System.getenv("JAVA_HOME")
     }
 }
+*/

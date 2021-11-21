@@ -6,10 +6,9 @@ import java.nio.file.Paths
 import javax.imageio.ImageIO
 import kotlin.concurrent.write
 
-class OverlayImpl(
-    private val self: WindowManager, private val selected: WindowManager, private val callback: (Overlay) -> Unit
-) : Overlay {
+class OverlayImpl(private val self: WindowManager, private val selected: WindowManager) : Overlay {
 
+    var onRedraw: (Overlay) -> Unit = {}
 
     private val currentRectStorage = run {
         val rectStorage = RectReader.createSegment()
@@ -62,12 +61,12 @@ class OverlayImpl(
                             rect.left.toInt(), rect.top.toInt(), rect.width.toInt(), rect.height.toInt(), 1
                         )
                         if (rect.area != prev.area) {
-                            onResize(callback)
+                            onResize(onRedraw)
                         }
                         prev = rect
                     }
                     if (!Callback.firstDraw) {
-                        onResize(callback)
+                        onResize(onRedraw)
                     }
                 } else {
                     self.hideWindow()

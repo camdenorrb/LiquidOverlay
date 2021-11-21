@@ -1,18 +1,16 @@
 package dev.twelveoclock.liquidoverlay
 
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import dev.twelveoclock.liquidoverlay.api.Liquipedia
-import dev.twelveoclock.liquidoverlay.gui.GUI
+import dev.twelveoclock.liquidoverlay.modules.sub.PluginModule
 import dev.twelveoclock.liquidoverlay.speech.GoogleSpeechAPI
 import tech.poder.overlay.Callback
+import tech.poder.overlay.OverlayImpl
+import tech.poder.overlay.WindowClass
+import tech.poder.overlay.WindowManager
 import javax.sound.sampled.*
+import kotlin.io.path.Path
 import kotlin.system.exitProcess
 
-
-val NAVIGATION_WIDTH = 250.dp
-
-val BACKGROUND_COLOR = Color(43, 54, 72)
 
 val LIQUIPEDIA = Liquipedia(TODO())
 
@@ -21,6 +19,9 @@ object Main {
 
     @JvmStatic
     fun main(args: Array<String>) {
+
+        //GUI.createApplication()
+        pluginThingy()
 
         /*
         val processes = Callback.getProcesses()
@@ -61,11 +62,10 @@ object Main {
             graphics.dispose()
         }
 
-        PluginModule(Path("plugins"), overlay).enable()
         //System.setOut(PrintStream(FileOutputStream("log.txt", true)))
         //System.setErr(PrintStream(FileOutputStream("err.txt", true)))
         */
-        GUI.createApplication()
+
 
 
 
@@ -82,10 +82,55 @@ object Main {
 
     }
 
-private fun createOverlay(){
-    val processes = Callback.getProcesses()
-    println("hi")
-}
+    private fun createOverlay(){
+        val processes = Callback.getProcesses()
+        println("hi")
+    }
+
+    private fun pluginThingy() {
+
+        val selected = Callback.getProcesses().find { "Notepad.exe" in it.exeLocation }!!
+        val clazz = WindowClass.define("Kats")
+
+        val window = WindowManager.createWindow(
+            WindowManager.WS_EX_TOPMOST or WindowManager.WS_EX_TRANSPARENT or WindowManager.WS_EX_LAYERED,
+            clazz = clazz,
+            windowName = "LiquidOverlay",
+            style = WindowManager.WS_POPUP.toInt(),
+            x = selected.rect.left.toInt(),
+            y = selected.rect.top.toInt(),
+            width = selected.rect.width.toInt(),
+            height = selected.rect.height.toInt()
+        )
+
+        val selectedWindow = selected.asWindow()
+
+        val overlay = OverlayImpl(window, selectedWindow)
+
+        val pluginModule = PluginModule(Path("Plugins"), overlay).apply { enable() }
+
+        overlay.onRedraw = {
+
+            /*
+
+            val bufferedImage = BufferedImage(it.canvasWidth, it.canvasHeight, BufferedImage.TYPE_INT_RGB)
+            val graphics = bufferedImage.createGraphics()
+
+            graphics.color = java.awt.Color(0, 100, 0)
+            graphics.fillRect(0, 0, bufferedImage.width, bufferedImage.height)
+
+            it.image(bufferedImage, Overlay.Position(0, 0), it.canvasWidth, it.canvasHeight)
+
+            graphics.dispose()
+            */
+            pluginModule.redraw()
+
+        }
+
+
+        window.doLoop()
+
+    }
 
 }
 

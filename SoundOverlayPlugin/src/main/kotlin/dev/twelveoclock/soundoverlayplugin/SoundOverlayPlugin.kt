@@ -2,9 +2,8 @@ package dev.twelveoclock.soundoverlayplugin
 
 import dev.twelveoclock.liquidoverlay.api.OverlayPlugin
 import dev.twelveoclock.soundoverlayplugin.modules.SoundModule
-import java.awt.Color
+import tech.poder.overlay.Overlay
 import java.awt.image.BufferedImage
-import javax.sound.sampled.AudioFormat
 
 object SoundOverlayPlugin : OverlayPlugin() {
 
@@ -13,6 +12,7 @@ object SoundOverlayPlugin : OverlayPlugin() {
 
     override fun onEnable() {
         soundModule.enable()
+        println("SoundOverlayPlugin enabled")
     }
 
     override fun onDisable() {
@@ -23,6 +23,7 @@ object SoundOverlayPlugin : OverlayPlugin() {
     override fun draw() {
 
         // TODO: MOO COWWWWWWWWW, place your audio here
+        /*
         val audioInputData = ByteArray(1_000)
         val (peakLeft, peakRight) = soundModule.tick(AudioFormat(44100f, 16, 1, true, false), audioInputData)
 
@@ -33,12 +34,33 @@ object SoundOverlayPlugin : OverlayPlugin() {
             graphics.color = Color(100, 50, 0)
             graphics.fillRect(0, bufferedImage.height / 2, 50, 100)
         }
-        if (peakRight > soundModule.averagePeakLeft()) {
+        if (peakRight > soundModule.averagePeakRight()) {
             graphics.color = Color(100, 50, 0)
             graphics.fillRect(bufferedImage.width - 50, bufferedImage.height / 2, 50, 100)
         }
+*/
+        // Testing
+
+        /*
+        val bufferedImage = BufferedImage(overlay.canvasWidth, overlay.canvasHeight, BufferedImage.TYPE_INT_RGB)
+        val graphics = bufferedImage.createGraphics()
+        graphics.color = Color(0, 100, 0)
+        graphics.fillRect(0, 0, bufferedImage.width, bufferedImage.height)
+
+        overlay.image(bufferedImage, Overlay.Position(0, 0), overlay.canvasWidth, overlay.canvasHeight)
 
         graphics.dispose()
+        */
+        val bufferedImage = BufferedImage(overlay.canvasWidth, overlay.canvasHeight, BufferedImage.TYPE_INT_RGB)
+        val graphics = bufferedImage.createGraphics()
+
+        graphics.color = java.awt.Color(0, 100, 0)
+        graphics.fillRect(0, 0, bufferedImage.width, bufferedImage.height)
+
+        overlay.image(bufferedImage, Overlay.Position(0, 0), overlay.canvasWidth, overlay.canvasHeight)
+
+        graphics.dispose()
+
     }
 
 }

@@ -6,6 +6,8 @@ import kotlinx.serialization.json.Json
 import tech.poder.overlay.Overlay
 import java.net.URLClassLoader
 import java.nio.file.Path
+import kotlin.io.path.createDirectories
+import kotlin.io.path.exists
 import kotlin.io.path.listDirectoryEntries
 import kotlin.reflect.KClass
 
@@ -15,6 +17,10 @@ class PluginModule(val pluginsFolder: Path, val overlay: Overlay) : BasicModule(
 
 
     override fun onEnable() {
+
+        if (!pluginsFolder.exists()) {
+            pluginsFolder.createDirectories()
+        }
 
         val mainClassLoader = this::class.java.classLoader
 
@@ -26,6 +32,7 @@ class PluginModule(val pluginsFolder: Path, val overlay: Overlay) : BasicModule(
             (pluginClassLoader.loadClass(config.mainClassPath).kotlin as KClass<OverlayPlugin>).objectInstance!!.also {
                 it.overlay = overlay
                 it.enable()
+                it.draw()
             }
         }
 
@@ -37,7 +44,7 @@ class PluginModule(val pluginsFolder: Path, val overlay: Overlay) : BasicModule(
     }
 
 
-    internal fun onResize() {
+    internal fun redraw() {
         loadedPlugins.forEach {
             it.draw()
         }

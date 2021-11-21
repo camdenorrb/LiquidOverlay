@@ -107,7 +107,7 @@ internal class TestHook {
         val processes = Callback.getProcesses()
         var i = 0
         processes.forEachIndexed { index, process ->
-            if (process.exeLocation.contains("Overwatch.exe")) {
+            if (process.exeLocation.contains("Notepad.exe")) {
                 i = index
             }
             println("$index: ${process.title}(${process.exeLocation})")
@@ -127,7 +127,9 @@ internal class TestHook {
         )
         val selectedWindow = selected.asWindow()
 
-        val overlay = OverlayImpl(window, selectedWindow) {
+        val overlay = OverlayImpl(window, selectedWindow)
+
+        overlay.onRedraw = {
 
             val bufferedImage = BufferedImage(it.canvasWidth, it.canvasHeight, BufferedImage.TYPE_INT_RGB)
             val graphics = bufferedImage.createGraphics()
@@ -185,7 +187,9 @@ internal class TestHook {
             graphics.dispose()
         }
 
-        val overlay = OverlayImpl(window, selectedWindow) {
+        val overlay = OverlayImpl(window, selectedWindow)
+        
+        overlay.onRedraw = {
             draw(it)
         }
 
