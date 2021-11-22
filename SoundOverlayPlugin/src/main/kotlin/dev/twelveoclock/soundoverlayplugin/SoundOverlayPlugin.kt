@@ -3,6 +3,7 @@ package dev.twelveoclock.soundoverlayplugin
 import dev.twelveoclock.liquidoverlay.api.OverlayPlugin
 import dev.twelveoclock.soundoverlayplugin.modules.SoundModule
 import tech.poder.overlay.Overlay
+import java.awt.Color
 import java.awt.image.BufferedImage
 
 object SoundOverlayPlugin : OverlayPlugin() {
@@ -41,16 +42,24 @@ object SoundOverlayPlugin : OverlayPlugin() {
 */
         // Testing
 
-        /*
+
         val bufferedImage = BufferedImage(overlay.canvasWidth, overlay.canvasHeight, BufferedImage.TYPE_INT_RGB)
         val graphics = bufferedImage.createGraphics()
-        graphics.color = Color(0, 100, 0)
+
+        // Draw transparent background
+        graphics.color = Color(255, 0, 0)
         graphics.fillRect(0, 0, bufferedImage.width, bufferedImage.height)
+
+        // Draw left/right bars
+        graphics.color = Color(100, 50, 0)
+        graphics.fillRect(0, 0, 5, bufferedImage.height)
+        graphics.fillRect(bufferedImage.width - 5, 0, 5, bufferedImage.height)
 
         overlay.image(bufferedImage, Overlay.Position(0, 0), overlay.canvasWidth, overlay.canvasHeight)
 
         graphics.dispose()
-        */
+
+        /*
         val bufferedImage = BufferedImage(overlay.canvasWidth, overlay.canvasHeight, BufferedImage.TYPE_INT_RGB)
         val graphics = bufferedImage.createGraphics()
 
@@ -60,7 +69,7 @@ object SoundOverlayPlugin : OverlayPlugin() {
         overlay.image(bufferedImage, Overlay.Position(0, 0), overlay.canvasWidth, overlay.canvasHeight)
 
         graphics.dispose()
-
+        */
     }
 
 }

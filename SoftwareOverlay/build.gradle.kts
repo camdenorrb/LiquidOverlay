@@ -54,6 +54,9 @@ tasks {
         targetCompatibility = javaVersion
     }
 
+    register("runAfterMakingPlugins") {
+        dependsOn( "run", ":SoundOverlayPlugin:writePlugin")
+    }
 
 }
 

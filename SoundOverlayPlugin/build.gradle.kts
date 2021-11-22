@@ -48,6 +48,13 @@ tasks {
         targetCompatibility = javaVersion
     }
 
+
+    register("writePlugin") {
+        dependsOn("clean", "shadowJar")
+        val pluginsFolder = File("../SoftwareOverlay/Plugins")
+        shadowJar.get().archiveFile.get().asFile.copyTo(pluginsFolder.resolve(shadowJar.get().archiveFileName.get()), true)
+    }
+
 }
 
 testing {

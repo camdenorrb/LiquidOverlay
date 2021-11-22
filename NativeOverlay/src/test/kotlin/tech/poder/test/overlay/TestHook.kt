@@ -188,7 +188,7 @@ internal class TestHook {
         }
 
         val overlay = OverlayImpl(window, selectedWindow)
-        
+
         overlay.onRedraw = {
             draw(it)
         }
