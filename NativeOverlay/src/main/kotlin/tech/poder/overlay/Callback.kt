@@ -396,6 +396,30 @@ object Callback {
         )
     )
 
+    private val getNextPacketSize = NativeRegistry.register(
+        FunctionDescription(
+            "GetNextPacketSize", params = listOf(MemoryAddress::class.java)
+        )
+    )
+
+    private val getBuffer = NativeRegistry.register(
+        FunctionDescription(
+            "GetBuffer", params = listOf(MemoryAddress::class.java)
+        )
+    )
+
+    private val releaseBuffer = NativeRegistry.register(
+        FunctionDescription(
+            "ReleaseBuffer", params = listOf(MemoryAddress::class.java)
+        )
+    )
+
+    private val stopRecording = NativeRegistry.register(
+        FunctionDescription(
+            "StopRecording", params = listOf(MemoryAddress::class.java)
+        )
+    )
+
     fun newState(): StructInstance {
         return state.new()
     }
@@ -403,4 +427,21 @@ object Callback {
     fun startRecording(state: StructInstance) {
         NativeRegistry[startRecording].invoke(state.segment.address())
     }
+
+    fun getNextPacketSize(state: StructInstance) {
+        NativeRegistry[getNextPacketSize].invoke(state.segment.address())
+    }
+
+    fun getBuffer(state: StructInstance) {
+        NativeRegistry[getBuffer].invoke(state.segment.address())
+    }
+
+    fun releaseBuffer(state: StructInstance) {
+        NativeRegistry[releaseBuffer].invoke(state.segment.address())
+    }
+
+    fun stopRecording(state: StructInstance) {
+        NativeRegistry[stopRecording].invoke(state.segment.address())
+    }
+
 }
