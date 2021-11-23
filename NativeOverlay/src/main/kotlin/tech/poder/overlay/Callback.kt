@@ -373,9 +373,9 @@ object Callback {
     private val state = StructDefinition.generate(
         listOf(
             Int::class.java,
+            Int::class.java,
+            Int::class.java,
             Double::class.java,
-            MemoryAddress::class.java,
-            MemoryAddress::class.java,
             MemoryAddress::class.java,
             MemoryAddress::class.java,
             MemoryAddress::class.java,
@@ -426,22 +426,42 @@ object Callback {
 
     fun startRecording(state: StructInstance) {
         NativeRegistry[startRecording].invoke(state.segment.address())
+        val hr = MemoryAccess.getIntAtOffset(state.segment, state[0])
+        check(hr >= 0) {
+            "Failed to start recording! Code: $hr  MSG: ${CLinker.toJavaString(MemoryAccess.getAddressAtOffset(state.segment, state[2]))}"
+        }
     }
 
     fun getNextPacketSize(state: StructInstance) {
         NativeRegistry[getNextPacketSize].invoke(state.segment.address())
+        val hr = MemoryAccess.getIntAtOffset(state.segment, state[0])
+        check(hr >= 0) {
+            "Failed to get next packet size! Code: $hr  MSG: ${CLinker.toJavaString(MemoryAccess.getAddressAtOffset(state.segment, state[2]))}"
+        }
     }
 
     fun getBuffer(state: StructInstance) {
         NativeRegistry[getBuffer].invoke(state.segment.address())
+        val hr = MemoryAccess.getIntAtOffset(state.segment, state[0])
+        check(hr >= 0) {
+            "Failed to get buffer! Code: $hr  MSG: ${CLinker.toJavaString(MemoryAccess.getAddressAtOffset(state.segment, state[2]))}"
+        }
     }
 
     fun releaseBuffer(state: StructInstance) {
         NativeRegistry[releaseBuffer].invoke(state.segment.address())
+        val hr = MemoryAccess.getIntAtOffset(state.segment, state[0])
+        check(hr >= 0) {
+            "Failed to release buffer! Code: $hr  MSG: ${CLinker.toJavaString(MemoryAccess.getAddressAtOffset(state.segment, state[2]))}"
+        }
     }
 
     fun stopRecording(state: StructInstance) {
         NativeRegistry[stopRecording].invoke(state.segment.address())
+        val hr = MemoryAccess.getIntAtOffset(state.segment, state[0])
+        check(hr >= 0) {
+            "Failed to stop recording! Code: $hr  MSG: ${CLinker.toJavaString(MemoryAccess.getAddressAtOffset(state.segment, state[2]))}"
+        }
     }
 
 }

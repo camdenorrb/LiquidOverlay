@@ -2,11 +2,10 @@ package tech.poder.test.overlay
 
 import jdk.incubator.foreign.CLinker
 import jdk.incubator.foreign.MemoryAccess
-import jdk.incubator.foreign.MemoryAddress
 import tech.poder.overlay.*
 import java.awt.Color
 import java.awt.image.BufferedImage
-import kotlin.math.ceil
+import kotlin.experimental.and
 import kotlin.test.Test
 
 internal class TestHook {
@@ -200,22 +199,46 @@ internal class TestHook {
         overlay.close()
     }
 
+    val AUDCLNT_BUFFERFLAGS_SILENT: Byte = 2
+
+    fun getPNumFramesInPacket(state: StructInstance): UInt {
+        return MemoryAccess.getIntAtOffset(state.segment, state[1]).toUInt()
+    }
+
+    fun getPFlags(state: StructInstance): Byte {
+        return MemoryAccess.getByteAtOffset(state.segment, state[2])
+    }
 
     @Test
     fun basicAudio() {
         val state = Callback.newState()
 
         Callback.startRecording(state)
-        val hr = MemoryAccess.getIntAtOffset(state.segment, state[0])
-        check(hr >= 0) {
-            "Failed to start recording! Code: $hr  MSG: ${CLinker.toJavaString(MemoryAccess.getAddressAtOffset(state.segment, state[2]))}"
-        }
-        val hnsPeriod = MemoryAccess.getDoubleAtOffset(state.segment, state[1])
+        val hnsPeriod = MemoryAccess.getDoubleAtOffset(state.segment, state[3])
+        val sleepTime = ((hnsPeriod / 10000.0) / 2.0).toLong()
         var counter = 0
+        var dataLength = 0u
         while (counter < 30) {
-            Thread.sleep(1000)
+            println("at top of loop")
+            // Sleep for half the buffer duration.
+            Thread.sleep(sleepTime)
             counter++
+            Callback.getNextPacketSize(state)
+            var packetLength = getPNumFramesInPacket(state)
+            while (packetLength != 0u) {
+                Callback.getBuffer(state)
+
+                val flags = getPFlags(state)
+                if (flags and AUDCLNT_BUFFERFLAGS_SILENT != 0.toByte()) {
+                    println("SILENT")
+                }
+                dataLength += getPNumFramesInPacket(state)
+                Callback.releaseBuffer(state)
+                Callback.getNextPacketSize(state)
+                packetLength = getPNumFramesInPacket(state)
+            }
         }
+        println(dataLength)
     }
 
 }
