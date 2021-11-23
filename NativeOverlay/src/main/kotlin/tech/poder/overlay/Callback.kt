@@ -370,10 +370,13 @@ object Callback {
         return denseProcesses
     }
 
-    val state = StructDefinition.generate(
+    private val state = StructDefinition.generate(
         listOf(
             Int::class.java,
             Double::class.java,
+            MemoryAddress::class.java,
+            MemoryAddress::class.java,
+            MemoryAddress::class.java,
             MemoryAddress::class.java,
             MemoryAddress::class.java,
             MemoryAddress::class.java,
@@ -387,7 +390,7 @@ object Callback {
         MemoryAddress::class.java
     ))*/
 
-    val startRecording = NativeRegistry.register(
+    private val startRecording = NativeRegistry.register(
         FunctionDescription(
             "StartRecording", params = listOf(MemoryAddress::class.java)
         )
