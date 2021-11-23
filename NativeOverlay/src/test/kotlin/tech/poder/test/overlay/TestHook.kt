@@ -200,6 +200,11 @@ internal class TestHook {
 
     @Test
     fun basicAudio() {
+
+        NativeRegistry[Callback.startRecordingNative].invoke()
+        /*
+        val testMidnight = NativeRegistry[Callback.recordSomething].invoke() as Long
+        println(testMidnight)
         val pDevice = Callback.getDefaultAudioDevice()
         val pAudioClient = Callback.activateAudioClient(pDevice)
         val mixInfo = Callback.getMixFormat(pAudioClient)
@@ -209,8 +214,8 @@ internal class TestHook {
         val hnsPeriod = Callback.getActualDuration(mixInfo, bufferFrameCount)
         while (true) {
             Thread.sleep(ceil(hnsPeriod).toLong())
-
         }
+        */
     }
 
 }

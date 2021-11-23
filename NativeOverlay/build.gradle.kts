@@ -26,6 +26,10 @@ tasks {
 
     val javaVersion = JavaVersion.VERSION_17.toString()
 
+    build {
+        dependsOn(clean)
+    }
+
     withType<KotlinCompile> {
         sourceCompatibility = javaVersion
         targetCompatibility = javaVersion

@@ -55,7 +55,7 @@ tasks {
     }
 
     register("runAfterMakingPlugins") {
-        dependsOn( "run", ":SoundOverlayPlugin:writePlugin")
+        dependsOn("run", ":SoundOverlayPlugin:writePlugin")
     }
 
 }

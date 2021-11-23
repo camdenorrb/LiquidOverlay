@@ -34,7 +34,7 @@ value class WindowClass(val clazzPointer: MemoryAddress) : AutoCloseable {
             )
         )
 
-        val createSolidBrush = kotlin.run {
+        val createSolidBrush = run {
             NativeRegistry.loadLib("Gdi32")
             NativeRegistry.register(
                 FunctionDescription(
@@ -43,7 +43,7 @@ value class WindowClass(val clazzPointer: MemoryAddress) : AutoCloseable {
             )
         }
 
-        private val invisibleBrush = kotlin.run {
+        private val invisibleBrush = run {
             val result = NativeRegistry[createSolidBrush].invoke(WindowManager.invisible) as MemoryAddress
             check(result != MemoryAddress.NULL) {
                 "CreateSolidBrush failed: ${NativeRegistry[Callback.getLastError].invoke()}"
