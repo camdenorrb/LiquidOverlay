@@ -1,6 +1,7 @@
 package tech.poder.overlay
 
 import jdk.incubator.foreign.*
+import tech.poder.overlay.utils.NativeUtils
 import java.awt.Color
 
 data class WindowManager(val window: MemoryAddress) : AutoCloseable {
@@ -29,7 +30,8 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
             WS_OVERLAPPED or WS_CAPTION or WS_SYSMENU or WS_THICKFRAME or WS_MINIMIZEBOX or WS_MAXIMIZEBOX
 
         private val createWindow = run {
-            NativeRegistry.loadLib(
+
+            NativeUtils.loadLibraries(
                 "kernel32",
                 "user32",
                 "gdi32",
@@ -37,63 +39,55 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
                 "kernel32",
                 "psapi"
             )
-            NativeRegistry.register(
-                FunctionDescription(
-                    "CreateWindowExW", MemoryAddress::class.java, listOf(
-                        Int::class.java,
-                        MemoryAddress::class.java,
-                        MemoryAddress::class.java,
-                        Int::class.java,
-                        Int::class.java,
-                        Int::class.java,
-                        Int::class.java,
-                        Int::class.java,
-                        MemoryAddress::class.java,
-                        MemoryAddress::class.java,
-                        MemoryAddress::class.java,
-                        MemoryAddress::class.java
-                    )
+
+            NativeUtils.lookupMethodHandle(
+                "CreateWindowExW",
+                MemoryAddress::class.java,
+                listOf(
+                    Int::class.java,
+                    MemoryAddress::class.java,
+                    MemoryAddress::class.java,
+                    Int::class.java,
+                    Int::class.java,
+                    Int::class.java,
+                    Int::class.java,
+                    Int::class.java,
+                    MemoryAddress::class.java,
+                    MemoryAddress::class.java,
+                    MemoryAddress::class.java,
+                    MemoryAddress::class.java
                 )
             )
         }
 
-        private val showWindow = run {
-            NativeRegistry.loadLib("user32")
-            NativeRegistry.register(
-                FunctionDescription(
-                    "ShowWindow", Boolean::class.java, listOf(
-                        MemoryAddress::class.java,
-                        Int::class.java,
-                    )
-                )
+        private val showWindow = NativeUtils.lookupMethodHandle(
+            "ShowWindow",
+            Boolean::class.java,
+            listOf(
+                MemoryAddress::class.java,
+                Int::class.java,
             )
-        }
+        )
 
-        internal val defWindowProcW = run {
-            NativeRegistry.loadLib("user32")
-            NativeRegistry.register(
-                FunctionDescription(
-                    "DefWindowProcW", MemoryAddress::class.java, listOf(
-                        MemoryAddress::class.java, Int::class.java, MemoryAddress::class.java, MemoryAddress::class.java
-                    )
-                )
+        internal val defWindowProcW = NativeUtils.lookupMethodHandle(
+            "DefWindowProcW",
+            MemoryAddress::class.java,
+            listOf(
+                MemoryAddress::class.java, Int::class.java, MemoryAddress::class.java, MemoryAddress::class.java
             )
-        }
+        )
+
 
         val invisibleColor = Color(255, 0, 0, 0)
         val invisibleRGB = Color(invisibleColor.red, invisibleColor.green, invisibleColor.blue, invisibleColor.alpha).rgb
         val invisible = Color(invisibleColor.blue, invisibleColor.green, invisibleColor.red, invisibleColor.alpha).rgb
 
-        private val setLayeredWindowAttributes = run {
-            NativeRegistry.loadLib("user32")
-            NativeRegistry.register(
-                FunctionDescription(
-                    "SetLayeredWindowAttributes", Boolean::class.java, listOf(
-                        MemoryAddress::class.java, Int::class.java, Byte::class.java, Int::class.java
-                    )
-                )
-            )
-        }
+        private val setLayeredWindowAttributes = NativeUtils.lookupMethodHandle(
+            "SetLayeredWindowAttributes",
+            Boolean::class.java,
+            listOf(MemoryAddress::class.java, Int::class.java, Byte::class.java, Int::class.java)
+        )
+
 
         fun createWindow(
             exStyle: Int = 0,
@@ -118,11 +112,12 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
             val parentWindow = parent?.window ?: MemoryAddress.NULL
             val menuWindow = menu?.window ?: MemoryAddress.NULL
 
-            val pidInstance =
-                instance?.handle ?: NativeRegistry[Callback.getModuleHandle].invoke(MemoryAddress.NULL) as MemoryAddress
+            val pidInstance = instance?.handle
+                ?: NativeAPI.getModuleHandle(MemoryAddress.NULL) as MemoryAddress
 
             val storage = param?.segment?.address() ?: MemoryAddress.NULL
-            val result = NativeRegistry[createWindow].invoke(
+
+            val result = createWindow.invoke(
                 exStyle,
                 clazz.clazzPointer,
                 windowNameAddress.address(),
@@ -136,71 +131,62 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
                 pidInstance,
                 storage
             ) as MemoryAddress
+
             println(result)
+
             check(result != MemoryAddress.NULL) {
-                "Failed to create window: ${NativeRegistry[Callback.getLastError].invoke()}"
+                "Failed to create window: ${NativeAPI.getLastError.invoke()}"
             }
 
 
-            val result2 =
-                NativeRegistry[setLayeredWindowAttributes].invoke(result, invisible, 0.toByte(), 0x00000001) as Int
+            val result2 = setLayeredWindowAttributes.invoke(result, invisible, 0.toByte(), 0x00000001) as Int
+
             check(result2 != 0) {
-                "Failed to set layered window attributes: ${NativeRegistry[Callback.getLastError].invoke()}"
+                "Failed to set layered window attributes: ${NativeAPI.getLastError()}"
             }
-            NativeRegistry[showWindow].invoke(result, 5)
+
+            showWindow(result, 5)
             tmpScope.close()
 
             return WindowManager(result)
         }
 
-        val getMessage = run {
-            NativeRegistry.loadLib("user32")
-            NativeRegistry.register(
-                FunctionDescription(
-                    "GetMessageW", Boolean::class.java, listOf(
-                        MemoryAddress::class.java, MemoryAddress::class.java, Int::class.java, Int::class.java
-                    )
-                )
+        val getMessage = NativeUtils.lookupMethodHandle(
+            "GetMessageW",
+            Boolean::class.java, listOf(
+                MemoryAddress::class.java, MemoryAddress::class.java, Int::class.java, Int::class.java
             )
-        }
+        )
 
-        val dispatchMessage = run {
-            NativeRegistry.loadLib("user32")
-            NativeRegistry.register(
-                FunctionDescription(
-                    "DispatchMessageW", Int::class.java, listOf(
-                        MemoryAddress::class.java
-                    )
-                )
+        val dispatchMessage = NativeUtils.lookupMethodHandle(
+            "DispatchMessageW",
+            Int::class.java,
+            listOf(
+                MemoryAddress::class.java
             )
-        }
+        )
 
-        val translateMessage = run {
-            NativeRegistry.loadLib("user32")
-            NativeRegistry.register(
-                FunctionDescription(
-                    "TranslateMessage", Boolean::class.java, listOf(
-                        MemoryAddress::class.java
-                    )
-                )
+        val translateMessage = NativeUtils.lookupMethodHandle(
+            "TranslateMessage",
+            Boolean::class.java,
+            listOf(
+                MemoryAddress::class.java
             )
-        }
-        val setWindowPosition = run {
-            NativeRegistry.loadLib("user32")
-            NativeRegistry.register(
-                FunctionDescription(
-                    "SetWindowPos", Boolean::class.java, listOf(
-                        MemoryAddress::class.java,
-                        MemoryAddress::class.java,
-                        Int::class.java,
-                        Int::class.java,
-                        Int::class.java,
-                        Int::class.java,
-                        Int::class.java
-                    )
-                )
+        )
+
+        val setWindowPosition = NativeUtils.lookupMethodHandle(
+            "SetWindowPos",
+            Boolean::class.java,
+            listOf(
+                MemoryAddress::class.java,
+                MemoryAddress::class.java,
+                Int::class.java,
+                Int::class.java,
+                Int::class.java,
+                Int::class.java,
+                Int::class.java
             )
-        }
+        )
 
         val msgStruct = StructDefinition.generate(
             listOf(
@@ -214,81 +200,68 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
             )
         )
 
-        val moveWindow = run {
-            NativeRegistry.loadLib("user32")
-            NativeRegistry.register(
-                FunctionDescription(
-                    "MoveWindow", Boolean::class.java, listOf(
-                        MemoryAddress::class.java,
-                        Int::class.java,
-                        Int::class.java,
-                        Int::class.java,
-                        Int::class.java,
-                        Boolean::class.java
-                    )
-                )
-            )
-        }
-
-        val isWindow = run {
-            NativeRegistry.loadLib("user32")
-            NativeRegistry.register(
-                FunctionDescription(
-                    "IsWindow", Boolean::class.java, listOf(
-                        MemoryAddress::class.java
-                    )
-                )
-            )
-        }
-
-        val isWindowVisible = run {
-            NativeRegistry.loadLib("user32")
-            NativeRegistry.register(
-                FunctionDescription(
-                    "IsWindowVisible", Boolean::class.java, listOf(
-                        MemoryAddress::class.java
-                    )
-                )
-            )
-        }
-
-        val beginPaint = NativeRegistry.register(
-            FunctionDescription(
-                "BeginPaint", MemoryAddress::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
+        val moveWindow = NativeUtils.lookupMethodHandle(
+            "MoveWindow",
+            Boolean::class.java,
+            listOf(
+                MemoryAddress::class.java,
+                Int::class.java,
+                Int::class.java,
+                Int::class.java,
+                Int::class.java,
+                Boolean::class.java
             )
         )
 
-        val endPaint = NativeRegistry.register(
-            FunctionDescription(
-                "EndPaint", Boolean::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
+        val isWindow = NativeUtils.lookupMethodHandle(
+            "IsWindow",
+            Boolean::class.java,
+            listOf(
+                MemoryAddress::class.java
             )
         )
 
-        val updateWindow = NativeRegistry.register(
-            FunctionDescription(
-                "UpdateWindow", Boolean::class.java, listOf(MemoryAddress::class.java)
+
+        val isWindowVisible = NativeUtils.lookupMethodHandle(
+            "IsWindowVisible",
+            Boolean::class.java,
+            listOf(
+                MemoryAddress::class.java
             )
         )
 
-        val textOutA = NativeRegistry.register(
-            FunctionDescription(
-                "TextOutA", Boolean::class.java, listOf(
-                    MemoryAddress::class.java,
-                    Int::class.java,
-                    Int::class.java,
-                    MemoryAddress::class.java,
-                    Int::class.java
-                )
+        val beginPaint = NativeUtils.lookupMethodHandle(
+            "BeginPaint", MemoryAddress::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
+        )
+
+
+        val endPaint = NativeUtils.lookupMethodHandle(
+            "EndPaint", Boolean::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
+        )
+
+        val updateWindow = NativeUtils.lookupMethodHandle(
+            "UpdateWindow", Boolean::class.java, listOf(MemoryAddress::class.java)
+        )
+
+        val textOutA = NativeUtils.lookupMethodHandle(
+            "TextOutA",
+            Boolean::class.java,
+            listOf(
+                MemoryAddress::class.java,
+                Int::class.java,
+                Int::class.java,
+                MemoryAddress::class.java,
+                Int::class.java
             )
         )
 
-        val invalidateRect = NativeRegistry.register(
-            FunctionDescription(
-                "InvalidateRect", Boolean::class.java, listOf(
-                    MemoryAddress::class.java,
-                    MemoryAddress::class.java,
-                    Boolean::class.java
-                )
+        val invalidateRect = NativeUtils.lookupMethodHandle(
+            "InvalidateRect",
+            Boolean::class.java,
+            listOf(
+                MemoryAddress::class.java,
+                MemoryAddress::class.java,
+                Boolean::class.java
             )
         )
 
@@ -308,42 +281,42 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
     fun doLoop(extra: () -> Unit = {}) {
         val scope = ResourceScope.newConfinedScope()
         val storage = MemorySegment.allocateNative(msgStruct.size, scope)
-        while (NativeRegistry[getMessage].invoke(storage.address(), window, 0, 0) as Int != 0) {
-            NativeRegistry[translateMessage].invoke(storage.address())
-            NativeRegistry[dispatchMessage].invoke(storage.address())
+        while (getMessage(storage.address(), window, 0, 0) as Int != 0) {
+            translateMessage(storage.address())
+            dispatchMessage(storage.address())
             extra.invoke()
         }
     }
 
     fun showWindow() {
-        NativeRegistry[showWindow].invoke(window, 5)
+        showWindow(window, 5)
     }
 
     fun hideWindow() {
-        NativeRegistry[showWindow].invoke(window, 0)
+        showWindow(window, 0)
     }
 
     fun setWindowPosition(
         afterOther: WindowManager? = null, x: Int = 0, y: Int = 0, cx: Int = 0, cy: Int = 0, flags: Int = 0
     ): Boolean {
         val other = afterOther?.window ?: MemoryAddress.NULL
-        return NativeRegistry[setWindowPosition].invoke(window, other, x, y, cx, cy, flags) as Int != 0
+        return setWindowPosition(window, other, x, y, cx, cy, flags) as Int != 0
     }
 
     fun getWindowRect(storage: ExternalStorage) {
-        NativeRegistry[Callback.getWindowRect].invoke(window, storage.segment.address())
+        NativeAPI.getWindowRect(window, storage.segment.address())
     }
 
     fun isAlive(): Boolean {
-        return NativeRegistry[isWindow].invoke(window) as Int != 0
+        return isWindow(window) as Int != 0
     }
 
     fun isVisible(): Boolean {
-        return NativeRegistry[isWindowVisible].invoke(window) as Int != 0
+        return isWindowVisible(window) as Int != 0
     }
 
     fun moveWindow(x: Int = 0, y: Int = 0, width: Int = 0, height: Int = 0, repaint: Int = 0): Boolean {
-        return NativeRegistry[moveWindow].invoke(window, x, y, width, height, repaint) != 0
+        return moveWindow(window, x, y, width, height, repaint) != 0
     }
 
     var changed = false
@@ -353,45 +326,59 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
     }
 
     fun startPaint() {
+
         check(dc == MemoryAddress.NULL) {
             "Already started painting"
         }
+
         if (changed) {
             zeroOut()
         }
-        dc = NativeRegistry[beginPaint].invoke(window, paintStruct.address()) as MemoryAddress
+
+        dc = beginPaint(window, paintStruct.address()) as MemoryAddress
+
         check(dc != MemoryAddress.NULL) {
             "Failed to get DC"
         }
     }
 
     fun drawText(text: String, x: Int, y: Int) {
+
         changed = true
+
         check(dc != MemoryAddress.NULL) {
             "Not painting"
         }
+
         text.forEachIndexed { index, c ->
             MemoryAccess.setCharAtIndex(stringStorage, index.toLong(), c)
         }
-        val result = NativeRegistry[textOutA].invoke(dc, x, y, stringStorage.address(), text.length)
+
+        val result = textOutA(dc, x, y, stringStorage.address(), text.length)
+
         check(result != 0) {
             "Failed to draw text"
         }
     }
 
     fun updateWindow(): Boolean {
-        val res1 = NativeRegistry[invalidateRect].invoke(window, MemoryAddress.NULL, 0)
+
+        val res1 = invalidateRect(window, MemoryAddress.NULL, 0)
+
         if (res1 == 0) {
             return false
         }
-        return NativeRegistry[updateWindow].invoke(window) != 0
+
+        return updateWindow(window) != 0
     }
 
     fun endPaint() {
+
         check(dc != MemoryAddress.NULL) {
             "Not painting"
         }
-        NativeRegistry[endPaint].invoke(window, dc)
+
+        endPaint(window, dc)
         dc = MemoryAddress.NULL
         changed = false
     }
@@ -399,4 +386,5 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
     override fun close() {
         TODO("Not yet implemented")
     }
+
 }

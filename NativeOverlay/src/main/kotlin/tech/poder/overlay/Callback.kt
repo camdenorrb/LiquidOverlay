@@ -11,68 +11,46 @@ object Callback {
     val init = NativeRegistry.loadLib("Comctl32", "Ole32", "user32", "kernel32", "psapi")
     val init2 = NativeRegistry.loadLib(Paths.get("libnew.dll").toAbsolutePath())
 
-    val getLastError = NativeRegistry.register(
-        FunctionDescription(
-            "GetLastError", Int::class.java
-        )
-    )
+    val getLastError = NativeRegistry.register("GetLastError", Int::class.java)
 
     private val enumWindows = NativeRegistry.register(
-        FunctionDescription(
-            "EnumWindows", Byte::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
-        )
+        "EnumWindows", Byte::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
     )
 
     private val getWindowThreadProcessId = NativeRegistry.register(
-        FunctionDescription(
-            "GetWindowThreadProcessId", Int::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
-        )
+        "GetWindowThreadProcessId", Int::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
     )
 
     private val isWindowVisible = NativeRegistry.register(
-        FunctionDescription(
-            "IsWindowVisible", Boolean::class.java, listOf(MemoryAddress::class.java)
-        )
+        "IsWindowVisible", Boolean::class.java, listOf(MemoryAddress::class.java)
     )
 
     private val getWindow = NativeRegistry.register(
-        FunctionDescription(
-            "GetWindow", MemoryAddress::class.java, listOf(MemoryAddress::class.java, Int::class.java)
-        )
+        "GetWindow", MemoryAddress::class.java, listOf(MemoryAddress::class.java, Int::class.java)
     )
 
     private val getDC = NativeRegistry.register(
-        FunctionDescription(
-            "GetDC", MemoryAddress::class.java, listOf(MemoryAddress::class.java)
-        )
+        "GetDC", MemoryAddress::class.java, listOf(MemoryAddress::class.java)
     )
 
     private val releaseDC = NativeRegistry.register(
-        FunctionDescription(
-            "ReleaseDC", MemoryAddress::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
-        )
+        "ReleaseDC", MemoryAddress::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
     )
 
     private val getClassNameA = NativeRegistry.register(
-        FunctionDescription(
-            "GetClassNameA",
-            Int::class.java,
-            listOf(MemoryAddress::class.java, MemoryAddress::class.java, Int::class.java)
-        )
+        "GetClassNameA",
+        Int::class.java,
+        listOf(MemoryAddress::class.java, MemoryAddress::class.java, Int::class.java)
     )
 
     private val getWindowTextA = NativeRegistry.register(
-        FunctionDescription(
-            "GetWindowTextA",
-            Int::class.java,
-            listOf(MemoryAddress::class.java, MemoryAddress::class.java, Int::class.java)
-        )
+        "GetWindowTextA",
+        Int::class.java,
+        listOf(MemoryAddress::class.java, MemoryAddress::class.java, Int::class.java)
     )
 
     val getWindowRect = NativeRegistry.register(
-        FunctionDescription(
-            "GetWindowRect", Boolean::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
-        )
+        "GetWindowRect", Boolean::class.java, listOf(MemoryAddress::class.java, MemoryAddress::class.java)
     )
 
     private val getWindowModuleFileNameA = NativeRegistry.register(
@@ -84,43 +62,41 @@ object Callback {
     )
 
     private val openProcess = NativeRegistry.register(
-        FunctionDescription(
-            "OpenProcess", MemoryAddress::class.java, listOf(Int::class.java, Boolean::class.java, Int::class.java)
-        )
+        "OpenProcess", MemoryAddress::class.java, listOf(Int::class.java, Boolean::class.java, Int::class.java)
     )
 
     private val getModuleFileNameExA = NativeRegistry.register(
-        FunctionDescription(
-            "GetModuleFileNameExA",
-            Int::class.java,
-            listOf(MemoryAddress::class.java, MemoryAddress::class.java, MemoryAddress::class.java, Int::class.java)
-        )
+        "GetModuleFileNameExA",
+        Int::class.java,
+        listOf(MemoryAddress::class.java, MemoryAddress::class.java, MemoryAddress::class.java, Int::class.java)
     )
 
     val closeHandle = NativeRegistry.register(
-        FunctionDescription(
-            "CloseHandle", Boolean::class.java, listOf(MemoryAddress::class.java)
-        )
+        "CloseHandle", Boolean::class.java, listOf(MemoryAddress::class.java)
     )
 
     val enumProcessModules = NativeRegistry.register(
-        FunctionDescription(
-            "EnumProcessModules",
-            Boolean::class.java,
-            listOf(MemoryAddress::class.java, MemoryAddress::class.java, Int::class.java, MemoryAddress::class.java)
-        )
+        "EnumProcessModules",
+        Boolean::class.java,
+        listOf(MemoryAddress::class.java, MemoryAddress::class.java, Int::class.java, MemoryAddress::class.java)
     )
 
     private fun <T> getExpanding(invoke: (Long, MemorySegment) -> T?): T {
+
         var result: T? = null
         var size = 0L
+
         while (result == null) {
+
             if (size == 0L) {
                 size = 256L
             }
+
             size *= 2L
+
             val scope = ResourceScope.newConfinedScope()
             val holder = MemorySegment.allocateNative(size, scope)
+
             result = invoke.invoke(size, holder)
             scope.close()
         }
@@ -128,9 +104,10 @@ object Callback {
     }
 
     fun isMainWindow(hwnd: MemoryAddress): Boolean {
-        return NativeRegistry[isWindowVisible].invoke(hwnd) as Int != 0 && NativeRegistry[getWindow].invoke(
-            hwnd, 4
-        ) as MemoryAddress == MemoryAddress.NULL
+        return (
+            NativeRegistry[isWindowVisible].invoke(hwnd) as Int != 0 &&
+            NativeRegistry[getWindow].invoke(hwnd, 4) == MemoryAddress.NULL
+        )
     }
 
     @JvmStatic
@@ -146,52 +123,47 @@ object Callback {
     }
 
     val imageListCreate = NativeRegistry.register(
-        FunctionDescription(
-            "ImageList_Create",
-            MemoryAddress::class.java,
-            listOf(Int::class.java, Int::class.java, Int::class.java, Int::class.java, Int::class.java)
-        )
+        "ImageList_Create",
+        MemoryAddress::class.java,
+        listOf(Int::class.java, Int::class.java, Int::class.java, Int::class.java, Int::class.java)
     )
 
     val imageListDestroy = NativeRegistry.register(
-        FunctionDescription(
-            "ImageList_Destroy", Boolean::class.java, listOf(MemoryAddress::class.java)
-        )
+        "ImageList_Destroy", Boolean::class.java, listOf(MemoryAddress::class.java)
     )
 
     val imageListAdd = NativeRegistry.register(
-        FunctionDescription(
-            "ImageList_AddMasked",
-            Int::class.java,
-            listOf(MemoryAddress::class.java, MemoryAddress::class.java, Int::class.java)
-        )
+        "ImageList_AddMasked",
+        Int::class.java,
+        listOf(MemoryAddress::class.java, MemoryAddress::class.java, Int::class.java)
     )
 
     val loadImage = NativeRegistry.register(
-        FunctionDescription(
-            "LoadImageW", MemoryAddress::class.java, listOf(
-                MemoryAddress::class.java,
-                MemoryAddress::class.java,
-                Int::class.java,
-                Int::class.java,
-                Int::class.java,
-                Int::class.java
-            )
+        "LoadImageW",
+        MemoryAddress::class.java,
+        listOf(
+            MemoryAddress::class.java,
+            MemoryAddress::class.java,
+            Int::class.java,
+            Int::class.java,
+            Int::class.java,
+            Int::class.java
         )
     )
 
     val imageListDraw = NativeRegistry.register(
-        FunctionDescription(
-            "ImageList_Draw", Int::class.java, listOf(
-                MemoryAddress::class.java,
-                Int::class.java,
-                MemoryAddress::class.java,
-                Int::class.java,
-                Int::class.java,
-                Int::class.java
-            )
+        "ImageList_Draw",
+        Int::class.java,
+        listOf(
+            MemoryAddress::class.java,
+            Int::class.java,
+            MemoryAddress::class.java,
+            Int::class.java,
+            Int::class.java,
+            Int::class.java
         )
     )
+
     val lock = ReentrantReadWriteLock()
 
     var currentImageList = MemoryAddress.NULL
@@ -248,8 +220,6 @@ object Callback {
                 NativeRegistry[WindowManager.defWindowProcW].invoke(hwnd, uMsg, wParam, lParam) as MemoryAddress
             }
         }
-
-
     }
 
     val getModuleHandle = NativeRegistry.register(
