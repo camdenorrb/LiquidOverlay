@@ -1,5 +1,8 @@
 package tech.poder.test.overlay
 
+import jdk.incubator.foreign.CLinker
+import jdk.incubator.foreign.MemoryAccess
+import jdk.incubator.foreign.MemoryAddress
 import tech.poder.overlay.*
 import java.awt.Color
 import java.awt.image.BufferedImage
@@ -200,16 +203,18 @@ internal class TestHook {
 
     @Test
     fun basicAudio() {
-        val pDevice = Callback.getDefaultAudioDevice()
-        val pAudioClient = Callback.activateAudioClient(pDevice)
-        val mixInfo = Callback.getMixFormat(pAudioClient)
-        val bufferFrameCount = Callback.getBufferSize(pAudioClient)
-        val pRenderClient = Callback.getService(pAudioClient)
-        Callback.start(pRenderClient)
-        val hnsPeriod = Callback.getActualDuration(mixInfo, bufferFrameCount)
-        while (true) {
-            Thread.sleep(ceil(hnsPeriod).toLong())
+        val state = Callback.newState()
 
+        Callback.startRecording(state)
+        val hr = MemoryAccess.getIntAtOffset(state.segment, state[0])
+        check(hr >= 0) {
+            "Failed to start recording! Code: $hr  MSG: ${CLinker.toJavaString(MemoryAccess.getAddressAtOffset(state.segment, state[2]))}"
+        }
+        val hnsPeriod = MemoryAccess.getDoubleAtOffset(state.segment, state[1])
+        var counter = 0
+        while (counter < 30) {
+            Thread.sleep(1000)
+            counter++
         }
     }
 
