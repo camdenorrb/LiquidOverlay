@@ -200,10 +200,15 @@ object Callback {
     var lastWindow = WindowManager(MemoryAddress.NULL)
 
     fun loadImage(pathString: ExternalStorage): MemoryAddress {
+
         val res = NativeRegistry[loadImage].invoke(
             MemoryAddress.NULL, pathString.segment.address(), 0, 0, 0, 0x00000010
         ) as MemoryAddress
-        check(res != MemoryAddress.NULL) { "LoadImage failed: ${NativeRegistry[getLastError].invoke()}" }
+
+        check(res != MemoryAddress.NULL) {
+            "LoadImage failed: ${NativeRegistry[getLastError].invoke()}"
+        }
+
         return res
     }
 
@@ -232,9 +237,11 @@ object Callback {
 
     @JvmStatic
     fun hookProc(hwnd: MemoryAddress, uMsg: Int, wParam: MemoryAddress, lParam: MemoryAddress): MemoryAddress {
+
         if (lastWindow.window == MemoryAddress.NULL) {
             lastWindow = WindowManager(hwnd)
         }
+
         return when (uMsg) {
             0x000f -> {
                 repaint(hwnd)
@@ -248,8 +255,6 @@ object Callback {
                 NativeRegistry[WindowManager.defWindowProcW].invoke(hwnd, uMsg, wParam, lParam) as MemoryAddress
             }
         }
-
-
     }
 
     val getModuleHandle = NativeRegistry.register(

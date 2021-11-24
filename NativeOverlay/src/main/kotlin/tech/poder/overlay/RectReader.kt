@@ -12,6 +12,7 @@ data class RectReader(val segment: MemorySegment, val left: UInt, val top: UInt,
     val area by lazy { width * height }
 
     companion object {
+
         fun createSegment(): ExternalStorage {
             val scope = ResourceScope.newSharedScope()
             val rectPlaceholder = MemorySegment.allocateNative(CLinker.C_LONG.byteSize() * 4, scope)
@@ -31,6 +32,7 @@ data class RectReader(val segment: MemorySegment, val left: UInt, val top: UInt,
                 MemoryAccess.getIntAtIndex(segment, 3).toUInt()
             )
         }
+
     }
 
 }

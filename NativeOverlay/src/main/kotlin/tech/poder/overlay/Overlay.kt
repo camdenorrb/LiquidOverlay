@@ -1,6 +1,5 @@
 package tech.poder.overlay
 
-import java.awt.Color
 import java.awt.image.BufferedImage
 
 // TODO: A way to listen to clicks on the overlay?

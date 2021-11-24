@@ -1,6 +1,5 @@
 package tech.poder.test.overlay
 
-import jdk.incubator.foreign.CLinker
 import jdk.incubator.foreign.MemoryAccess
 import tech.poder.overlay.*
 import java.awt.Color
@@ -215,7 +214,7 @@ internal class TestHook {
 
         Callback.startRecording(state)
         val hnsPeriod = MemoryAccess.getDoubleAtOffset(state.segment, state[3])
-        val sleepTime = ((hnsPeriod / 10000.0) / 2.0).toLong()
+        val sleepTime = ((hnsPeriod / 10_000.0) / 2.0).toLong()
         var counter = 0
         var dataLength = 0u
         while (counter < 30) {
