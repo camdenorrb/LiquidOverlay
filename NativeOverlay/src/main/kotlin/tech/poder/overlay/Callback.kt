@@ -385,6 +385,18 @@ object Callback {
         )
     )
 
+    private val waveFormatEx = StructDefinition.generate(
+        listOf(
+            Short::class.java,
+            Short::class.java,
+            Int::class.java,
+            Int::class.java,
+            Short::class.java,
+            Short::class.java,
+            Short::class.java,
+        )
+    )
+
     /*val createState = NativeRegistry.register(FunctionDescription(
         "CreateState",
         MemoryAddress::class.java
@@ -392,7 +404,7 @@ object Callback {
 
     private val startRecording = NativeRegistry.register(
         FunctionDescription(
-            "StartRecording", params = listOf(MemoryAddress::class.java)
+            "StartRecording", params = listOf(MemoryAddress::class.java, MemoryAddress::class.java)
         )
     )
 
@@ -424,8 +436,8 @@ object Callback {
         return state.new()
     }
 
-    fun startRecording(state: StructInstance) {
-        NativeRegistry[startRecording].invoke(state.segment.address())
+    fun startRecording(state: StructInstance, formats: MemoryAddress = MemoryAddress.NULL) {
+        NativeRegistry[startRecording].invoke(state.segment.address(), formats)
         val hr = MemoryAccess.getIntAtOffset(state.segment, state[0])
         check(hr >= 0) {
             "Failed to start recording! Code: $hr  MSG: ${CLinker.toJavaString(MemoryAccess.getAddressAtOffset(state.segment, state[2]))}"
