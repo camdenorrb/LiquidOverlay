@@ -9,13 +9,17 @@ data class RectReader(val segment: MemorySegment, val left: UInt, val top: UInt,
 
     val width = right - left
     val height = bottom - top
-    val area by lazy { width * height }
+    val area = width * height
 
     companion object {
+
         fun createSegment(): ExternalStorage {
-            val scope = ResourceScope.newSharedScope()
-            val rectPlaceholder = MemorySegment.allocateNative(CLinker.C_LONG.byteSize() * 4, scope)
-            return ExternalStorage(rectPlaceholder)
+            return ExternalStorage(
+                MemorySegment.allocateNative(
+                    CLinker.C_LONG.byteSize() * 4,
+                    ResourceScope.newSharedScope()
+                )
+            )
         }
 
         fun fromMemorySegment(segment: ExternalStorage): RectReader {

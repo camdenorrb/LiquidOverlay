@@ -3,6 +3,7 @@ package tech.poder.overlay
 import jdk.incubator.foreign.*
 import tech.poder.overlay.utils.NativeUtils
 import java.util.concurrent.ConcurrentSkipListMap
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.random.Random
 import kotlin.system.exitProcess
@@ -10,6 +11,12 @@ import kotlin.system.exitProcess
 object NativeAPI {
 
 	private val registry = ConcurrentSkipListMap<Long, Any>()
+
+	private var isCoInitialized = false
+
+	internal var isFirstDraw = false
+
+	internal val repaintLock = ReentrantReadWriteLock()
 
 
 	//region MethodHandle
@@ -135,7 +142,233 @@ object NativeAPI {
 		listOf(MemoryAddress::class.java, MemoryAddress::class.java)
 	)
 
+	val coCreateInstance = NativeUtils.lookupMethodHandle(
+		"CoCreateInstance",
+		Int::class.java,
+		listOf(
+			MemoryAddress::class.java,
+			MemoryAddress::class.java,
+			Int::class.java,
+			MemoryAddress::class.java,
+			MemoryAddress::class.java
+		)
+	)
+
+	val coInitializeEx = NativeUtils.lookupMethodHandle(
+		"CoInitializeEx",
+		Int::class.java,
+		listOf(
+			MemoryAddress::class.java,
+			Int::class.java,
+		)
+	)
+
+	val getAudioDeviceEndpoint = NativeUtils.lookupMethodHandle(
+		"GetAudioDeviceEndpoint",
+		Int::class.java,
+		listOf(MemoryAddress::class.java, MemoryAddress::class.java)
+	)
+
+	val deviceActivate = NativeUtils.lookupMethodHandle(
+		"DeviceActivate",
+		Int::class.java,
+		listOf(
+			MemoryAddress::class.java,
+			MemoryAddress::class.java,
+		)
+	)
+
+	val getMixFormat = NativeUtils.lookupMethodHandle(
+		"GetMixFormat",
+		Int::class.java,
+		listOf(
+			MemoryAddress::class.java,
+			MemoryAddress::class.java,
+			Int::class.java
+		)
+	)
+
+	val getBufferSize = NativeUtils.lookupMethodHandle(
+		"GetBufferSize",
+		Int::class.java,
+		listOf(
+			MemoryAddress::class.java,
+			MemoryAddress::class.java
+		)
+	)
+
+	val getService = NativeUtils.lookupMethodHandle(
+		"GetService",
+		Int::class.java,
+		listOf(
+			MemoryAddress::class.java,
+			MemoryAddress::class.java
+		)
+	)
+
+	val getHNSActualDuration = NativeUtils.lookupMethodHandle(
+		"GetHNSActualDuration",
+		Double::class.java,
+		listOf(
+			MemoryAddress::class.java,
+			Int::class.java,
+			Int::class.java
+		)
+	)
+
+	val clientStart = NativeUtils.lookupMethodHandle(
+		"Start",
+		Int::class.java,
+		listOf(
+			MemoryAddress::class.java
+		)
+	)
+
+	val clientStop = NativeUtils.lookupMethodHandle(
+		"Stop",
+		Int::class.java,
+		listOf(
+			MemoryAddress::class.java
+		)
+	)
+
+	val getNextPacketSize = NativeUtils.lookupMethodHandle(
+		"GetNextPacketSize",
+		Int::class.java,
+		listOf(
+			MemoryAddress::class.java,
+			MemoryAddress::class.java
+		)
+	)
+
+	val getBuffer = NativeUtils.lookupMethodHandle(
+		"GetBuffer",
+		Int::class.java,
+		listOf(
+			MemoryAddress::class.java,
+			MemoryAddress::class.java,
+			MemoryAddress::class.java,
+			MemoryAddress::class.java
+		)
+	)
+
+	val releaseBuffer = NativeUtils.lookupMethodHandle(
+		"ReleaseBuffer",
+		Int::class.java,
+		listOf(
+			MemoryAddress::class.java,
+			Int::class.java
+		)
+	)
+
+	val failed = NativeUtils.lookupMethodHandle(
+		"Failed",
+		Int::class.java,
+		listOf(
+			Int::class.java
+		)
+	)
+
 	//endregion
+
+
+	val GUID = StructDefinition.generate(
+		listOf(
+			Long::class.java,
+			Short::class.java,
+			Short::class.java,
+			Byte::class.java,
+			Byte::class.java,
+			Byte::class.java,
+			Byte::class.java,
+			Byte::class.java,
+			Byte::class.java,
+			Byte::class.java,
+			Byte::class.java
+		)
+	)
+
+	val propertyKey = StructDefinition.generate(
+		listOf(
+			Long::class.java,
+			Short::class.java,
+			Short::class.java,
+			Byte::class.java,
+			Byte::class.java,
+			Byte::class.java,
+			Byte::class.java,
+			Byte::class.java,
+			Byte::class.java,
+			Byte::class.java,
+			Byte::class.java,
+			Int::class.java
+		)
+	)
+
+	const val CLSCTX_ALL = 23
+
+	val CLSID_MMDeviceEnumerator = defineGUID(
+		0xBCDE0395L,
+		0xE52F.toShort(),
+		0x467C,
+		0x8E.toByte(),
+		0x3D,
+		0xC4.toByte(),
+		0x57,
+		0x92.toByte(),
+		0x91.toByte(),
+		0x69,
+		0x2E
+	)
+
+
+	val IID_IMMDeviceEnumerator = defineGUID(
+		0xa95664d2,
+		0x9614.toShort(),
+		0x4f35,
+		0xa7.toByte(),
+		0x46,
+		0xde.toByte(),
+		0x8d.toByte(),
+		0xb6.toByte(),
+		0x36,
+		0x17,
+		0xe6.toByte()
+	)
+
+	val IID_IAudioClient = defineGUID(
+		0x1cb9ad4c,
+		0xdbfa.toShort(),
+		0x4c32,
+		0xb1.toByte(),
+		0x78,
+		0xc2.toByte(),
+		0xf5.toByte(),
+		0x68,
+		0xa7.toByte(),
+		0x03,
+		0xb2.toByte()
+	)
+
+	val IID_IAudioCaptureClient = defineGUID(
+		0xc8adbd64, 0xe71e.toShort(), 0x48a0, 0xa4.toByte(), 0xde.toByte(), 0x18, 0x5c, 0x39, 0x5c, 0xd3.toByte(), 0x17
+	)
+
+	val PKEY_Device_FriendlyName = definePropertyId(
+		0xa45c254e,
+		0xdf1c.toShort(),
+		0x4efd,
+		0x80.toByte(),
+		0x20,
+		0x67,
+		0xd1.toByte(),
+		0x46,
+		0xa8.toByte(),
+		0x50,
+		0xe0.toByte(),
+		14
+	)
+
 
 	init {
 		// TODO: See if you can load libnew.dll without a Path
@@ -144,8 +377,48 @@ object NativeAPI {
 	}
 
 
-	class Window(hwnd: MemoryAddress, uMsg: Int, wParam: MemoryAddress, lParam: MemoryAddress) {
 
+	fun defineGUID(
+		a: Long, b: Short, c: Short, d: Byte, e: Byte, f: Byte, g: Byte, h: Byte, i: Byte, j: Byte, k: Byte
+	): MemorySegment {
+		val confinedStatic = ResourceScope.newSharedScope()
+		val data = MemorySegment.allocateNative(GUID.size, confinedStatic)
+		MemoryAccess.setLongAtOffset(data, GUID[0], a)
+		MemoryAccess.setShortAtOffset(data, GUID[1], b)
+		MemoryAccess.setShortAtOffset(data, GUID[2], c)
+		MemoryAccess.setByteAtOffset(data, GUID[3], d)
+		MemoryAccess.setByteAtOffset(data, GUID[4], e)
+		MemoryAccess.setByteAtOffset(data, GUID[5], f)
+		MemoryAccess.setByteAtOffset(data, GUID[6], g)
+		MemoryAccess.setByteAtOffset(data, GUID[7], h)
+		MemoryAccess.setByteAtOffset(data, GUID[8], i)
+		MemoryAccess.setByteAtOffset(data, GUID[9], j)
+		MemoryAccess.setByteAtOffset(data, GUID[10], k)
+		return data
+	}
+
+	fun definePropertyId(
+		a: Long, b: Short, c: Short, d: Byte, e: Byte, f: Byte, g: Byte, h: Byte, i: Byte, j: Byte, k: Byte, l: Int
+	): MemorySegment {
+		val confinedStatic = ResourceScope.newSharedScope()
+		val data = MemorySegment.allocateNative(propertyKey.size, confinedStatic)
+		MemoryAccess.setLongAtOffset(data, propertyKey[0], a)
+		MemoryAccess.setShortAtOffset(data, propertyKey[1], b)
+		MemoryAccess.setShortAtOffset(data, propertyKey[2], c)
+		MemoryAccess.setByteAtOffset(data, propertyKey[3], d)
+		MemoryAccess.setByteAtOffset(data, propertyKey[4], e)
+		MemoryAccess.setByteAtOffset(data, propertyKey[5], f)
+		MemoryAccess.setByteAtOffset(data, propertyKey[6], g)
+		MemoryAccess.setByteAtOffset(data, propertyKey[7], h)
+		MemoryAccess.setByteAtOffset(data, propertyKey[8], i)
+		MemoryAccess.setByteAtOffset(data, propertyKey[9], j)
+		MemoryAccess.setByteAtOffset(data, propertyKey[10], k)
+		MemoryAccess.setIntAtOffset(data, propertyKey[11], l)
+		return data
+	}
+
+
+	class Window(hwnd: MemoryAddress, uMsg: Int, wParam: MemoryAddress, lParam: MemoryAddress) {
 
 		companion object {
 
@@ -164,7 +437,7 @@ object NativeAPI {
 					}
 					else -> {
 						println("Unhandled Called: $uMsg")
-						defWindowProcW.invoke(hwnd, uMsg, wParam, lParam) as MemoryAddress
+						WindowManager.defWindowProcW(hwnd, uMsg, wParam, lParam) as MemoryAddress
 					}
 				}
 			}
@@ -189,26 +462,27 @@ object NativeAPI {
 		return res
 	}
 
-	var firstDraw = false
-
-
 	private fun repaint(hwnd: MemoryAddress) {
+
 		lastWindow.startPaint()
+
 		if (images > 0) {
-			firstDraw = true
-			val dc = NativeRegistry[Callback.getDC].invoke(hwnd) as MemoryAddress
-			Callback.lock.read {
+
+			isFirstDraw = true
+
+			val dc = getDC(hwnd) as MemoryAddress
+
+			repaintLock.read {
 				repeat(images) {
-					val result = NativeRegistry[Callback.imageListDraw].invoke(
-						currentImageList, it, dc, 0, 0, 0
-					) as Int
-					check(result != 0) {
-						"ImageList_Draw failed: ${NativeRegistry[Callback.getLastError].invoke()}"
+					check(imageListDraw(currentImageList, it, dc, 0, 0, 0) != 0) {
+						"ImageList_Draw failed: ${getLastError()}"
 					}
 				}
 			}
-			NativeRegistry[Callback.releaseDC].invoke(hwnd, dc)
+
+			releaseDC(hwnd, dc)
 		}
+
 		lastWindow.endPaint()
 	}
 
@@ -227,7 +501,7 @@ object NativeAPI {
 			}
 			else -> {
 				println("Unhandled Called: $uMsg")
-				NativeRegistry[WindowManager.defWindowProcW].invoke(hwnd, uMsg, wParam, lParam) as MemoryAddress
+				WindowManager.defWindowProcW(hwnd, uMsg, wParam, lParam) as MemoryAddress
 			}
 		}
 	}
@@ -264,14 +538,13 @@ object NativeAPI {
 
 		processes.forEach { processData ->
 
-			val intHolderSeg = MemorySegment.allocateNative(CLinker.C_INT.byteSize(), confinedStatic)
-			val pidNoReason = getWindowThreadProcessId(processData, intHolderSeg.address()) as Int
+			val pidSegment = MemorySegment.allocateNative(CLinker.C_INT.byteSize(), confinedStatic)
 
-			check(pidNoReason != 0) {
+			check(getWindowThreadProcessId(processData, pidSegment.address()) as Int != 0) {
 				"Could not get pid"
 			}
 
-			val pid = MemoryAccess.getInt(intHolderSeg)
+			val pid = MemoryAccess.getInt(pidSegment)
 			val processHandle = openProcess(PROCESS_QUERY_INFORMATION, 0, pid) as MemoryAddress
 
 			if (processHandle == MemoryAddress.NULL) {
@@ -317,50 +590,203 @@ object NativeAPI {
 
 			val rect = RectReader.fromMemorySegment(rectPlaceholder)
 
-			if (rect.area != 0u) {
-				val clazzName = NativeUtils.getExpanding { size, handle ->
-
-					val used = getClassNameA(processData, handle.address(), size.toInt()) as Int
-
-					if (used >= size) {
-						null
-					}
-					else {
-						CLinker.toJavaString(handle)
-					}
-				}
-				val title = NativeUtils.getExpanding { size, handle ->
-
-					val used = getWindowTextA(processData, handle.address(), size.toInt()) as Int
-
-					if (used >= size) {
-						null
-					}
-					else {
-						CLinker.toJavaString(handle)
-					}
-				}
-
-				denseProcesses.add(Process(processData, processHandle, exeName, clazzName, title, pid, rect))
-			}
-			else {
+			if (rect.area == 0u) {
 				return@forEach
 			}
-		}
-		confinedStatic.close()
 
+			val clazzName = NativeUtils.getExpanding { size, handle ->
+				if (getClassNameA(processData, handle.address(), size.toInt()) as Int >= size) {
+					null
+				}
+				else {
+					CLinker.toJavaString(handle)
+				}
+			}
+
+			val title = NativeUtils.getExpanding { size, handle ->
+				if (getWindowTextA(processData, handle.address(), size.toInt()) as Int >= size) {
+					null
+				}
+				else {
+					CLinker.toJavaString(handle)
+				}
+			}
+
+			denseProcesses.add(Process(processData, processHandle, exeName, clazzName, title, pid, rect))
+
+		}
+
+		confinedStatic.close()
 		return denseProcesses
 	}
 
 	@JvmStatic
 	fun forEachWindow(address1: MemoryAddress, address2: MemoryAddress): Int {
 
-		if (Callback.isMainWindow(address1)) {
+		if (isMainWindow(address1)) {
 			@Suppress("UNCHECKED_CAST")
 			(registry[address2.toRawLongValue()] as MutableList<MemoryAddress>).add(address1)
 		}
 
 		return 1
+	}
+
+	fun getEnumerator(): MemoryAddress {
+
+		if (!isCoInitialized) {
+
+			val result = coInitializeEx(MemoryAddress.NULL, 0) as Int
+
+			check(result >= 0) {
+				"CoInitializeEx failed: $result ${getLastError()}"
+			}
+
+			isCoInitialized = true
+		}
+
+		val enumerator = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newConfinedScope())
+
+		val result = coCreateInstance(
+			CLSID_MMDeviceEnumerator.address(),
+			MemoryAddress.NULL,
+			CLSCTX_ALL,
+			IID_IMMDeviceEnumerator.address(),
+			enumerator.address()
+		) as Int
+
+		check(result >= 0) {
+			"CoCreateInstance failed: $result ${getLastError()}"
+		}
+
+		return MemoryAccess.getAddress(enumerator)
+	}
+
+	fun getDefaultAudioDevice(): MemoryAddress {
+
+		val enumerator = getEnumerator()
+		val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newConfinedScope())
+		val result = getAudioDeviceEndpoint(enumerator, tmp.address()) as Int
+
+		check(result >= 0) {
+			"GetAudioDeviceEndpoint failed: $result ${getLastError()}"
+		}
+
+		return MemoryAccess.getAddress(tmp).apply { tmp.scope().close() }
+	}
+
+	fun activateAudioClient(device: MemoryAddress): MemoryAddress {
+
+		val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newConfinedScope())
+		val result = deviceActivate(device, tmp.address()) as Int
+
+		check(result >= 0) {
+			"DeviceActivate failed: $result ${getLastError()}"
+		}
+
+		return MemoryAccess.getAddress(tmp).apply { tmp.scope().close() }
+	}
+
+	fun getMixFormat(client: MemoryAddress, REFTIMES_PER_SEC: Int = 10_000_000): MemoryAddress {
+
+		val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newConfinedScope())
+		val result = getMixFormat(client, tmp.address(), REFTIMES_PER_SEC) as Int
+
+		check(result >= 0) {
+			"GetMixFormat failed: $result ${getLastError()}"
+		}
+
+		return MemoryAccess.getAddress(tmp).apply {
+			tmp.scope().close()
+		}
+	}
+
+	fun getBufferSize(client: MemoryAddress): UInt {
+
+		val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newConfinedScope())
+		val result = getBufferSize(client, tmp.address()) as Int
+
+		check(result >= 0) {
+			"GetBufferSize failed: $result ${getLastError()}"
+		}
+
+		return MemoryAccess.getInt(tmp).apply { tmp.scope().close() }.toUInt()
+	}
+
+	fun getService(client: MemoryAddress): MemoryAddress {
+
+		val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newConfinedScope())
+		val result = getService(client, tmp.address()) as Int
+
+		check(result >= 0) {
+			"DeviceGetService failed: $result ${getLastError()}"
+		}
+
+		return MemoryAccess.getAddress(tmp).apply {
+			tmp.scope().close()
+		}
+	}
+
+	fun getActualDuration(format: MemoryAddress, bufferSize: UInt, REFTIMES_PER_SEC: Int = 1_000_000): Double {
+		return getService(format, bufferSize.toInt(), REFTIMES_PER_SEC) as Double
+	}
+
+	fun start(client: MemoryAddress) {
+
+		val result = clientStart(client) as Int
+
+		check(result >= 0) {
+			"Start failed: $result ${getLastError()}"
+		}
+	}
+
+	fun stop(client: MemoryAddress) {
+
+		val result = clientStop(client) as Int
+
+		check(result >= 0) {
+			"Stop failed: $result ${getLastError()}"
+		}
+	}
+
+	fun getNextPacketSize(service: MemoryAddress): UInt {
+
+		val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newConfinedScope())
+		val result = getNextPacketSize(service, tmp.address()) as Int
+
+		check(result >= 0) {
+			"GetNextPacketSize failed: $result ${getLastError()}"
+		}
+
+		return MemoryAccess.getInt(tmp).apply { tmp.scope().close() }.toUInt()
+	}
+
+	fun getPacket(service: MemoryAddress): NativeBuffer {
+
+		val pData = MemorySegment.allocateNative(CLinker.C_CHAR.byteSize(), ResourceScope.newConfinedScope())
+		val numFramesAvailable = MemorySegment.allocateNative(CLinker.C_INT.byteSize(), pData.scope())
+		val flags = MemorySegment.allocateNative(CLinker.C_INT.byteSize(), pData.scope())
+		val result = getBuffer(service, pData.address(), numFramesAvailable.address(), flags.address()) as Int
+
+		check(result >= 0) {
+			"GetPacket failed: $result ${getLastError()}"
+		}
+
+		return NativeBuffer(
+			MemoryAccess.getByte(pData),
+			MemoryAccess.getInt(flags),
+			MemoryAccess.getInt(numFramesAvailable).toUInt()
+		).apply {
+			pData.scope().close()
+		}
+	}
+
+	fun deletePacket(service: MemoryAddress, buffer: NativeBuffer) {
+
+		val result = releaseBuffer(service, buffer.numFramesAvailable) as Int
+
+		check(result >= 0) {
+			"DeletePacket failed: $result ${getLastError()}"
+		}
 	}
 
 
@@ -382,12 +808,5 @@ object NativeAPI {
 		block(id)
 		registry.remove(id)
 	}
-
-	private inline fun tempRegister(id: Long, value: Any, block: () -> Unit) {
-		registry[id] = value
-		block()
-		registry.remove(id)
-	}
-
 
 }

@@ -5,18 +5,22 @@ import jdk.incubator.foreign.MemorySegment
 import jdk.incubator.foreign.ResourceScope
 
 @JvmInline
-value class ExternalStorage(val segment: MemorySegment): AutoCloseable {
+value class ExternalStorage(val segment: MemorySegment) : AutoCloseable {
+
+    override fun close() {
+        segment.scope().close()
+    }
+
+
     companion object {
 
-        val nullChar = "\u0000".toByteArray(Charsets.UTF_16LE)
+        private val nullChar = "\u0000".toByteArray(Charsets.UTF_16LE)
 
         fun fromString(str: String): ExternalStorage {
 
-            val newScope = ResourceScope.newSharedScope()
-
             str.toByteArray(Charsets.UTF_16LE).let { bytes ->
 
-                val segment = MemorySegment.allocateNative((bytes.size + nullChar.size).toLong(), newScope)
+                val segment = MemorySegment.allocateNative((bytes.size + nullChar.size).toLong(), ResourceScope.newSharedScope())
                 bytes.forEachIndexed { index, byte ->
                     MemoryAccess.setByteAtOffset(segment, index.toLong(), byte)
                 }
@@ -28,9 +32,8 @@ value class ExternalStorage(val segment: MemorySegment): AutoCloseable {
 
                 return ExternalStorage(segment)
             }
+
         }
     }
-    override fun close() {
-        segment.scope().close()
-    }
+
 }

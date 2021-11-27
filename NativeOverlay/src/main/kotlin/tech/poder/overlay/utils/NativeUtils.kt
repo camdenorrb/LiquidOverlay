@@ -5,21 +5,30 @@ import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.Path
+import kotlin.io.path.name
 
 object NativeUtils {
+
+	val loadedLibraries = mutableSetOf<String>()
 
 	private val symbolLookup = SymbolLookup.loaderLookup()
 
 	private val handleLookup = MethodHandles.lookup()
 
+	private val upcallScope = ResourceScope.newSharedScope()
+
 
 	fun loadLibrary(path: Path) {
-		System.loadLibrary(path.toAbsolutePath().toString())
+		if (loadedLibraries.add(path.name.lowercase())) {
+			System.loadLibrary(path.toAbsolutePath().toString())
+		}
 	}
 
 	fun loadLibraries(vararg names: String) {
 		names.forEach { name ->
-			System.loadLibrary(name)
+			if (loadedLibraries.add(name.lowercase())) {
+				System.loadLibrary(name)
+			}
 		}
 	}
 
@@ -27,11 +36,26 @@ object NativeUtils {
 		return dataTypesToMethod(symbolLookup.lookup(name).get(), returnType, parameterTypes)
 	}
 
+
+	fun lookupStaticMethodUpcall(staticClazz: Class<*>, name: String, returnType: Class<*>? = null, parameterTypes: List<Class<*>> = emptyList()): MemoryAddress {
+		val methodHandle = lookupStaticMethodHandle(staticClazz, name, returnType, parameterTypes)
+		return methodToUpcall(methodHandle, returnType, parameterTypes)
+	}
+
 	fun lookupStaticMethodHandle(staticClazz: Class<*>, name: String, returnType: Class<*>? = null, parameterTypes: List<Class<*>> = emptyList()): MethodHandle {
 		return handleLookup.findStatic(
 			staticClazz,
 			name,
 			MethodType.methodType(classAsPrimitive(returnType ?: Void.TYPE), parameterTypes.map(::classAsPrimitive))
+		)
+	}
+
+
+	private fun methodToUpcall(handle: MethodHandle, returnType: Class<*>?, parameterTypes: List<Class<*>>): MemoryAddress {
+		return CLinker.getInstance().upcallStub(
+			handle,
+			generateDescriptor(returnType, parameterTypes),
+			upcallScope
 		)
 	}
 
@@ -79,13 +103,12 @@ object NativeUtils {
 
 			size *= 2L
 
-			val scope = ResourceScope.newConfinedScope()
-			val holder = MemorySegment.allocateNative(size, scope)
-
-			result = invoke.invoke(size, holder)
-			scope.close()
+			ResourceScope.newConfinedScope().use { scope ->
+				result = invoke.invoke(size, MemorySegment.allocateNative(size, scope))
+			}
 		}
-		return result
+
+		return result!!
 	}
 
 

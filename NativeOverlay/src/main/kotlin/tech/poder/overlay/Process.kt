@@ -10,14 +10,16 @@ data class Process(
     val title: String,
     val pid: Int,
     val rect: RectReader,
-): AutoCloseable {
+) : AutoCloseable {
+
     override fun close() {
         if (handle != MemoryAddress.NULL) {
-            NativeRegistry[Callback.closeHandle].invoke(handle)
+            NativeAPI.closeHandle(handle)
         }
     }
 
     fun asWindow(): WindowManager {
         return WindowManager(hWnd)
     }
+
 }

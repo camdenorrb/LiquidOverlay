@@ -2,9 +2,9 @@ package tech.poder.overlay
 
 import jdk.incubator.foreign.MemoryAddress
 import java.awt.image.BufferedImage
-import java.nio.file.Paths
 import javax.imageio.ImageIO
 import kotlin.concurrent.write
+import kotlin.io.path.Path
 
 class OverlayImpl(private val self: WindowManager, private val selected: WindowManager) : Overlay {
 
@@ -18,17 +18,16 @@ class OverlayImpl(private val self: WindowManager, private val selected: WindowM
         rectStorage
     }
 
-    val storageBitmap = Paths.get("test.bmp").toAbsolutePath()
+    val storageBitmap = Path("test.bmp").toAbsolutePath()
     val pathString = ExternalStorage.fromString(storageBitmap.toString())
 
     private var rectReader = RectReader.fromMemorySegment(currentRectStorage)
 
-    override var canvasWidth: Int = rectReader.width.toInt()
+    override var canvasWidth = rectReader.width.toInt()
 
-    override var canvasHeight: Int = rectReader.height.toInt()
+    override var canvasHeight = rectReader.height.toInt()
 
-    private var prevList =
-        NativeRegistry[Callback.imageListCreate].invoke(canvasWidth, canvasHeight, 0x00000001, 1, 1) as MemoryAddress
+    private var prevList = NativeAPI.imageListCreate(canvasWidth, canvasHeight, 0x00000001, 1, 1) as MemoryAddress
 
     private var internal = BufferedImage(canvasWidth, canvasHeight, BufferedImage.TYPE_INT_RGB)
     private var internalGraphics = internal.graphics
@@ -36,43 +35,47 @@ class OverlayImpl(private val self: WindowManager, private val selected: WindowM
     private var visible = self.isVisible()
 
     private val checker = Thread {
+
         val newRectStorage = run {
-            val rectStorage = RectReader.createSegment()
-
-            self.getWindowRect(rectStorage)
-
-            rectStorage
+            RectReader.createSegment().apply {
+                self.getWindowRect(this)
+            }
         }
 
         var prev = rectReader
+
         while (selected.isAlive()) {
 
-            visible = true
+            // FPS
             Thread.sleep(10)
-            if (visible) {
-                if (selected.isVisible()) {
-                    if (!self.isVisible()) {
-                        self.showWindow()
-                    }
-                    selected.getWindowRect(newRectStorage)
-                    val rect = RectReader.fromMemorySegment(newRectStorage)
-                    if (prev != rect) {
-                        self.moveWindow(
-                            rect.left.toInt(), rect.top.toInt(), rect.width.toInt(), rect.height.toInt(), 1
-                        )
-                        if (rect.area != prev.area) {
-                            onResize(onRedraw)
-                        }
-                        prev = rect
-                    }
-                    if (!Callback.firstDraw) {
-                        onResize(onRedraw)
-                    }
-                } else {
-                    self.hideWindow()
+
+            if (!selected.isVisible()) {
+                self.hideWindow()
+                continue
+            }
+
+            if (!self.isVisible()) {
+                self.showWindow()
+            }
+
+            selected.getWindowRect(newRectStorage)
+
+            val rect = RectReader.fromMemorySegment(newRectStorage)
+            if (prev != rect) {
+                self.moveWindow(
+                    rect.left.toInt(), rect.top.toInt(), rect.width.toInt(), rect.height.toInt(), 1
+                )
+                if (rect.area != prev.area) {
+                    onResize(onRedraw)
                 }
+                prev = rect
+            }
+
+            if (!NativeAPI.isFirstDraw) {
+                onResize(onRedraw)
             }
         }
+
         newRectStorage.close()
     }
 
@@ -131,30 +134,35 @@ class OverlayImpl(private val self: WindowManager, private val selected: WindowM
     }
 
     override fun publish() {
-        ImageIO.write(internal, "bmp", storageBitmap.toFile())
-        val bitmap = Callback.loadImage(pathString)
 
-        prevList = NativeRegistry[Callback.imageListCreate].invoke(
-            canvasWidth, canvasHeight, 0x00000001, 1, 1
-        ) as MemoryAddress
-        NativeRegistry[Callback.imageListAdd].invoke(prevList, bitmap, WindowManager.invisible)
-        val old = Callback.currentImageList
-        Callback.lock.write {
-            Callback.currentImageList = prevList
-            Callback.images = 1
+        ImageIO.write(internal, "bmp", storageBitmap.toFile())
+
+        val bitmap = NativeAPI.loadImage(pathString)
+        prevList = NativeAPI.imageListCreate(canvasWidth, canvasHeight, 0x00000001, 1, 1) as MemoryAddress
+
+        NativeAPI.imageListAdd(prevList, bitmap, WindowManager.invisible)
+        val old = NativeAPI.currentImageList
+
+        NativeAPI.repaintLock.write {
+            NativeAPI.currentImageList = prevList
+            NativeAPI.images = 1
         }
+
         check(self.updateWindow()) {
-            "Failed to update window: ${NativeRegistry[Callback.getLastError].invoke()}"
+            "Failed to update window: ${NativeAPI.getLastError()}"
         }
-        NativeRegistry[Callback.imageListDestroy].invoke(old)
+
+        NativeAPI.imageListDestroy(old)
     }
 
     private fun onResize(callback: (Overlay) -> Unit): Boolean {
+
         if (remake()) {
-            callback.invoke(this)
+            callback(this)
             publish()
             return true
         }
+
         return false
     }
 }

@@ -8,6 +8,121 @@ import kotlin.test.Test
 
 internal class TestHook {
 
+    @Test
+    fun drawCat() {
+
+        val processes = NativeAPI.getProcesses()
+        var i = 0
+        processes.forEachIndexed { index, process ->
+            if (process.exeLocation.contains("Notepad.exe")) {
+                i = index
+            }
+            println("$index: ${process.title}(${process.exeLocation})")
+        }
+        println("Choose: $i")
+        val selected = processes[i]
+        val clazz = WindowClass.define("Kats")
+
+        val window = WindowManager.createWindow(
+            WindowManager.WS_EX_TOPMOST or WindowManager.WS_EX_TRANSPARENT or WindowManager.WS_EX_LAYERED,
+            clazz = clazz,
+            windowName = "LiquidOverlay",
+            style = WindowManager.WS_POPUP.toInt(),
+            x = selected.rect.left.toInt(),
+            y = selected.rect.top.toInt(),
+            width = selected.rect.width.toInt(),
+            height = selected.rect.height.toInt()
+        )
+        val selectedWindow = selected.asWindow()
+
+        val overlay = OverlayImpl(window, selectedWindow)
+
+        overlay.onRedraw = {
+
+            val bufferedImage = BufferedImage(it.canvasWidth, it.canvasHeight, BufferedImage.TYPE_INT_RGB)
+            val graphics = bufferedImage.createGraphics()
+
+            graphics.color = Color(0, 100, 0)
+            graphics.fillRect(0, 0, bufferedImage.width, bufferedImage.height)
+
+            it.image(bufferedImage, Overlay.Position(0, 0), it.canvasWidth, it.canvasHeight)
+
+            graphics.dispose()
+        }
+
+
+        window.doLoop()
+
+        overlay.close()
+    }
+
+    @Test
+    fun nateDraw() {
+
+        val processes = NativeAPI.getProcesses()
+        var i = 0
+        processes.forEachIndexed { index, process ->
+            if (process.exeLocation.contains("Overwatch.exe")) {
+                i = index
+            }
+            println("$index: ${process.title}(${process.exeLocation})")
+        }
+        println("Choose: $i")
+        val selected = processes[i]
+        val clazz = WindowClass.define("Kats")
+        val window = WindowManager.createWindow(
+            WindowManager.WS_EX_TOPMOST or WindowManager.WS_EX_TRANSPARENT or WindowManager.WS_EX_LAYERED,
+            clazz = clazz,
+            windowName = "LiquidOverlay",
+            style = WindowManager.WS_POPUP.toInt(),
+            x = selected.rect.left.toInt(),
+            y = selected.rect.top.toInt(),
+            width = selected.rect.width.toInt(),
+            height = selected.rect.height.toInt()
+        )
+        val selectedWindow = selected.asWindow()
+
+        fun draw(overlay: Overlay) {
+
+            val bufferedImage = BufferedImage(overlay.canvasWidth, overlay.canvasHeight, BufferedImage.TYPE_INT_RGB)
+            val graphics = bufferedImage.createGraphics()
+
+            graphics.color = Color(0, 100, 0)
+            graphics.fillRect(0, 0, bufferedImage.width, bufferedImage.height)
+
+            overlay.image(bufferedImage, Overlay.Position(0, 0), overlay.canvasWidth, overlay.canvasHeight)
+
+            graphics.dispose()
+        }
+
+        val overlay = OverlayImpl(window, selectedWindow)
+
+        overlay.onRedraw = {
+            draw(it)
+        }
+
+        window.doLoop()
+        overlay.close()
+    }
+
+
+    @Test
+    fun basicAudio() {
+        val pDevice = NativeAPI.getDefaultAudioDevice()
+        val pAudioClient = NativeAPI.activateAudioClient(pDevice)
+        val mixInfo = NativeAPI.getMixFormat(pAudioClient)
+        val bufferFrameCount = NativeAPI.getBufferSize(pAudioClient)
+        val pRenderClient = NativeAPI.getService(pAudioClient)
+        NativeAPI.start(pRenderClient)
+        val hnsPeriod = NativeAPI.getActualDuration(mixInfo, bufferFrameCount)
+        while (true) {
+            Thread.sleep(ceil(hnsPeriod).toLong())
+
+        }
+    }
+
+
+
     /*
     @Test
     fun createWindow() {
@@ -100,117 +215,5 @@ internal class TestHook {
         println("Window End")
         Thread.sleep(10000)
     }*/
-
-    @Test
-    fun drawCat() {
-
-        val processes = Callback.getProcesses()
-        var i = 0
-        processes.forEachIndexed { index, process ->
-            if (process.exeLocation.contains("Notepad.exe")) {
-                i = index
-            }
-            println("$index: ${process.title}(${process.exeLocation})")
-        }
-        println("Choose: $i")
-        val selected = processes[i]
-        val clazz = WindowClass.define("Kats")
-        val window = WindowManager.createWindow(
-            WindowManager.WS_EX_TOPMOST or WindowManager.WS_EX_TRANSPARENT or WindowManager.WS_EX_LAYERED,
-            clazz = clazz,
-            windowName = "LiquidOverlay",
-            style = WindowManager.WS_POPUP.toInt(),
-            x = selected.rect.left.toInt(),
-            y = selected.rect.top.toInt(),
-            width = selected.rect.width.toInt(),
-            height = selected.rect.height.toInt()
-        )
-        val selectedWindow = selected.asWindow()
-
-        val overlay = OverlayImpl(window, selectedWindow)
-
-        overlay.onRedraw = {
-
-            val bufferedImage = BufferedImage(it.canvasWidth, it.canvasHeight, BufferedImage.TYPE_INT_RGB)
-            val graphics = bufferedImage.createGraphics()
-
-            graphics.color = Color(0, 100, 0)
-            graphics.fillRect(0, 0, bufferedImage.width, bufferedImage.height)
-
-            it.image(bufferedImage, Overlay.Position(0, 0), it.canvasWidth, it.canvasHeight)
-
-            graphics.dispose()
-        }
-
-
-        window.doLoop()
-
-        overlay.close()
-    }
-
-    @Test
-    fun nateDraw() {
-
-        val processes = Callback.getProcesses()
-        var i = 0
-        processes.forEachIndexed { index, process ->
-            if (process.exeLocation.contains("Overwatch.exe")) {
-                i = index
-            }
-            println("$index: ${process.title}(${process.exeLocation})")
-        }
-        println("Choose: $i")
-        val selected = processes[i]
-        val clazz = WindowClass.define("Kats")
-        val window = WindowManager.createWindow(
-            WindowManager.WS_EX_TOPMOST or WindowManager.WS_EX_TRANSPARENT or WindowManager.WS_EX_LAYERED,
-            clazz = clazz,
-            windowName = "LiquidOverlay",
-            style = WindowManager.WS_POPUP.toInt(),
-            x = selected.rect.left.toInt(),
-            y = selected.rect.top.toInt(),
-            width = selected.rect.width.toInt(),
-            height = selected.rect.height.toInt()
-        )
-        val selectedWindow = selected.asWindow()
-
-        fun draw(overlay: Overlay) {
-
-            val bufferedImage = BufferedImage(overlay.canvasWidth, overlay.canvasHeight, BufferedImage.TYPE_INT_RGB)
-            val graphics = bufferedImage.createGraphics()
-
-            graphics.color = Color(0, 100, 0)
-            graphics.fillRect(0, 0, bufferedImage.width, bufferedImage.height)
-
-            overlay.image(bufferedImage, Overlay.Position(0, 0), overlay.canvasWidth, overlay.canvasHeight)
-
-            graphics.dispose()
-        }
-
-        val overlay = OverlayImpl(window, selectedWindow)
-
-        overlay.onRedraw = {
-            draw(it)
-        }
-
-        window.doLoop()
-        overlay.close()
-    }
-
-
-    @Test
-    fun basicAudio() {
-        val pDevice = Callback.getDefaultAudioDevice()
-        val pAudioClient = Callback.activateAudioClient(pDevice)
-        val mixInfo = Callback.getMixFormat(pAudioClient)
-        val bufferFrameCount = Callback.getBufferSize(pAudioClient)
-        val pRenderClient = Callback.getService(pAudioClient)
-        Callback.start(pRenderClient)
-        val hnsPeriod = Callback.getActualDuration(mixInfo, bufferFrameCount)
-        while (true) {
-            Thread.sleep(ceil(hnsPeriod).toLong())
-
-        }
-    }
 
 }

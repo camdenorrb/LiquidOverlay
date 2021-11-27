@@ -1,5 +1,7 @@
 package tech.poder.overlay
 
+/*
+
 import jdk.incubator.foreign.*
 import java.nio.file.Paths
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -193,11 +195,11 @@ object Callback {
                         currentImageList, it, dc, 0, 0, 0
                     ) as Int
                     check(result != 0) {
-                        "ImageList_Draw failed: ${NativeRegistry[getLastError].invoke()}"
+                        "ImageList_Draw failed: ${getLastError()}"
                     }
                 }
             }
-            NativeRegistry[releaseDC].invoke(hwnd, dc)
+            releaseDC(hwnd, dc)
         }
         lastWindow.endPaint()
     }
@@ -764,4 +766,4 @@ object Callback {
             "DeletePacket failed: $result ${NativeRegistry[getLastError].invoke()}"
         }
     }
-}
+}*/

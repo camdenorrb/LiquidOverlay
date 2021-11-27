@@ -3,7 +3,7 @@ package dev.twelveoclock.liquidoverlay
 import dev.twelveoclock.liquidoverlay.api.Liquipedia
 import dev.twelveoclock.liquidoverlay.modules.sub.PluginModule
 import dev.twelveoclock.liquidoverlay.speech.GoogleSpeechAPI
-import tech.poder.overlay.Callback
+import tech.poder.overlay.NativeAPI
 import tech.poder.overlay.OverlayImpl
 import tech.poder.overlay.WindowClass
 import tech.poder.overlay.WindowManager
@@ -83,13 +83,13 @@ object Main {
     }
 
     private fun createOverlay(){
-        val processes = Callback.getProcesses()
+        val processes = NativeAPI.getProcesses()
         println("hi")
     }
 
     private fun pluginThingy() {
 
-        val selected = Callback.getProcesses().find { "Notepad.exe" in it.exeLocation }!!
+        val selected = NativeAPI.getProcesses().find { "Notepad.exe" in it.exeLocation }!!
         val clazz = WindowClass.define("Kats")
 
         val window = WindowManager.createWindow(

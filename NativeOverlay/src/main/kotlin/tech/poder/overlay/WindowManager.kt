@@ -6,6 +6,11 @@ import java.awt.Color
 
 data class WindowManager(val window: MemoryAddress) : AutoCloseable {
 
+    override fun close() {
+        TODO("Not yet implemented")
+    }
+
+
     companion object {
 
         //Overlay = WS_EX_TOPMOST | WS_EX_TRANSPARENT | WS_EX_LAYERED
@@ -79,7 +84,8 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
 
 
         val invisibleColor = Color(255, 0, 0, 0)
-        val invisibleRGB = Color(invisibleColor.red, invisibleColor.green, invisibleColor.blue, invisibleColor.alpha).rgb
+        val invisibleRGB =
+            Color(invisibleColor.red, invisibleColor.green, invisibleColor.blue, invisibleColor.alpha).rgb
         val invisible = Color(invisibleColor.blue, invisibleColor.green, invisibleColor.red, invisibleColor.alpha).rgb
 
         private val setLayeredWindowAttributes = NativeUtils.lookupMethodHandle(
@@ -87,69 +93,6 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
             Boolean::class.java,
             listOf(MemoryAddress::class.java, Int::class.java, Byte::class.java, Int::class.java)
         )
-
-
-        fun createWindow(
-            exStyle: Int = 0,
-            clazz: WindowClass,
-            windowName: String? = null,
-            style: Int = 0,
-            x: Int = 1,
-            y: Int = 1,
-            width: Int = 0,
-            height: Int = 0,
-            parent: WindowManager? = null,
-            menu: WindowManager? = null,
-            instance: Process? = null,
-            param: ExternalStorage? = null
-        ): WindowManager {
-
-            val tmpScope = ResourceScope.newConfinedScope()
-            val windowNameAddress =
-                windowName?.let { ExternalStorage.fromString(windowName) }?.segment?.address() ?: MemoryAddress.NULL
-
-
-            val parentWindow = parent?.window ?: MemoryAddress.NULL
-            val menuWindow = menu?.window ?: MemoryAddress.NULL
-
-            val pidInstance = instance?.handle
-                ?: NativeAPI.getModuleHandle(MemoryAddress.NULL) as MemoryAddress
-
-            val storage = param?.segment?.address() ?: MemoryAddress.NULL
-
-            val result = createWindow.invoke(
-                exStyle,
-                clazz.clazzPointer,
-                windowNameAddress.address(),
-                style,
-                x,
-                y,
-                width,
-                height,
-                parentWindow,
-                menuWindow,
-                pidInstance,
-                storage
-            ) as MemoryAddress
-
-            println(result)
-
-            check(result != MemoryAddress.NULL) {
-                "Failed to create window: ${NativeAPI.getLastError.invoke()}"
-            }
-
-
-            val result2 = setLayeredWindowAttributes.invoke(result, invisible, 0.toByte(), 0x00000001) as Int
-
-            check(result2 != 0) {
-                "Failed to set layered window attributes: ${NativeAPI.getLastError()}"
-            }
-
-            showWindow(result, 5)
-            tmpScope.close()
-
-            return WindowManager(result)
-        }
 
         val getMessage = NativeUtils.lookupMethodHandle(
             "GetMessageW",
@@ -267,23 +210,86 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
 
         val HWND_TOPMOST = WindowManager(MemoryAddress.ofLong(-1L))
         val HWND_BOTTOM = WindowManager(MemoryAddress.ofLong(1L))
+
+
+        val scope = ResourceScope.newConfinedScope()
+        var dc = MemoryAddress.NULL
+
+        val paintStruct = MemorySegment.allocateNative(
+            CLinker.C_POINTER.byteSize() + (CLinker.C_INT.byteSize() * 7) + (CLinker.C_CHAR.byteSize() * 32), scope
+        )
+
+        val stringStorage = MemorySegment.allocateNative(CLinker.C_CHAR.byteSize() * 128, scope)
+
+
+        fun createWindow(
+            exStyle: Int = 0,
+            clazz: WindowClass,
+            windowName: String? = null,
+            style: Int = 0,
+            x: Int = 1,
+            y: Int = 1,
+            width: Int = 0,
+            height: Int = 0,
+            parent: WindowManager? = null,
+            menu: WindowManager? = null,
+            instance: Process? = null,
+            param: ExternalStorage? = null
+        ): WindowManager {
+
+            val tmpScope = ResourceScope.newConfinedScope()
+
+            val windowNameAddress = windowName?.let { ExternalStorage.fromString(windowName) }?.segment?.address()
+                ?: MemoryAddress.NULL
+
+
+            val parentWindow = parent?.window ?: MemoryAddress.NULL
+            val menuWindow = menu?.window ?: MemoryAddress.NULL
+
+            val pidInstance = instance?.handle
+                ?: NativeAPI.getModuleHandle(MemoryAddress.NULL) as MemoryAddress
+
+            val storage = param?.segment?.address() ?: MemoryAddress.NULL
+
+            val result = createWindow.invoke(
+                exStyle,
+                clazz.clazzPointer,
+                windowNameAddress.address(),
+                style,
+                x,
+                y,
+                width,
+                height,
+                parentWindow,
+                menuWindow,
+                pidInstance,
+                storage
+            ) as MemoryAddress
+
+            println(result)
+
+            check(result != MemoryAddress.NULL) {
+                "Failed to create window: ${NativeAPI.getLastError.invoke()}"
+            }
+
+            check(setLayeredWindowAttributes.invoke(result, invisible, 0.toByte(), 0x00000001) != 0) {
+                "Failed to set layered window attributes: ${NativeAPI.getLastError()}"
+            }
+
+            showWindow(result, 5)
+            tmpScope.close()
+
+            return WindowManager(result)
+        }
     }
 
-    val scope = ResourceScope.newConfinedScope()
-    var dc = MemoryAddress.NULL
-
-    val paintStruct = MemorySegment.allocateNative(
-        CLinker.C_POINTER.byteSize() + (CLinker.C_INT.byteSize() * 7) + (CLinker.C_CHAR.byteSize() * 32), scope
-    )
-
-    val stringStorage = MemorySegment.allocateNative(CLinker.C_CHAR.byteSize() * 128, scope)
-
     fun doLoop(extra: () -> Unit = {}) {
-        val scope = ResourceScope.newConfinedScope()
-        val storage = MemorySegment.allocateNative(msgStruct.size, scope)
-        while (getMessage(storage.address(), window, 0, 0) as Int != 0) {
-            translateMessage(storage.address())
-            dispatchMessage(storage.address())
+
+        val storageAddress = MemorySegment.allocateNative(msgStruct.size, ResourceScope.newConfinedScope()).address()
+
+        while (getMessage(storageAddress, window, 0, 0) != 0) {
+            translateMessage(storageAddress)
+            dispatchMessage(storageAddress)
             extra.invoke()
         }
     }
@@ -296,11 +302,8 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
         showWindow(window, 0)
     }
 
-    fun setWindowPosition(
-        afterOther: WindowManager? = null, x: Int = 0, y: Int = 0, cx: Int = 0, cy: Int = 0, flags: Int = 0
-    ): Boolean {
-        val other = afterOther?.window ?: MemoryAddress.NULL
-        return setWindowPosition(window, other, x, y, cx, cy, flags) as Int != 0
+    fun setWindowPosition(afterOther: WindowManager? = null, x: Int = 0, y: Int = 0, cx: Int = 0, cy: Int = 0, flags: Int = 0): Boolean {
+        return setWindowPosition(window, afterOther?.window ?: MemoryAddress.NULL, x, y, cx, cy, flags) != 0
     }
 
     fun getWindowRect(storage: ExternalStorage) {
@@ -308,11 +311,11 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
     }
 
     fun isAlive(): Boolean {
-        return isWindow(window) as Int != 0
+        return isWindow(window) != 0
     }
 
     fun isVisible(): Boolean {
-        return isWindowVisible(window) as Int != 0
+        return isWindowVisible(window) != 0
     }
 
     fun moveWindow(x: Int = 0, y: Int = 0, width: Int = 0, height: Int = 0, repaint: Int = 0): Boolean {
@@ -354,18 +357,14 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
             MemoryAccess.setCharAtIndex(stringStorage, index.toLong(), c)
         }
 
-        val result = textOutA(dc, x, y, stringStorage.address(), text.length)
-
-        check(result != 0) {
+        check(textOutA(dc, x, y, stringStorage.address(), text.length) != 0) {
             "Failed to draw text"
         }
     }
 
     fun updateWindow(): Boolean {
 
-        val res1 = invalidateRect(window, MemoryAddress.NULL, 0)
-
-        if (res1 == 0) {
+        if (invalidateRect(window, MemoryAddress.NULL, 0) == 0) {
             return false
         }
 
@@ -381,10 +380,6 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
         endPaint(window, dc)
         dc = MemoryAddress.NULL
         changed = false
-    }
-
-    override fun close() {
-        TODO("Not yet implemented")
     }
 
 }
