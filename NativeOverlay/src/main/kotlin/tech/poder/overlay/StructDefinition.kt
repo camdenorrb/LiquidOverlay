@@ -1,5 +1,6 @@
 package tech.poder.overlay
 
+import jdk.incubator.foreign.MemoryLayout
 import tech.poder.overlay.utils.NativeUtils
 
 data class StructDefinition(val offset: List<Long>, val size: Long) {
@@ -14,7 +15,7 @@ data class StructDefinition(val offset: List<Long>, val size: Long) {
         fun generate(dataTypes: List<Class<*>>): StructDefinition {
 
             val types = dataTypes.map(NativeUtils::classToMemoryLayout)
-            val maxByteSize = types.maxOf { it.byteSize() }
+            val maxByteSize = types.maxOf(MemoryLayout::byteSize)
 
             val offsets = mutableListOf<Long>()
             var size = 0L

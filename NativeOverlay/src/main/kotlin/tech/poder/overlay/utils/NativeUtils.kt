@@ -11,11 +11,12 @@ object NativeUtils {
 
 	val loadedLibraries = mutableSetOf<String>()
 
+	private val upcallScope = ResourceScope.newSharedScope()
+
 	private val symbolLookup = SymbolLookup.loaderLookup()
 
 	private val handleLookup = MethodHandles.lookup()
 
-	private val upcallScope = ResourceScope.newSharedScope()
 
 
 	fun loadLibrary(path: Path) {
@@ -35,7 +36,6 @@ object NativeUtils {
 	fun lookupMethodHandle(name: String, returnType: Class<*>? = null, parameterTypes: List<Class<*>> = emptyList()): MethodHandle {
 		return dataTypesToMethod(symbolLookup.lookup(name).get(), returnType, parameterTypes)
 	}
-
 
 	fun lookupStaticMethodUpcall(staticClazz: Class<*>, name: String, returnType: Class<*>? = null, parameterTypes: List<Class<*>> = emptyList()): MemoryAddress {
 		val methodHandle = lookupStaticMethodHandle(staticClazz, name, returnType, parameterTypes)
@@ -74,37 +74,29 @@ object NativeUtils {
 		else -> error("Unsupported type: $type")
 	}
 
-	fun classToMemoryLayout(type: Class<*>): MemoryLayout {
-		return when (type) {
+	fun classToMemoryLayout(type: Class<*>) = when (type) {
 
-			Boolean::class.java -> CLinker.C_INT
-			Byte::class.java -> CLinker.C_CHAR
-			Short::class.java -> CLinker.C_SHORT
-			Int::class.java -> CLinker.C_INT
-			Long::class.java -> CLinker.C_LONG
-			Float::class.java -> CLinker.C_FLOAT
-			Double::class.java -> CLinker.C_DOUBLE
-			MemoryAddress::class.java -> CLinker.C_POINTER
+		Boolean::class.java -> CLinker.C_INT
+		Byte::class.java -> CLinker.C_CHAR
+		Short::class.java -> CLinker.C_SHORT
+		Int::class.java -> CLinker.C_INT
+		Long::class.java -> CLinker.C_LONG
+		Float::class.java -> CLinker.C_FLOAT
+		Double::class.java -> CLinker.C_DOUBLE
+		MemoryAddress::class.java -> CLinker.C_POINTER
 
-			else -> error("Unsupported type: $type")
-		}
+		else -> error("Unsupported type: $type")
 	}
 
-	fun <T> getExpanding(invoke: (Long, MemorySegment) -> T?): T {
+	fun <T> getExpanding(block: (Long, MemorySegment) -> T?): T {
 
 		var result: T? = null
-		var size = 0L
+		var size = 256L
 
 		while (result == null) {
-
-			if (size == 0L) {
-				size = 256L
-			}
-
-			size *= 2L
-
 			ResourceScope.newConfinedScope().use { scope ->
-				result = invoke.invoke(size, MemorySegment.allocateNative(size, scope))
+				size *= 2L
+				result = block.invoke(size, MemorySegment.allocateNative(size, scope))
 			}
 		}
 
@@ -125,9 +117,7 @@ object NativeUtils {
 			FunctionDescriptor.ofVoid(*parameterTypes.map(::classToMemoryLayout).toTypedArray())
 		}
 		else {
-			FunctionDescriptor.of(
-				classToMemoryLayout(returnType), *parameterTypes.map(::classToMemoryLayout).toTypedArray()
-			)
+			FunctionDescriptor.of(classToMemoryLayout(returnType), *parameterTypes.map(::classToMemoryLayout).toTypedArray())
 		}
 	}
 

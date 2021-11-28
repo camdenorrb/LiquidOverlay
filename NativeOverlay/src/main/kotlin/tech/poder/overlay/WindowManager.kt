@@ -211,7 +211,6 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
         val HWND_TOPMOST = WindowManager(MemoryAddress.ofLong(-1L))
         val HWND_BOTTOM = WindowManager(MemoryAddress.ofLong(1L))
 
-
         val scope = ResourceScope.newConfinedScope()
         var dc = MemoryAddress.NULL
 
@@ -237,19 +236,10 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
             param: ExternalStorage? = null
         ): WindowManager {
 
-            val tmpScope = ResourceScope.newConfinedScope()
+            //val tmpScope = ResourceScope.newConfinedScope()
 
             val windowNameAddress = windowName?.let { ExternalStorage.fromString(windowName) }?.segment?.address()
                 ?: MemoryAddress.NULL
-
-
-            val parentWindow = parent?.window ?: MemoryAddress.NULL
-            val menuWindow = menu?.window ?: MemoryAddress.NULL
-
-            val pidInstance = instance?.handle
-                ?: NativeAPI.getModuleHandle(MemoryAddress.NULL) as MemoryAddress
-
-            val storage = param?.segment?.address() ?: MemoryAddress.NULL
 
             val result = createWindow.invoke(
                 exStyle,
@@ -260,10 +250,10 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
                 y,
                 width,
                 height,
-                parentWindow,
-                menuWindow,
-                pidInstance,
-                storage
+                parent?.window ?: MemoryAddress.NULL,
+                menu?.window ?: MemoryAddress.NULL,
+                instance?.handle ?: NativeAPI.getModuleHandle(MemoryAddress.NULL) as MemoryAddress,
+                param?.segment?.address() ?: MemoryAddress.NULL
             ) as MemoryAddress
 
             println(result)
@@ -277,7 +267,7 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
             }
 
             showWindow(result, 5)
-            tmpScope.close()
+            //tmpScope.close()
 
             return WindowManager(result)
         }
@@ -322,22 +312,13 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
         return moveWindow(window, x, y, width, height, repaint) != 0
     }
 
-    var changed = false
-    private fun zeroOut() {
-        paintStruct.fill(0)
-
-    }
-
     fun startPaint() {
 
         check(dc == MemoryAddress.NULL) {
             "Already started painting"
         }
 
-        if (changed) {
-            zeroOut()
-        }
-
+        paintStruct.fill(0)
         dc = beginPaint(window, paintStruct.address()) as MemoryAddress
 
         check(dc != MemoryAddress.NULL) {
@@ -347,14 +328,12 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
 
     fun drawText(text: String, x: Int, y: Int) {
 
-        changed = true
-
         check(dc != MemoryAddress.NULL) {
             "Not painting"
         }
 
-        text.forEachIndexed { index, c ->
-            MemoryAccess.setCharAtIndex(stringStorage, index.toLong(), c)
+        text.forEachIndexed { index, char ->
+            MemoryAccess.setCharAtIndex(stringStorage, index.toLong(), char)
         }
 
         check(textOutA(dc, x, y, stringStorage.address(), text.length) != 0) {
@@ -379,7 +358,6 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
 
         endPaint(window, dc)
         dc = MemoryAddress.NULL
-        changed = false
     }
 
 }
