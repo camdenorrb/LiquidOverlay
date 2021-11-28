@@ -1,10 +1,14 @@
 package tech.poder.test.overlay
 
 import jdk.incubator.foreign.MemoryAccess
+import jdk.incubator.foreign.MemoryAddress
+import jdk.incubator.foreign.ResourceScope
 import tech.poder.overlay.*
 import java.awt.Color
 import java.awt.image.BufferedImage
+import java.nio.ByteBuffer
 import kotlin.experimental.and
+import kotlin.math.min
 import kotlin.test.Test
 
 internal class TestHook {
@@ -216,6 +220,18 @@ internal class TestHook {
         return MemoryAccess.getShortAtOffset(format.segment, format[1])
     }
 
+    fun getNumberOfSamplesPerSecond(format: StructInstance): Int {
+        return MemoryAccess.getIntAtOffset(format.segment, format[2])
+    }
+
+    fun getStartPdata(state: StructInstance): MemoryAddress {
+        return MemoryAccess.getAddressAtOffset(state.segment, state[9])
+    }
+
+    fun processesFrame(buffer: ByteArray) {
+
+    }
+
     @Test
     fun basicAudio() {
         val state = Callback.newState()
@@ -224,10 +240,14 @@ internal class TestHook {
         val hnsPeriod = MemoryAccess.getDoubleAtOffset(state.segment, state[3])
         val sleepTime = ((hnsPeriod / 10_000.0) / 2.0).toLong()
         var counter = 0
-        var dataLength = 0u
         val format = Callback.getFormat(state)
 
         val bytesPerFrame = ((getBitsPerSample(format) * getNumberOfChannels(format).toLong()) / 8L).toInt()
+        val framesPerSecond = getNumberOfSamplesPerSecond(format)
+        val bytesPerSecond = bytesPerFrame * framesPerSecond.toLong()
+        if (bytesPerSecond.toInt().toLong() != bytesPerSecond) {
+            error("Bytes per second is too big")
+        }
 
         while (counter < 30) {
             println("at top of loop")
@@ -243,13 +263,19 @@ internal class TestHook {
                 if (flags and AUDCLNT_BUFFERFLAGS_SILENT != 0.toByte()) {
                     println("SILENT")
                 }
-                dataLength += getPNumFramesInPacket(state)
+                val amountOfFramesInBuffer = getPNumFramesInPacket(state)
+                val pDataLocation = getStartPdata(state).asSegment(amountOfFramesInBuffer.toLong() * bytesPerFrame.toLong(), ResourceScope.globalScope())
+                var currentPos = 0L
+                while (currentPos < pDataLocation.byteSize()) {
+                    val buffer = pDataLocation.asSlice(currentPos, min(bytesPerFrame.toLong(), pDataLocation.byteSize() - currentPos))
+                    processesFrame(buffer.toByteArray())
+                    currentPos += buffer.byteSize()
+                }
                 Callback.releaseBuffer(state)
                 Callback.getNextPacketSize(state)
                 packetLength = getPNumFramesInPacket(state)
             }
         }
-        println(dataLength)
     }
 
 }
