@@ -5,6 +5,7 @@ import tech.poder.overlay.utils.NativeUtils
 import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
+import kotlin.io.path.Path
 import kotlin.random.Random
 import kotlin.system.exitProcess
 
@@ -20,6 +21,11 @@ object NativeAPI {
 
 
 	//region MethodHandle
+
+	init {
+		NativeUtils.loadLibraries("Comctl32", "Ole32", "user32", "kernel32", "psapi")
+		NativeUtils.loadLibrary(Path("libnew.dll"))
+	}
 
 	val getLastError = NativeUtils.lookupMethodHandle("GetLastError", Int::class.java)
 
@@ -135,7 +141,7 @@ object NativeAPI {
 		"GetModuleHandleA", MemoryAddress::class.java, listOf(MemoryAddress::class.java)
 	)
 
-	val forEachWindowUpcall = NativeUtils.lookupStaticMethodHandle(
+	val forEachWindowUpcall = NativeUtils.lookupStaticMethodUpcall(
 		this::class.java,
 		"forEachWindow",
 		Boolean::class.java,
@@ -370,14 +376,6 @@ object NativeAPI {
 	)
 
 
-	init {
-		// TODO: See if you can load libnew.dll without a Path
-		NativeUtils.loadLibraries("Comctl32", "Ole32", "user32", "kernel32", "psapi", "libnew.dll")
-		//NativeUtils.loadLibrary(Path("libnew.dll"))
-	}
-
-
-
 	fun defineGUID(
 		a: Long, b: Short, c: Short, d: Byte, e: Byte, f: Byte, g: Byte, h: Byte, i: Byte, j: Byte, k: Byte
 	): MemorySegment {
@@ -422,25 +420,8 @@ object NativeAPI {
 
 		companion object {
 
-			@JvmStatic
-			fun hookProc(hwnd: MemoryAddress, uMsg: Int, wParam: MemoryAddress, lParam: MemoryAddress): MemoryAddress {
-				if (lastWindow.window == MemoryAddress.NULL) {
-					lastWindow = WindowManager(hwnd)
-				}
-				return when (uMsg) {
-					0x000f -> {
-						repaint(hwnd)
-						MemoryAddress.NULL
-					}
-					0x0002, 0x0010 -> {
-						exitProcess(0)
-					}
-					else -> {
-						println("Unhandled Called: $uMsg")
-						WindowManager.defWindowProcW(hwnd, uMsg, wParam, lParam) as MemoryAddress
-					}
-				}
-			}
+			// Move hookProc here?
+
 
 		}
 

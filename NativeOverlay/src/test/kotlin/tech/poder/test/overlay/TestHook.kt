@@ -14,7 +14,7 @@ internal class TestHook {
         val processes = NativeAPI.getProcesses()
         var i = 0
         processes.forEachIndexed { index, process ->
-            if (process.exeLocation.contains("Notepad.exe")) {
+            if (process.exeLocation.contains("notepad++.exe")) {
                 i = index
             }
             println("$index: ${process.title}(${process.exeLocation})")
@@ -33,8 +33,8 @@ internal class TestHook {
             width = selected.rect.width.toInt(),
             height = selected.rect.height.toInt()
         )
-        val selectedWindow = selected.asWindow()
 
+        val selectedWindow = selected.asWindow()
         val overlay = OverlayImpl(window, selectedWindow)
 
         overlay.onRedraw = {
@@ -50,9 +50,7 @@ internal class TestHook {
             graphics.dispose()
         }
 
-
         window.doLoop()
-
         overlay.close()
     }
 
@@ -82,7 +80,9 @@ internal class TestHook {
         )
         val selectedWindow = selected.asWindow()
 
-        fun draw(overlay: Overlay) {
+        val overlay = OverlayImpl(window, selectedWindow)
+
+        overlay.onRedraw = {
 
             val bufferedImage = BufferedImage(overlay.canvasWidth, overlay.canvasHeight, BufferedImage.TYPE_INT_RGB)
             val graphics = bufferedImage.createGraphics()
@@ -93,12 +93,6 @@ internal class TestHook {
             overlay.image(bufferedImage, Overlay.Position(0, 0), overlay.canvasWidth, overlay.canvasHeight)
 
             graphics.dispose()
-        }
-
-        val overlay = OverlayImpl(window, selectedWindow)
-
-        overlay.onRedraw = {
-            draw(it)
         }
 
         window.doLoop()

@@ -21,7 +21,7 @@ object NativeUtils {
 
 	fun loadLibrary(path: Path) {
 		if (loadedLibraries.add(path.name.lowercase())) {
-			System.loadLibrary(path.toAbsolutePath().toString())
+			System.load(path.toAbsolutePath().toString())
 		}
 	}
 
@@ -33,13 +33,21 @@ object NativeUtils {
 		}
 	}
 
+	// The same as NativeRegister.register(name, function)
 	fun lookupMethodHandle(name: String, returnType: Class<*>? = null, parameterTypes: List<Class<*>> = emptyList()): MethodHandle {
-		return dataTypesToMethod(symbolLookup.lookup(name).get(), returnType, parameterTypes)
+		return dataTypesToMethod(
+			symbolLookup.lookup(name).get(),
+			returnType,
+			parameterTypes,
+		)
 	}
 
 	fun lookupStaticMethodUpcall(staticClazz: Class<*>, name: String, returnType: Class<*>? = null, parameterTypes: List<Class<*>> = emptyList()): MemoryAddress {
-		val methodHandle = lookupStaticMethodHandle(staticClazz, name, returnType, parameterTypes)
-		return methodToUpcall(methodHandle, returnType, parameterTypes)
+		return methodToUpcall(
+			lookupStaticMethodHandle(staticClazz, name, returnType, parameterTypes),
+			returnType,
+			parameterTypes
+		)
 	}
 
 	fun lookupStaticMethodHandle(staticClazz: Class<*>, name: String, returnType: Class<*>? = null, parameterTypes: List<Class<*>> = emptyList()): MethodHandle {
@@ -104,15 +112,19 @@ object NativeUtils {
 	}
 
 
-	private fun dataTypesToMethod(location: Addressable, returnType: Class<*>? = null, parameterTypes: List<Class<*>> = emptyList()): MethodHandle {
-		return CLinker.getInstance().downcallHandle(location, generateType(), generateDescriptor(returnType, parameterTypes))
+	private fun dataTypesToMethod(location: Addressable, returnType: Class<*>?, parameterTypes: List<Class<*>>): MethodHandle {
+		return CLinker.getInstance().downcallHandle(
+			location,
+			generateType(returnType, parameterTypes),
+			generateDescriptor(returnType, parameterTypes)
+		)
 	}
 
-	private fun generateType(returnType: Class<*>? = null, parameterTypes: List<Class<*>> = emptyList()): MethodType {
+	private fun generateType(returnType: Class<*>?, parameterTypes: List<Class<*>>): MethodType {
 		return MethodType.methodType(classAsPrimitive(returnType ?: Void.TYPE), parameterTypes.map(::classAsPrimitive))
 	}
 
-	private fun generateDescriptor(returnType: Class<*>? = null, parameterTypes: List<Class<*>> = emptyList()): FunctionDescriptor {
+	private fun generateDescriptor(returnType: Class<*>?, parameterTypes: List<Class<*>>): FunctionDescriptor {
 		return if (returnType == null) {
 			FunctionDescriptor.ofVoid(*parameterTypes.map(::classToMemoryLayout).toTypedArray())
 		}

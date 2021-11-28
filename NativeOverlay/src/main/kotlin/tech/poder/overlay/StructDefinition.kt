@@ -15,25 +15,22 @@ data class StructDefinition(val offset: List<Long>, val size: Long) {
         fun generate(dataTypes: List<Class<*>>): StructDefinition {
 
             val types = dataTypes.map(NativeUtils::classToMemoryLayout)
-            val maxByteSize = types.maxOf(MemoryLayout::byteSize)
+            val maxByteSize = types.maxOfOrNull(MemoryLayout::byteSize) ?: 1L
 
             val offsets = mutableListOf<Long>()
             var size = 0L
 
             types.forEachIndexed { index, memoryLayout ->
-                size += if (index == 0 || types[index - 1].byteSize() == memoryLayout.byteSize()) {
-                    offsets.add(size)
-                    memoryLayout.byteSize()
-                }
-                else {
 
+                // If should apply padding
+                if (index != 0 && types[index - 1].byteSize() != memoryLayout.byteSize()) {
                     while (size % maxByteSize != 0L) {
-                        size++ //padding
+                        size++
                     }
-
-                    offsets.add(size)
-                    memoryLayout.byteSize()
                 }
+
+                offsets.add(size)
+                size += memoryLayout.byteSize()
             }
 
             return StructDefinition(offsets, size)

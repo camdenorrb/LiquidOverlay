@@ -55,7 +55,7 @@ value class WindowClass(val clazzPointer: MemoryAddress) : AutoCloseable {
         }
 
         val hookProcUpcall = NativeUtils.lookupStaticMethodUpcall(
-            this::class.java,
+            NativeAPI::class.java,
             "hookProc",
             MemoryAddress::class.java,
             listOf(MemoryAddress::class.java, Int::class.java, MemoryAddress::class.java, MemoryAddress::class.java),
@@ -79,6 +79,8 @@ value class WindowClass(val clazzPointer: MemoryAddress) : AutoCloseable {
             MemoryAccess.setAddressAtOffset(struct, windClassW.offset[9], externalStorage.segment.address())
 
             println(struct.toByteArray().joinToString(", "))
+
+            // Error
             val result = registerClassW(struct.address()) as MemoryAddress
 
             check(result != MemoryAddress.NULL) {
@@ -86,7 +88,9 @@ value class WindowClass(val clazzPointer: MemoryAddress) : AutoCloseable {
             }
 
             return WindowClass(result)
+
         }
+
     }
 
 }
