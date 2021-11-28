@@ -267,7 +267,7 @@ internal class TestHook {
                 val pDataLocation = getStartPdata(state).asSegment(amountOfFramesInBuffer.toLong() * bytesPerFrame.toLong(), ResourceScope.globalScope())
                 var currentPos = 0L
                 while (currentPos < pDataLocation.byteSize()) {
-                    val buffer = pDataLocation.asSlice(currentPos, min(bytesPerFrame.toLong(), pDataLocation.byteSize() - currentPos))
+                    val buffer = pDataLocation.asSlice(currentPos, min(bytesPerSecond, pDataLocation.byteSize() - currentPos))
                     processesFrame(buffer.toByteArray())
                     currentPos += buffer.byteSize()
                 }
