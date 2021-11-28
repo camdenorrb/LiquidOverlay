@@ -437,6 +437,16 @@ object Callback {
         )
     )
 
+    fun newFormat(): StructInstance {
+        return waveFormatEx.new()
+    }
+
+    fun getFormat(state: StructInstance): StructInstance {
+        val scope = ResourceScope.globalScope()
+        val seg = MemoryAccess.getAddressAtOffset(state.segment, state[8]).asSegment(waveFormatEx.size, scope)
+        return StructInstance(seg, waveFormatEx)
+    }
+
     fun newState(): StructInstance {
         return state.new()
     }

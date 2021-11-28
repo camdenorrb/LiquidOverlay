@@ -208,6 +208,14 @@ internal class TestHook {
         return MemoryAccess.getByteAtOffset(state.segment, state[2])
     }
 
+    fun getBitsPerSample(format: StructInstance): Short {
+        return MemoryAccess.getShortAtOffset(format.segment, format[5])
+    }
+
+    fun getNumberOfChannels(format: StructInstance): Short {
+        return MemoryAccess.getShortAtOffset(format.segment, format[1])
+    }
+
     @Test
     fun basicAudio() {
         val state = Callback.newState()
@@ -217,6 +225,10 @@ internal class TestHook {
         val sleepTime = ((hnsPeriod / 10_000.0) / 2.0).toLong()
         var counter = 0
         var dataLength = 0u
+        val format = Callback.getFormat(state)
+
+        val bytesPerFrame = ((getBitsPerSample(format) * getNumberOfChannels(format).toLong()) / 8L).toInt()
+
         while (counter < 30) {
             println("at top of loop")
             // Sleep for half the buffer duration.
