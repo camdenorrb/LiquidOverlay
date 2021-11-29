@@ -3,10 +3,10 @@ package dev.twelveoclock.liquidoverlay
 import dev.twelveoclock.liquidoverlay.api.Liquipedia
 import dev.twelveoclock.liquidoverlay.modules.sub.PluginModule
 import dev.twelveoclock.liquidoverlay.speech.GoogleSpeechAPI
-import tech.poder.overlay.Callback
-import tech.poder.overlay.OverlayImpl
-import tech.poder.overlay.WindowClass
-import tech.poder.overlay.WindowManager
+import tech.poder.overlay.general.Callback
+import tech.poder.overlay.video.OverlayImpl
+import tech.poder.overlay.video.WindowClass
+import tech.poder.overlay.video.WindowManager
 import javax.sound.sampled.*
 import kotlin.io.path.Path
 import kotlin.system.exitProcess

@@ -1,6 +1,8 @@
-package tech.poder.overlay
+package tech.poder.overlay.audio
 
 import jdk.incubator.foreign.MemoryAccess
+import tech.poder.overlay.general.Callback
+import tech.poder.overlay.general.StructInstance
 import java.util.*
 
 interface AudioFormat {
@@ -19,13 +21,24 @@ interface AudioFormat {
                 builder.appendLine("WAVE_FORMAT_EXTENSIBLE Detected!")
                 val upgraded = Callback.upgradeFormat(format)
                 builder.appendLine("Samples: ${MemoryAccess.getShortAtOffset(upgraded.segment, upgraded[7])}")
-                builder.appendLine("Channel Mask: ${MemoryAccess.getIntAtOffset(upgraded.segment, upgraded[8])}")
+                val channels = mutableListOf<Channel>()
+                val mask = MemoryAccess.getIntAtOffset(upgraded.segment, upgraded[8])
+                Channel.values().forEach {
+                    if (mask and it.flag != 0) {
+                        channels.add(it)
+                    }
+                }
+                builder.appendLine("Channel Mask = $mask: ${channels.joinToString(", ")}")
                 builder.appendLine("Sub Format: ${UUID.nameUUIDFromBytes(upgraded.segment.asSlice(upgraded[9]).toByteArray())}")
             }
 
             return builder.toString()
         }
+
+        fun generateFormat() {
+
+        }
     }
 
-    fun getAudioStruct(): StructInstance
+    fun getAudioStruct(): GeneratedFormat
 }

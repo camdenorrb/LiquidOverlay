@@ -1,6 +1,10 @@
-package tech.poder.overlay
+package tech.poder.overlay.general
 
 import jdk.incubator.foreign.MemoryAddress
+import tech.poder.overlay.general.Callback
+import tech.poder.overlay.general.NativeRegistry
+import tech.poder.overlay.video.RectReader
+import tech.poder.overlay.video.WindowManager
 
 data class Process(
     val hWnd: MemoryAddress,

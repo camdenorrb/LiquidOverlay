@@ -1,4 +1,4 @@
-package tech.poder.overlay
+package tech.poder.overlay.general
 
 import jdk.incubator.foreign.MemoryAccess
 import jdk.incubator.foreign.MemorySegment

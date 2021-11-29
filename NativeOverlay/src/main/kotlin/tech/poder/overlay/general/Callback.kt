@@ -1,6 +1,9 @@
-package tech.poder.overlay
+package tech.poder.overlay.general
 
 import jdk.incubator.foreign.*
+import tech.poder.overlay.audio.AudioFormat
+import tech.poder.overlay.video.RectReader
+import tech.poder.overlay.video.WindowManager
 import java.nio.file.Paths
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read

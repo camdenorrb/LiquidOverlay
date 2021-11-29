@@ -1,6 +1,7 @@
-package tech.poder.overlay
+package tech.poder.overlay.audio
 
 import jdk.incubator.foreign.MemoryAccess
+import tech.poder.overlay.general.Callback
 
 object SpeechToText : AudioFormat {
     private val format by lazy {
@@ -12,10 +13,10 @@ object SpeechToText : AudioFormat {
         MemoryAccess.setShortAtOffset(format.segment, format[4], 8) //Block Alignment = (16*1) / 8) = 8
         MemoryAccess.setShortAtOffset(format.segment, format[5], 16) //16bit
         MemoryAccess.setShortAtOffset(format.segment, format[6], 0) //No Extra Data
-        format
+        GeneratedFormat(format)
     }
 
-    override fun getAudioStruct(): StructInstance {
+    override fun getAudioStruct(): GeneratedFormat {
         return format
     }
 }

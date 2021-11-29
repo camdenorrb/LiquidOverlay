@@ -2,9 +2,16 @@ package tech.poder.test.overlay
 
 import jdk.incubator.foreign.*
 import tech.poder.overlay.*
+import tech.poder.overlay.audio.AudioFormat
+import tech.poder.overlay.audio.SpeechToText
+import tech.poder.overlay.general.Callback
+import tech.poder.overlay.general.StructInstance
+import tech.poder.overlay.video.Overlay
+import tech.poder.overlay.video.OverlayImpl
+import tech.poder.overlay.video.WindowClass
+import tech.poder.overlay.video.WindowManager
 import java.awt.Color
 import java.awt.image.BufferedImage
-import java.nio.ByteBuffer
 import kotlin.experimental.and
 import kotlin.math.min
 import kotlin.test.Test
@@ -237,13 +244,13 @@ internal class TestHook {
     @Test
     fun basicAudio() {
         val state = Callback.newState()
-        /*val formatList = Callback.newFormatList()
+        val formatList = Callback.newFormatList()
         MemoryAccess.setIntAtOffset(formatList.segment, formatList[0], 1)
         val pointerList = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newSharedScope())
-        MemoryAccess.setAddress(pointerList, SpeechToText.getAudioStruct().segment.address())
+        MemoryAccess.setAddress(pointerList, SpeechToText.getAudioStruct().format.segment.address())
         MemoryAccess.setAddressAtOffset(formatList.segment, formatList[1], pointerList)
-        Callback.startRecording(state, formatList)*/
-        Callback.startRecording(state)
+        Callback.startRecording(state, formatList)
+        //Callback.startRecording(state)
         val hnsPeriod = MemoryAccess.getDoubleAtOffset(state.segment, state[3])
         val sleepTime = ((hnsPeriod / 10_000.0) / 2.0).toLong()
         var counter = 0

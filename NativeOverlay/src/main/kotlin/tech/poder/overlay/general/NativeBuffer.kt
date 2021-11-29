@@ -1,4 +1,4 @@
-package tech.poder.overlay
+package tech.poder.overlay.general
 
 data class NativeBuffer(
     val pData: Byte,

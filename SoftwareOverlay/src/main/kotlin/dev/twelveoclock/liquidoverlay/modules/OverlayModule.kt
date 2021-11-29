@@ -2,8 +2,8 @@ package dev.twelveoclock.liquidoverlay.modules
 
 import dev.twelveoclock.liquidoverlay.modules.base.BasicModule
 import dev.twelveoclock.liquidoverlay.modules.sub.PluginModule
-import tech.poder.overlay.OverlayImpl
-import tech.poder.overlay.WindowManager
+import tech.poder.overlay.video.OverlayImpl
+import tech.poder.overlay.video.WindowManager
 import java.nio.file.Path
 
 class OverlayModule(

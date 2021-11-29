@@ -1,4 +1,4 @@
-package tech.poder.overlay
+package tech.poder.overlay.general
 
 import jdk.incubator.foreign.*
 import java.lang.invoke.MethodHandle

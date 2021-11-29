@@ -1,6 +1,9 @@
-package tech.poder.overlay
+package tech.poder.overlay.video
 
 import jdk.incubator.foreign.MemoryAddress
+import tech.poder.overlay.general.Callback
+import tech.poder.overlay.general.ExternalStorage
+import tech.poder.overlay.general.NativeRegistry
 import java.awt.image.BufferedImage
 import java.nio.file.Paths
 import javax.imageio.ImageIO

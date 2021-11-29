@@ -1,4 +1,4 @@
-package tech.poder.overlay
+package tech.poder.overlay.video
 
 import java.awt.image.BufferedImage
 

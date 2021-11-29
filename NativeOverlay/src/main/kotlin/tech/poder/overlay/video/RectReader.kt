@@ -1,9 +1,10 @@
-package tech.poder.overlay
+package tech.poder.overlay.video
 
 import jdk.incubator.foreign.CLinker
 import jdk.incubator.foreign.MemoryAccess
 import jdk.incubator.foreign.MemorySegment
 import jdk.incubator.foreign.ResourceScope
+import tech.poder.overlay.general.ExternalStorage
 
 data class RectReader(val segment: MemorySegment, val left: UInt, val top: UInt, val right: UInt, val bottom: UInt) {
 

@@ -1,6 +1,12 @@
-package tech.poder.overlay
+package tech.poder.overlay.video
 
 import jdk.incubator.foreign.*
+import tech.poder.overlay.general.Process
+import tech.poder.overlay.general.StructDefinition
+import tech.poder.overlay.general.Callback
+import tech.poder.overlay.general.ExternalStorage
+import tech.poder.overlay.general.FunctionDescription
+import tech.poder.overlay.general.NativeRegistry
 import java.awt.Color
 
 data class WindowManager(val window: MemoryAddress) : AutoCloseable {
