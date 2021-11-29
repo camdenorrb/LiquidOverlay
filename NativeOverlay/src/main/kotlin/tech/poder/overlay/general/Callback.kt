@@ -509,8 +509,10 @@ object Callback {
                 val start = MemoryAccess.getAddressAtOffset(formats.segment, formats[1]).asSegment(CLinker.C_POINTER.byteSize() * amount, ResourceScope.globalScope())
                 repeat(amount) {
                     val formatAddress = MemoryAccess.getAddressAtIndex(start, it.toLong())
-                    val format = toFormat(formatAddress)
-                    alts.add(AudioFormat.getFormat(format))
+                    if (formatAddress != MemoryAddress.NULL) {
+                        val format = toFormat(formatAddress)
+                        alts.add(AudioFormat.getFormat(format))
+                    }
                 }
             }
             "Failed to start recording! Code: $hr MSG: ${CLinker.toJavaString(MemoryAccess.getAddressAtOffset(state.segment, state[4]))} ${if (alts.isNotEmpty()) "ALTS: ${alts.joinToString(", ")}" else ""}"

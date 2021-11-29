@@ -8,7 +8,7 @@ object NumberUtils {
     fun shortFromBytes(bytes: ByteArray, offset: Int = 0): Short {
         var value = 0
         shortUtils.forEachIndexed { index, it ->
-            value = value or bytes[index + offset].toInt() and 0xFF shl it
+            value = value or (bytes[index + offset].toInt() and 0xFF shl it)
         }
         return value.toShort()
     }
@@ -16,7 +16,7 @@ object NumberUtils {
     fun intFromBytes(bytes: ByteArray, offset: Int = 0): Int {
         var value = 0
         intUtils.forEachIndexed { index, it ->
-            value = value or bytes[index + offset].toInt() and 0xFF shl it
+            value = value or (bytes[index + offset].toInt() and 0xFF shl it)
         }
         return value
     }
@@ -24,7 +24,7 @@ object NumberUtils {
     fun longFromBytes(bytes: ByteArray, offset: Int = 0): Long {
         var value = 0L
         longUtils.forEachIndexed { index, it ->
-            value = value or bytes[index + offset].toLong() and 0xFFL shl it
+            value = value or (bytes[index + offset].toLong() and 0xFFL shl it)
         }
         return value
     }

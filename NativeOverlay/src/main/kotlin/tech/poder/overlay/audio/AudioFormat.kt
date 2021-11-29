@@ -31,7 +31,10 @@ interface AudioFormat {
                     }
                 }
                 builder.appendLine("Channel Mask = $mask: ${channels.joinToString(", ")}")
-                builder.appendLine("Sub Format: ${UUID.nameUUIDFromBytes(upgraded.segment.asSlice(upgraded[9]).toByteArray())}")
+                val bytes = upgraded.segment.asSlice(upgraded[9]).toByteArray()
+                val most = NumberUtils.longFromBytes(bytes)
+                val least = NumberUtils.longFromBytes(bytes, 8)
+                builder.appendLine("Sub Format: ${UUID(most, least)}")
             }
 
             return builder.toString()
