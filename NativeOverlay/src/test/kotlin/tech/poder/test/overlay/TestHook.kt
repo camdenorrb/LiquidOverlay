@@ -279,10 +279,7 @@ internal class TestHook {
                     println("SILENT")
                 }
                 val amountOfFramesInBuffer = getPNumFramesInPacket(state)
-                val pDataLocation = getStartPdata(state).asSegment(
-                    amountOfFramesInBuffer.toLong() * bytesPerFrame.toLong(),
-                    ResourceScope.globalScope()
-                )
+                val pDataLocation = Callback.getPData(getStartPdata(state), amountOfFramesInBuffer.toLong() * bytesPerFrame.toLong())
                 var currentPos = 0L
                 while (currentPos < pDataLocation.byteSize()) {
                     val buffer =

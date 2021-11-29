@@ -63,15 +63,16 @@ interface AudioFormat {
             }
             MemoryAccess.setShortAtOffset(format.segment, format[1], channelSize)
             MemoryAccess.setIntAtOffset(format.segment, format[2], sampleRate)
-            MemoryAccess.setShortAtOffset(
+            val blockAlignment = ((channelBitWidth.toLong() * channelSize.toLong()) / 8L).toShort()
+            MemoryAccess.setIntAtOffset(
                 format.segment,
                 format[3],
-                ((sampleRate.toLong() * (channelSize.toLong() * channelBitWidth.toLong())) / 8L).toShort()
+                (sampleRate.toLong() * blockAlignment).toInt()
             )
             MemoryAccess.setShortAtOffset(
                 format.segment,
                 format[4],
-                ((channelBitWidth.toLong() * channelSize.toLong()) / 8L).toShort()
+                blockAlignment
             )
             MemoryAccess.setShortAtOffset(format.segment, format[5], channelBitWidth)
             if (extended) {

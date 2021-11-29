@@ -596,6 +596,10 @@ object Callback {
         return state.new()
     }
 
+    fun getPData(address: MemoryAddress, size: Long): MemorySegment {
+        return address.asSegment(size, ResourceScope.globalScope())
+    }
+
     fun startRecording(state: StructInstance, formats: StructInstance? = null) {
         NativeRegistry[startRecording].invoke(
             state.segment.address(),
