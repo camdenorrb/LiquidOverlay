@@ -2,8 +2,10 @@ package tech.poder.overlay.audio
 
 import jdk.incubator.foreign.MemoryAccess
 import tech.poder.overlay.general.Callback
+import tech.poder.overlay.general.NumberUtils
 import tech.poder.overlay.general.StructInstance
 import java.util.*
+import kotlin.math.max
 
 interface AudioFormat {
     companion object {
@@ -35,8 +37,59 @@ interface AudioFormat {
             return builder.toString()
         }
 
-        fun generateFormat(channels: List<Channel> = ChannelShortCut.KSAUDIO_SPEAKER_STEREO.channels, sampleRate: Int = 44100, channelBitWidth: Int = 16): StructInstance {
-            TODO()
+        fun generateFormat(formatFlag: FormatFlag, channels: List<Channel> = ChannelShortCut.KSAUDIO_SPEAKER_STEREO.channels, sampleRate: Int = 44100, channelBitWidth: Short = 16, extended: Boolean = true): GeneratedFormat {
+            var format = Callback.newFormat()
+            val channelSize = max(channels.size, 1).toShort()
+            if (extended) {
+                format = Callback.upgradeFormat(format)
+                MemoryAccess.setShortAtOffset(format.segment, format[0], FormatFlag.extendedBaseFlag)
+            } else {
+                MemoryAccess.setShortAtOffset(format.segment, format[0], formatFlag.baseFlag)
+            }
+            MemoryAccess.setShortAtOffset(format.segment, format[1], channelSize)
+            MemoryAccess.setIntAtOffset(format.segment, format[2], sampleRate)
+            MemoryAccess.setShortAtOffset(format.segment, format[3], ((sampleRate.toLong() * (channelSize.toLong() * channelBitWidth.toLong())) / 8L).toShort())
+            MemoryAccess.setShortAtOffset(format.segment, format[4], ((channelBitWidth.toLong() * channelSize.toLong()) / 8L).toShort())
+            MemoryAccess.setShortAtOffset(format.segment, format[5], channelBitWidth)
+            if (extended) {
+                MemoryAccess.setShortAtOffset(format.segment, format[6], 22)
+                //todo set format[7]: UNION of Samples
+                var mask = 0
+                channels.forEach {
+                    mask = mask or it.flag
+                }
+                MemoryAccess.setIntAtOffset(format.segment, format[8], mask)
+
+                val byteArray = ByteArray(16)
+                NumberUtils.bytesFromLong(formatFlag.subformatGUID.mostSignificantBits, byteArray)
+                NumberUtils.bytesFromLong(formatFlag.subformatGUID.leastSignificantBits, byteArray, 8)
+                var offset = 0
+                MemoryAccess.setIntAtOffset(format.segment, format[9], NumberUtils.intFromBytes(byteArray, offset))
+                offset += Int.SIZE_BYTES
+                MemoryAccess.setShortAtOffset(format.segment, format[10], NumberUtils.shortFromBytes(byteArray, offset))
+                offset += Short.SIZE_BYTES
+                MemoryAccess.setShortAtOffset(format.segment, format[11], NumberUtils.shortFromBytes(byteArray, offset))
+                offset += Short.SIZE_BYTES
+                MemoryAccess.setByteAtOffset(format.segment, format[12], byteArray[offset])
+                offset++
+                MemoryAccess.setByteAtOffset(format.segment, format[13], byteArray[offset])
+                offset++
+                MemoryAccess.setByteAtOffset(format.segment, format[14], byteArray[offset])
+                offset++
+                MemoryAccess.setByteAtOffset(format.segment, format[15], byteArray[offset])
+                offset++
+                MemoryAccess.setByteAtOffset(format.segment, format[16], byteArray[offset])
+                offset++
+                MemoryAccess.setByteAtOffset(format.segment, format[17], byteArray[offset])
+                offset++
+                MemoryAccess.setByteAtOffset(format.segment, format[18], byteArray[offset])
+                offset++
+                MemoryAccess.setByteAtOffset(format.segment, format[19], byteArray[offset])
+            } else {
+                MemoryAccess.setShortAtOffset(format.segment, format[6], 0)
+            }
+
+            return GeneratedFormat(format)
         }
     }
 

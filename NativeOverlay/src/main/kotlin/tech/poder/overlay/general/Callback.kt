@@ -448,8 +448,8 @@ object Callback {
         )
     )
 
-    fun upgradeFormat(state: StructInstance): StructInstance {
-        return StructInstance(state.segment.address().asSegment(waveFormatEx2.size, ResourceScope.globalScope()), waveFormatEx2)
+    fun upgradeFormat(format: StructInstance): StructInstance {
+        return StructInstance(format.segment.address().asSegment(waveFormatEx2.size, ResourceScope.globalScope()), waveFormatEx2)
     }
 
     private val getNextPacketSize = NativeRegistry.register(
