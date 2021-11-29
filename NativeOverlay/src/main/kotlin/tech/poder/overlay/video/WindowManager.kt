@@ -1,12 +1,7 @@
 package tech.poder.overlay.video
 
 import jdk.incubator.foreign.*
-import tech.poder.overlay.general.Process
-import tech.poder.overlay.general.StructDefinition
-import tech.poder.overlay.general.Callback
-import tech.poder.overlay.general.ExternalStorage
-import tech.poder.overlay.general.FunctionDescription
-import tech.poder.overlay.general.NativeRegistry
+import tech.poder.overlay.general.*
 import java.awt.Color
 
 data class WindowManager(val window: MemoryAddress) : AutoCloseable {
@@ -87,7 +82,8 @@ data class WindowManager(val window: MemoryAddress) : AutoCloseable {
         }
 
         val invisibleColor = Color(255, 0, 0, 0)
-        val invisibleRGB = Color(invisibleColor.red, invisibleColor.green, invisibleColor.blue, invisibleColor.alpha).rgb
+        val invisibleRGB =
+            Color(invisibleColor.red, invisibleColor.green, invisibleColor.blue, invisibleColor.alpha).rgb
         val invisible = Color(invisibleColor.blue, invisibleColor.green, invisibleColor.red, invisibleColor.alpha).rgb
 
         private val setLayeredWindowAttributes = run {

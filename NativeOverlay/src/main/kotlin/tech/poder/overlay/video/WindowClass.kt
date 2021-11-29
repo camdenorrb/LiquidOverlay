@@ -3,11 +3,7 @@ package tech.poder.overlay.video
 import jdk.incubator.foreign.MemoryAccess
 import jdk.incubator.foreign.MemoryAddress
 import jdk.incubator.foreign.MemorySegment
-import tech.poder.overlay.general.StructDefinition
-import tech.poder.overlay.general.Callback
-import tech.poder.overlay.general.ExternalStorage
-import tech.poder.overlay.general.FunctionDescription
-import tech.poder.overlay.general.NativeRegistry
+import tech.poder.overlay.general.*
 
 @JvmInline
 value class WindowClass(val clazzPointer: MemoryAddress) : AutoCloseable {

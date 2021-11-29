@@ -2,7 +2,7 @@ package tech.poder.overlay.general
 
 import jdk.incubator.foreign.MemorySegment
 
-data class StructInstance(val segment: MemorySegment, val def: StructDefinition): AutoCloseable {
+data class StructInstance(val segment: MemorySegment, val def: StructDefinition) : AutoCloseable {
     override fun close() {
         segment.scope().close()
     }

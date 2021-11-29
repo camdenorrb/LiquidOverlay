@@ -1,7 +1,6 @@
 package tech.poder.test.overlay
 
 import jdk.incubator.foreign.*
-import tech.poder.overlay.*
 import tech.poder.overlay.audio.AudioFormat
 import tech.poder.overlay.audio.SpeechToText
 import tech.poder.overlay.general.Callback
@@ -244,9 +243,6 @@ internal class TestHook {
     @Test
     fun basicAudio() {
         println("Requesting: ${AudioFormat.getFormat(SpeechToText.getAudioStruct().format)}")
-
-        println("Requesting UUID: ${Callback.toJavaUUID(Callback.guidFromUpgradedFormat(SpeechToText.getAudioStruct().format))}")
-        println("PCM UUID: ${Callback.toJavaUUID(Callback.getPCMgUID())}")
         val state = Callback.newState()
         val formatList = Callback.newFormatList()
         MemoryAccess.setIntAtOffset(formatList.segment, formatList[0], 1)
@@ -260,7 +256,8 @@ internal class TestHook {
         var counter = 0
         val format = Callback.getFormat(state)
         println(AudioFormat.getFormat(format))
-        val bytesPerFrame = getBytesPerFrame(format)//((getBitsPerSample(format) * getNumberOfChannels(format).toLong()) / 8L).toInt()
+        val bytesPerFrame =
+            getBytesPerFrame(format)//((getBitsPerSample(format) * getNumberOfChannels(format).toLong()) / 8L).toInt()
         val framesPerSecond = getNumberOfSamplesPerSecond(format)
         val bytesPerSecond = bytesPerFrame * framesPerSecond.toLong()
         if (bytesPerSecond.toInt().toLong() != bytesPerSecond) {
@@ -282,10 +279,14 @@ internal class TestHook {
                     println("SILENT")
                 }
                 val amountOfFramesInBuffer = getPNumFramesInPacket(state)
-                val pDataLocation = getStartPdata(state).asSegment(amountOfFramesInBuffer.toLong() * bytesPerFrame.toLong(), ResourceScope.globalScope())
+                val pDataLocation = getStartPdata(state).asSegment(
+                    amountOfFramesInBuffer.toLong() * bytesPerFrame.toLong(),
+                    ResourceScope.globalScope()
+                )
                 var currentPos = 0L
                 while (currentPos < pDataLocation.byteSize()) {
-                    val buffer = pDataLocation.asSlice(currentPos, min(bytesPerSecond, pDataLocation.byteSize() - currentPos))
+                    val buffer =
+                        pDataLocation.asSlice(currentPos, min(bytesPerSecond, pDataLocation.byteSize() - currentPos))
                     processesFrame(buffer.toByteArray())
                     currentPos += buffer.byteSize()
                 }

@@ -134,14 +134,15 @@ object NativeRegistry {
     }
 
     internal fun generateType(data: FunctionDescription): MethodType {
-        return MethodType.methodType(clazzToPrimitive[data.returnType ?: Void.TYPE]!!, data.params.map { clazzToPrimitive[it]!! })
+        return MethodType.methodType(
+            clazzToPrimitive[data.returnType ?: Void.TYPE]!!,
+            data.params.map { clazzToPrimitive[it]!! })
     }
 
     private fun generateDescriptor(data: FunctionDescription): FunctionDescriptor {
         return if (data.returnType == null) {
             FunctionDescriptor.ofVoid(*data.params.map { clazzToMemoryLayout[it]!! }.toTypedArray())
-        }
-        else {
+        } else {
             FunctionDescriptor.of(
                 clazzToMemoryLayout[data.returnType]!!, *data.params.map { clazzToMemoryLayout[it]!! }.toTypedArray()
             )

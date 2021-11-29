@@ -5,7 +5,7 @@ import jdk.incubator.foreign.MemorySegment
 import jdk.incubator.foreign.ResourceScope
 
 @JvmInline
-value class ExternalStorage(val segment: MemorySegment): AutoCloseable {
+value class ExternalStorage(val segment: MemorySegment) : AutoCloseable {
     companion object {
 
         val nullChar = "\u0000".toByteArray(Charsets.UTF_16LE)
@@ -30,6 +30,7 @@ value class ExternalStorage(val segment: MemorySegment): AutoCloseable {
             }
         }
     }
+
     override fun close() {
         segment.scope().close()
     }

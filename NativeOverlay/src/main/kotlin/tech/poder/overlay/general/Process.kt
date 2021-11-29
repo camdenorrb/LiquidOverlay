@@ -1,8 +1,6 @@
 package tech.poder.overlay.general
 
 import jdk.incubator.foreign.MemoryAddress
-import tech.poder.overlay.general.Callback
-import tech.poder.overlay.general.NativeRegistry
 import tech.poder.overlay.video.RectReader
 import tech.poder.overlay.video.WindowManager
 
@@ -14,7 +12,7 @@ data class Process(
     val title: String,
     val pid: Int,
     val rect: RectReader,
-): AutoCloseable {
+) : AutoCloseable {
 
     override fun close() {
         if (handle != MemoryAddress.NULL) {
@@ -25,5 +23,5 @@ data class Process(
     fun asWindow(): WindowManager {
         return WindowManager(hWnd)
     }
-    
+
 }
