@@ -31,10 +31,8 @@ interface AudioFormat {
                     }
                 }
                 builder.appendLine("Channel Mask = $mask: ${channels.joinToString(", ")}")
-                val bytes = upgraded.segment.asSlice(upgraded[9]).toByteArray()
-                val most = NumberUtils.longFromBytes(bytes)
-                val least = NumberUtils.longFromBytes(bytes, 8)
-                builder.appendLine("Sub Format: ${UUID(most, least)}")
+                val id = Callback.toJavaUUID(Callback.guidFromUpgradedFormat(upgraded))
+                builder.appendLine("Sub Format: $id")
             }
 
             return builder.toString()
@@ -62,32 +60,8 @@ interface AudioFormat {
                     mask = mask or it.flag
                 }
                 MemoryAccess.setIntAtOffset(format.segment, format[8], mask)
-
-                val byteArray = ByteArray(16)
-                NumberUtils.bytesFromLong(formatFlag.subformatGUID.mostSignificantBits, byteArray)
-                NumberUtils.bytesFromLong(formatFlag.subformatGUID.leastSignificantBits, byteArray, 8)
-                var offset = 0
-                MemoryAccess.setIntAtOffset(format.segment, format[9], NumberUtils.intFromBytes(byteArray, offset))
-                offset += Int.SIZE_BYTES
-                MemoryAccess.setShortAtOffset(format.segment, format[10], NumberUtils.shortFromBytes(byteArray, offset))
-                offset += Short.SIZE_BYTES
-                MemoryAccess.setShortAtOffset(format.segment, format[11], NumberUtils.shortFromBytes(byteArray, offset))
-                offset += Short.SIZE_BYTES
-                MemoryAccess.setByteAtOffset(format.segment, format[12], byteArray[offset])
-                offset++
-                MemoryAccess.setByteAtOffset(format.segment, format[13], byteArray[offset])
-                offset++
-                MemoryAccess.setByteAtOffset(format.segment, format[14], byteArray[offset])
-                offset++
-                MemoryAccess.setByteAtOffset(format.segment, format[15], byteArray[offset])
-                offset++
-                MemoryAccess.setByteAtOffset(format.segment, format[16], byteArray[offset])
-                offset++
-                MemoryAccess.setByteAtOffset(format.segment, format[17], byteArray[offset])
-                offset++
-                MemoryAccess.setByteAtOffset(format.segment, format[18], byteArray[offset])
-                offset++
-                MemoryAccess.setByteAtOffset(format.segment, format[19], byteArray[offset])
+                val guidPart = Callback.guidFromUpgradedFormat(format)
+                Callback.toGUID(formatFlag.subformatGUID, guidPart)
             } else {
                 MemoryAccess.setShortAtOffset(format.segment, format[6], 0)
             }

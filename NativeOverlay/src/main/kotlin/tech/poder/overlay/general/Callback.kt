@@ -5,6 +5,7 @@ import tech.poder.overlay.audio.AudioFormat
 import tech.poder.overlay.video.RectReader
 import tech.poder.overlay.video.WindowManager
 import java.nio.file.Paths
+import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.system.exitProcess
@@ -393,6 +394,22 @@ object Callback {
         )
     )
 
+    private val GUID = StructDefinition.generate(
+        listOf(
+            Int::class.java,
+            Short::class.java,
+            Short::class.java,
+            Byte::class.java,
+            Byte::class.java,
+            Byte::class.java,
+            Byte::class.java,
+            Byte::class.java,
+            Byte::class.java,
+            Byte::class.java,
+            Byte::class.java,
+        )
+    )
+
     private val waveFormatEx = StructDefinition.generate(
         listOf(
             Short::class.java,
@@ -432,8 +449,7 @@ object Callback {
 
     private val formatList = StructDefinition.generate(
         listOf(
-            Int::class.java,
-            MemoryAddress::class.java
+            Int::class.java, MemoryAddress::class.java
         )
     )
 
@@ -449,7 +465,10 @@ object Callback {
     )
 
     fun upgradeFormat(format: StructInstance): StructInstance {
-        return StructInstance(format.segment.address().asSegment(waveFormatEx2.size, ResourceScope.globalScope()), waveFormatEx2)
+        return StructInstance(
+            format.segment.address().asSegment(waveFormatEx2.size, ResourceScope.globalScope()),
+            waveFormatEx2
+        )
     }
 
     private val getNextPacketSize = NativeRegistry.register(
@@ -476,6 +495,12 @@ object Callback {
         )
     )
 
+    private val getPCMID = NativeRegistry.register(
+        FunctionDescription(
+            "GetPCMID", MemoryAddress::class.java
+        )
+    )
+
     fun newFormat(): StructInstance {
         return waveFormatEx.new()
     }
@@ -484,9 +509,81 @@ object Callback {
         return formatList.new()
     }
 
+    fun getPCMgUID(): StructInstance {
+        val address = NativeRegistry[getPCMID].invoke() as MemoryAddress
+        return StructInstance(address.asSegment(GUID.size, ResourceScope.globalScope()), GUID)
+    }
+
+    fun toJavaUUID(guid: StructInstance): UUID {
+        val data = ByteArray(16)
+        var offset = 0
+        NumberUtils.bytesFromInt(MemoryAccess.getIntAtOffset(guid.segment, guid[0]), data, offset)
+        offset += Int.SIZE_BYTES
+        NumberUtils.bytesFromShort(MemoryAccess.getShortAtOffset(guid.segment, guid[1]), data, offset)
+        offset += Short.SIZE_BYTES
+        NumberUtils.bytesFromShort(MemoryAccess.getShortAtOffset(guid.segment, guid[2]), data, offset)
+        offset += Short.SIZE_BYTES
+        data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid[3]))
+        offset++
+        data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid[4]))
+        offset++
+        data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid[5]))
+        offset++
+        data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid[6]))
+        offset++
+        data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid[7]))
+        offset++
+        data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid[8]))
+        offset++
+        data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid[9]))
+        offset++
+        data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid[10]))
+        val most = NumberUtils.longFromBytes(data)
+        val least = NumberUtils.longFromBytes(data, 8)
+        return UUID(most, least)
+    }
+
+    fun toGUID(uuid: UUID, guid: StructInstance) {
+        val byteArray = ByteArray(16)
+        NumberUtils.bytesFromLong(uuid.mostSignificantBits, byteArray)
+        NumberUtils.bytesFromLong(uuid.leastSignificantBits, byteArray, 8)
+        var offset = 0
+        MemoryAccess.setIntAtOffset(guid.segment, guid[0], NumberUtils.intFromBytes(byteArray, offset))
+        offset += Int.SIZE_BYTES
+        MemoryAccess.setShortAtOffset(guid.segment, guid[1], NumberUtils.shortFromBytes(byteArray, offset))
+        offset += Short.SIZE_BYTES
+        MemoryAccess.setShortAtOffset(guid.segment, guid[2], NumberUtils.shortFromBytes(byteArray, offset))
+        offset += Short.SIZE_BYTES
+        MemoryAccess.setByteAtOffset(guid.segment, guid[3], byteArray[offset])
+        offset++
+        MemoryAccess.setByteAtOffset(guid.segment, guid[4], byteArray[offset])
+        offset++
+        MemoryAccess.setByteAtOffset(guid.segment, guid[5], byteArray[offset])
+        offset++
+        MemoryAccess.setByteAtOffset(guid.segment, guid[6], byteArray[offset])
+        offset++
+        MemoryAccess.setByteAtOffset(guid.segment, guid[7], byteArray[offset])
+        offset++
+        MemoryAccess.setByteAtOffset(guid.segment, guid[8], byteArray[offset])
+        offset++
+        MemoryAccess.setByteAtOffset(guid.segment, guid[9], byteArray[offset])
+        offset++
+        MemoryAccess.setByteAtOffset(guid.segment, guid[10], byteArray[offset])
+    }
+
+    fun toGUID(uuid: UUID): StructInstance {
+        val format = GUID.new()
+        toGUID(uuid, format)
+        return format
+    }
+
     fun toFormat(address: MemoryAddress): StructInstance {
         return StructInstance(address.asSegment(waveFormatEx.size, ResourceScope.globalScope()), waveFormatEx)
 
+    }
+
+    fun guidFromUpgradedFormat(format: StructInstance): StructInstance {
+        return StructInstance(format.segment.asSlice(format[9]), GUID)
     }
 
     fun getFormat(state: StructInstance): StructInstance {
@@ -500,13 +597,17 @@ object Callback {
     }
 
     fun startRecording(state: StructInstance, formats: StructInstance? = null) {
-        NativeRegistry[startRecording].invoke(state.segment.address(), formats?.segment?.address() ?: MemoryAddress.NULL)
+        NativeRegistry[startRecording].invoke(
+            state.segment.address(),
+            formats?.segment?.address() ?: MemoryAddress.NULL
+        )
         val hr = MemoryAccess.getIntAtOffset(state.segment, state[0])
         check(hr >= 0) {
             val alts = mutableListOf<String>()
             if (formats != null) {
                 val amount = MemoryAccess.getIntAtOffset(formats.segment, formats[0])
-                val start = MemoryAccess.getAddressAtOffset(formats.segment, formats[1]).asSegment(CLinker.C_POINTER.byteSize() * amount, ResourceScope.globalScope())
+                val start = MemoryAccess.getAddressAtOffset(formats.segment, formats[1])
+                    .asSegment(CLinker.C_POINTER.byteSize() * amount, ResourceScope.globalScope())
                 repeat(amount) {
                     val formatAddress = MemoryAccess.getAddressAtIndex(start, it.toLong())
                     if (formatAddress != MemoryAddress.NULL) {
@@ -515,7 +616,14 @@ object Callback {
                     }
                 }
             }
-            "Failed to start recording! Code: $hr MSG: ${CLinker.toJavaString(MemoryAccess.getAddressAtOffset(state.segment, state[4]))} ${if (alts.isNotEmpty()) "ALTS: ${alts.joinToString(", ")}" else ""}"
+            "Failed to start recording! Code: $hr MSG: ${
+                CLinker.toJavaString(
+                    MemoryAccess.getAddressAtOffset(
+                        state.segment,
+                        state[4]
+                    )
+                )
+            } ${if (alts.isNotEmpty()) "ALTS: ${alts.joinToString(", ")}" else ""}"
         }
     }
 
@@ -523,7 +631,14 @@ object Callback {
         NativeRegistry[getNextPacketSize].invoke(state.segment.address())
         val hr = MemoryAccess.getIntAtOffset(state.segment, state[0])
         check(hr >= 0) {
-            "Failed to get next packet size! Code: $hr  MSG: ${CLinker.toJavaString(MemoryAccess.getAddressAtOffset(state.segment, state[4]))}"
+            "Failed to get next packet size! Code: $hr  MSG: ${
+                CLinker.toJavaString(
+                    MemoryAccess.getAddressAtOffset(
+                        state.segment,
+                        state[4]
+                    )
+                )
+            }"
         }
     }
 
@@ -531,7 +646,14 @@ object Callback {
         NativeRegistry[getBuffer].invoke(state.segment.address())
         val hr = MemoryAccess.getIntAtOffset(state.segment, state[0])
         check(hr >= 0) {
-            "Failed to get buffer! Code: $hr  MSG: ${CLinker.toJavaString(MemoryAccess.getAddressAtOffset(state.segment, state[4]))}"
+            "Failed to get buffer! Code: $hr  MSG: ${
+                CLinker.toJavaString(
+                    MemoryAccess.getAddressAtOffset(
+                        state.segment,
+                        state[4]
+                    )
+                )
+            }"
         }
     }
 
@@ -539,7 +661,14 @@ object Callback {
         NativeRegistry[releaseBuffer].invoke(state.segment.address())
         val hr = MemoryAccess.getIntAtOffset(state.segment, state[0])
         check(hr >= 0) {
-            "Failed to release buffer! Code: $hr  MSG: ${CLinker.toJavaString(MemoryAccess.getAddressAtOffset(state.segment, state[4]))}"
+            "Failed to release buffer! Code: $hr  MSG: ${
+                CLinker.toJavaString(
+                    MemoryAccess.getAddressAtOffset(
+                        state.segment,
+                        state[4]
+                    )
+                )
+            }"
         }
     }
 
@@ -547,7 +676,14 @@ object Callback {
         NativeRegistry[stopRecording].invoke(state.segment.address())
         val hr = MemoryAccess.getIntAtOffset(state.segment, state[0])
         check(hr >= 0) {
-            "Failed to stop recording! Code: $hr  MSG: ${CLinker.toJavaString(MemoryAccess.getAddressAtOffset(state.segment, state[4]))}"
+            "Failed to stop recording! Code: $hr  MSG: ${
+                CLinker.toJavaString(
+                    MemoryAccess.getAddressAtOffset(
+                        state.segment,
+                        state[4]
+                    )
+                )
+            }"
         }
     }
 
