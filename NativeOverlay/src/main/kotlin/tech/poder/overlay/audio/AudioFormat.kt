@@ -35,7 +35,7 @@ interface AudioFormat {
             return builder.toString()
         }
 
-        fun generateFormat() {
+        fun generateFormat(channels: List<Channel> = ChannelShortCut.KSAUDIO_SPEAKER_STEREO.channels) {
 
         }
     }
