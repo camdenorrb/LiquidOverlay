@@ -76,7 +76,7 @@ interface AudioFormat {
             MemoryAccess.setShortAtOffset(format.segment, format[5], channelBitWidth)
             if (extended) {
                 MemoryAccess.setShortAtOffset(format.segment, format[6], 22)
-                //todo set format[7]: UNION of Samples
+                MemoryAccess.setShortAtOffset(format.segment, format[7], channelBitWidth)//todo set format[7]: UNION of Samples (channelBitWidth?)
                 var mask = 0
                 channels.forEach {
                     mask = mask or it.flag
