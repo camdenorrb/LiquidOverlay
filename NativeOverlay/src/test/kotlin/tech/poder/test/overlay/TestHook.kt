@@ -243,6 +243,10 @@ internal class TestHook {
 
     @Test
     fun basicAudio() {
+        println("Requesting: ${AudioFormat.getFormat(SpeechToText.getAudioStruct().format)}")
+
+        println("Requesting UUID: ${Callback.toJavaUUID(Callback.guidFromUpgradedFormat(SpeechToText.getAudioStruct().format))}")
+        println("PCM UUID: ${Callback.toJavaUUID(Callback.getPCMgUID())}")
         val state = Callback.newState()
         val formatList = Callback.newFormatList()
         MemoryAccess.setIntAtOffset(formatList.segment, formatList[0], 1)

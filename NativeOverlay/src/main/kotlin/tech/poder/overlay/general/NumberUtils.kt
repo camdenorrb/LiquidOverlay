@@ -31,21 +31,21 @@ object NumberUtils {
 
     fun bytesFromShort(short: Short, array: ByteArray = ByteArray(shortUtils.size), offset: Int = 0): ByteArray {
         repeat(shortUtils.size) {
-            array[it + offset] = (short.toInt() shl shortUtils[it]).toByte()
+            array[it + offset] = (short.toInt() shr shortUtils[it]).toByte()
         }
         return array
     }
 
     fun bytesFromInt(int: Int, array: ByteArray = ByteArray(intUtils.size), offset: Int = 0): ByteArray {
         repeat(intUtils.size) {
-            array[it + offset] = (int shl intUtils[it]).toByte()
+            array[it + offset] = (int shr intUtils[it]).toByte()
         }
         return array
     }
 
     fun bytesFromLong(long: Long, array: ByteArray = ByteArray(longUtils.size), offset: Int = 0): ByteArray {
         repeat(longUtils.size) {
-            array[it + offset] = (long shl longUtils[it]).toByte()
+            array[it + offset] = (long shr longUtils[it]).toByte()
         }
         return array
     }
