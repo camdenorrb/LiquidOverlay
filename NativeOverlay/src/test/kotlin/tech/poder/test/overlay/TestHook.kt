@@ -1,8 +1,6 @@
 package tech.poder.test.overlay
 
-import jdk.incubator.foreign.MemoryAccess
-import jdk.incubator.foreign.MemoryAddress
-import jdk.incubator.foreign.ResourceScope
+import jdk.incubator.foreign.*
 import tech.poder.overlay.*
 import java.awt.Color
 import java.awt.image.BufferedImage
@@ -228,6 +226,10 @@ internal class TestHook {
         return MemoryAccess.getAddressAtOffset(state.segment, state[9])
     }
 
+    fun getBytesPerFrame(format: StructInstance): Short {
+        return MemoryAccess.getShortAtOffset(format.segment, format[4])
+    }
+
     fun processesFrame(buffer: ByteArray) {
 
     }
@@ -235,14 +237,19 @@ internal class TestHook {
     @Test
     fun basicAudio() {
         val state = Callback.newState()
-
+        /*val formatList = Callback.newFormatList()
+        MemoryAccess.setIntAtOffset(formatList.segment, formatList[0], 1)
+        val pointerList = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newSharedScope())
+        MemoryAccess.setAddress(pointerList, SpeechToText.getAudioStruct().segment.address())
+        MemoryAccess.setAddressAtOffset(formatList.segment, formatList[1], pointerList)
+        Callback.startRecording(state, formatList)*/
         Callback.startRecording(state)
         val hnsPeriod = MemoryAccess.getDoubleAtOffset(state.segment, state[3])
         val sleepTime = ((hnsPeriod / 10_000.0) / 2.0).toLong()
         var counter = 0
         val format = Callback.getFormat(state)
-
-        val bytesPerFrame = ((getBitsPerSample(format) * getNumberOfChannels(format).toLong()) / 8L).toInt()
+        println(AudioFormat.getFormat(format))
+        val bytesPerFrame = getBytesPerFrame(format)//((getBitsPerSample(format) * getNumberOfChannels(format).toLong()) / 8L).toInt()
         val framesPerSecond = getNumberOfSamplesPerSecond(format)
         val bytesPerSecond = bytesPerFrame * framesPerSecond.toLong()
         if (bytesPerSecond.toInt().toLong() != bytesPerSecond) {
