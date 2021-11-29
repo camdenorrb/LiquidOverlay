@@ -236,7 +236,7 @@ internal class TestHook {
         return MemoryAccess.getShortAtOffset(format.segment, format[4])
     }
 
-    fun processFrame(buffer: ByteArray) {
+    fun processFrame(buffer: ByteArray, format: StructInstance) {
 
     }
 
@@ -284,7 +284,7 @@ internal class TestHook {
                 while (currentPos < pDataLocation.byteSize()) {
                     val buffer =
                         pDataLocation.asSlice(currentPos, min(bytesPerSecond, pDataLocation.byteSize() - currentPos))
-                    processFrame(buffer.toByteArray())
+                    processFrame(buffer.toByteArray(), format)
                     currentPos += buffer.byteSize()
                 }
                 Callback.releaseBuffer(state)
