@@ -402,6 +402,31 @@ object Callback {
         )
     )
 
+    private val waveFormatEx2 = StructDefinition.generate(
+        listOf(
+            Short::class.java,
+            Short::class.java,
+            Int::class.java,
+            Int::class.java,
+            Short::class.java,
+            Short::class.java,
+            Short::class.java,
+            Short::class.java,
+            Int::class.java,
+            Int::class.java,
+            Short::class.java,
+            Short::class.java,
+            Byte::class.java,
+            Byte::class.java,
+            Byte::class.java,
+            Byte::class.java,
+            Byte::class.java,
+            Byte::class.java,
+            Byte::class.java,
+            Byte::class.java,
+        )
+    )
+
     private val formatList = StructDefinition.generate(
         listOf(
             Int::class.java,
@@ -419,6 +444,10 @@ object Callback {
             "StartRecording", params = listOf(MemoryAddress::class.java, MemoryAddress::class.java)
         )
     )
+
+    fun upgradeFormat(state: StructInstance): StructInstance {
+        return StructInstance(state.segment.address().asSegment(waveFormatEx2.size, ResourceScope.globalScope()), waveFormatEx2)
+    }
 
     private val getNextPacketSize = NativeRegistry.register(
         FunctionDescription(
