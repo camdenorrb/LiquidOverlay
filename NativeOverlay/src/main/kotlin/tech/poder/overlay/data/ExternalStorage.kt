@@ -1,4 +1,4 @@
-package tech.poder.overlay
+package tech.poder.overlay.data
 
 import jdk.incubator.foreign.MemoryAccess
 import jdk.incubator.foreign.MemorySegment
@@ -17,17 +17,16 @@ value class ExternalStorage(val segment: MemorySegment) : AutoCloseable {
         private val nullChar = "\u0000".toByteArray(Charsets.UTF_16LE)
 
         fun fromString(str: String): ExternalStorage {
-
             str.toByteArray(Charsets.UTF_16LE).let { bytes ->
 
                 val segment = MemorySegment.allocateNative((bytes.size + nullChar.size).toLong(), ResourceScope.newSharedScope())
+
                 bytes.forEachIndexed { index, byte ->
                     MemoryAccess.setByteAtOffset(segment, index.toLong(), byte)
                 }
 
-                val startIndex = bytes.size
                 nullChar.forEachIndexed { index, byte ->
-                    MemoryAccess.setByteAtOffset(segment, (startIndex + index).toLong(), byte)
+                    MemoryAccess.setByteAtOffset(segment, (bytes.size + index).toLong(), byte)
                 }
 
                 return ExternalStorage(segment)

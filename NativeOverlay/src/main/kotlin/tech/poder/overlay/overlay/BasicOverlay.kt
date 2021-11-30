@@ -1,12 +1,18 @@
-package tech.poder.overlay
+package tech.poder.overlay.overlay
 
 import jdk.incubator.foreign.MemoryAddress
+import tech.poder.overlay.api.WinAPI
+import tech.poder.overlay.data.ExternalStorage
+import tech.poder.overlay.data.RectReader
+import tech.poder.overlay.handles.WinAPIHandles
+import tech.poder.overlay.overlay.base.Overlay
+import tech.poder.overlay.window.WindowManager
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 import kotlin.concurrent.write
 import kotlin.io.path.Path
 
-class OverlayImpl(private val self: WindowManager, private val selected: WindowManager) : Overlay {
+class BasicOverlay(private val self: WindowManager, private val selected: WindowManager) : Overlay {
 
     var onRedraw: (Overlay) -> Unit = {}
 
@@ -22,7 +28,7 @@ class OverlayImpl(private val self: WindowManager, private val selected: WindowM
     override var canvasWidth = rectReader.width.toInt()
     override var canvasHeight = rectReader.height.toInt()
 
-    private var prevList = NativeAPI.imageListCreate(canvasWidth, canvasHeight, 0x00000001, 1, 1) as MemoryAddress
+    private var prevList = WinAPIHandles.imageListCreate(canvasWidth, canvasHeight, 0x00000001, 1, 1) as MemoryAddress
     private var internal = BufferedImage(canvasWidth, canvasHeight, BufferedImage.TYPE_INT_RGB)
 
     private val checker = Thread {
@@ -62,7 +68,7 @@ class OverlayImpl(private val self: WindowManager, private val selected: WindowM
                 prev = rect
             }
 
-            if (!NativeAPI.isFirstDraw) {
+            if (!WinAPI.isFirstDraw) {
                 onResize(onRedraw)
             }
         }
@@ -122,22 +128,22 @@ class OverlayImpl(private val self: WindowManager, private val selected: WindowM
         self.hideWindow()
     }
 
-    override fun publish() {
+    override fun update() {
 
-        prevList = NativeAPI.imageListCreate(canvasWidth, canvasHeight, 0x00000001, 1, 1) as MemoryAddress
+        prevList = WinAPIHandles.imageListCreate(canvasWidth, canvasHeight, 0x00000001, 1, 1) as MemoryAddress
 
         ImageIO.write(internal, "bmp", storageBitmap.toFile())
 
-        NativeAPI.imageListAdd(prevList, NativeAPI.loadImage(pathString), WindowManager.invisible)
-        NativeAPI.imageListDestroy(NativeAPI.currentImageList)
+        WinAPIHandles.imageListAdd(prevList, WinAPI.loadImage(pathString), WindowManager.invisible)
+        WinAPIHandles.imageListDestroy(WinAPI.currentImageList)
 
-        NativeAPI.repaintLock.write {
-            NativeAPI.currentImageList = prevList
-            NativeAPI.images = 1
+        WinAPI.repaintLock.write {
+            WinAPI.currentImageList = prevList
+            WinAPI.images = 1
         }
 
         check(self.updateWindow()) {
-            "Failed to update window: ${NativeAPI.getLastError()}"
+            "Failed to update window: ${WinAPIHandles.getLastError()}"
         }
 
     }
@@ -146,7 +152,7 @@ class OverlayImpl(private val self: WindowManager, private val selected: WindowM
 
         if (remake()) {
             callback(this)
-            publish()
+            update()
             return true
         }
 

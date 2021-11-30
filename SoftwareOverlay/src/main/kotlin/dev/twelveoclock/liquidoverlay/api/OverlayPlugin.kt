@@ -3,7 +3,7 @@ package dev.twelveoclock.liquidoverlay.api
 import dev.twelveoclock.liquidoverlay.Main
 import dev.twelveoclock.liquidoverlay.modules.base.BasicModule
 import kotlinx.serialization.Serializable
-import tech.poder.overlay.Overlay
+import tech.poder.overlay.overlay.base.Overlay
 
 abstract class OverlayPlugin : BasicModule() {
 

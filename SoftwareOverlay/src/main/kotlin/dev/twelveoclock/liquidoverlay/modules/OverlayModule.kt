@@ -2,8 +2,8 @@ package dev.twelveoclock.liquidoverlay.modules
 
 import dev.twelveoclock.liquidoverlay.modules.base.BasicModule
 import dev.twelveoclock.liquidoverlay.modules.sub.PluginModule
-import tech.poder.overlay.OverlayImpl
-import tech.poder.overlay.WindowManager
+import tech.poder.overlay.overlay.BasicOverlay
+import tech.poder.overlay.window.WindowManager
 import java.nio.file.Path
 
 class OverlayModule(
@@ -12,14 +12,14 @@ class OverlayModule(
     val selectedWindowManager: WindowManager
 ) : BasicModule() {
 
-    lateinit var overlay: OverlayImpl
+    lateinit var overlay: BasicOverlay
 
     lateinit var pluginModule: PluginModule
 
 
     override fun onEnable() {
 
-        overlay = OverlayImpl(canvasWindowManager, selectedWindowManager)
+        overlay = BasicOverlay(canvasWindowManager, selectedWindowManager)
 
         overlay.onRedraw = {
             pluginModule.redraw()

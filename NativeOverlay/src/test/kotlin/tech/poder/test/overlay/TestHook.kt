@@ -1,6 +1,10 @@
 package tech.poder.test.overlay
 
-import tech.poder.overlay.*
+import tech.poder.overlay.api.WinAPI
+import tech.poder.overlay.overlay.BasicOverlay
+import tech.poder.overlay.window.WindowClass
+import tech.poder.overlay.window.WindowManager
+import tech.poder.overlay.overlay.base.Overlay
 import java.awt.Color
 import java.awt.image.BufferedImage
 import kotlin.math.ceil
@@ -11,7 +15,7 @@ internal class TestHook {
     @Test
     fun drawCat() {
 
-        val processes = NativeAPI.getProcesses()
+        val processes = WinAPI.getProcesses()
         var i = 0
         processes.forEachIndexed { index, process ->
             if (process.exeLocation.contains("notepad++.exe")) {
@@ -35,7 +39,7 @@ internal class TestHook {
         )
 
         val selectedWindow = selected.asWindow()
-        val overlay = OverlayImpl(window, selectedWindow)
+        val overlay = BasicOverlay(window, selectedWindow)
 
         overlay.onRedraw = {
 
@@ -57,7 +61,7 @@ internal class TestHook {
     @Test
     fun nateDraw() {
 
-        val processes = NativeAPI.getProcesses()
+        val processes = WinAPI.getProcesses()
         var i = 0
         processes.forEachIndexed { index, process ->
             if (process.exeLocation.contains("Overwatch.exe")) {
@@ -80,7 +84,7 @@ internal class TestHook {
         )
         val selectedWindow = selected.asWindow()
 
-        val overlay = OverlayImpl(window, selectedWindow)
+        val overlay = BasicOverlay(window, selectedWindow)
 
         overlay.onRedraw = {
 
@@ -102,13 +106,13 @@ internal class TestHook {
 
     @Test
     fun basicAudio() {
-        val pDevice = NativeAPI.getDefaultAudioDevice()
-        val pAudioClient = NativeAPI.activateAudioClient(pDevice)
-        val mixInfo = NativeAPI.getMixFormat(pAudioClient)
-        val bufferFrameCount = NativeAPI.getBufferSize(pAudioClient)
-        val pRenderClient = NativeAPI.getService(pAudioClient)
-        NativeAPI.start(pRenderClient)
-        val hnsPeriod = NativeAPI.getActualDuration(mixInfo, bufferFrameCount)
+        val pDevice = WinAPI.getDefaultAudioDevice()
+        val pAudioClient = WinAPI.activateAudioClient(pDevice)
+        val mixInfo = WinAPI.getMixFormat(pAudioClient)
+        val bufferFrameCount = WinAPI.getBufferSize(pAudioClient)
+        val pRenderClient = WinAPI.getService(pAudioClient)
+        WinAPI.start(pRenderClient)
+        val hnsPeriod = WinAPI.getActualDuration(mixInfo, bufferFrameCount)
         while (true) {
             Thread.sleep(ceil(hnsPeriod).toLong())
 

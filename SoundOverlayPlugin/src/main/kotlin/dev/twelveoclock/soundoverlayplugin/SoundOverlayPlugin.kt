@@ -2,7 +2,7 @@ package dev.twelveoclock.soundoverlayplugin
 
 import dev.twelveoclock.liquidoverlay.api.OverlayPlugin
 import dev.twelveoclock.soundoverlayplugin.modules.SoundModule
-import tech.poder.overlay.Overlay
+import tech.poder.overlay.overlay.base.Overlay
 import java.awt.Color
 import java.awt.image.BufferedImage
 

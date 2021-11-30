@@ -3,10 +3,10 @@ package dev.twelveoclock.liquidoverlay
 import dev.twelveoclock.liquidoverlay.api.Liquipedia
 import dev.twelveoclock.liquidoverlay.modules.sub.PluginModule
 import dev.twelveoclock.liquidoverlay.speech.GoogleSpeechAPI
-import tech.poder.overlay.NativeAPI
-import tech.poder.overlay.OverlayImpl
-import tech.poder.overlay.WindowClass
-import tech.poder.overlay.WindowManager
+import tech.poder.overlay.api.WinAPI
+import tech.poder.overlay.overlay.BasicOverlay
+import tech.poder.overlay.window.WindowClass
+import tech.poder.overlay.window.WindowManager
 import javax.sound.sampled.*
 import kotlin.io.path.Path
 import kotlin.system.exitProcess
@@ -83,13 +83,13 @@ object Main {
     }
 
     private fun createOverlay(){
-        val processes = NativeAPI.getProcesses()
+        val processes = WinAPI.getProcesses()
         println("hi")
     }
 
     private fun pluginThingy() {
 
-        val selected = NativeAPI.getProcesses().find { "Notepad.exe" in it.exeLocation }!!
+        val selected = WinAPI.getProcesses().find { "Notepad.exe" in it.exeLocation }!!
         val clazz = WindowClass.define("Kats")
 
         val window = WindowManager.createWindow(
@@ -105,7 +105,7 @@ object Main {
 
         val selectedWindow = selected.asWindow()
 
-        val overlay = OverlayImpl(window, selectedWindow)
+        val overlay = BasicOverlay(window, selectedWindow)
 
         val pluginModule = PluginModule(Path("Plugins"), overlay).apply { enable() }
 

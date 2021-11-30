@@ -1,4 +1,4 @@
-package tech.poder.overlay
+package tech.poder.overlay.overlay.base
 
 import java.awt.image.BufferedImage
 
@@ -69,7 +69,7 @@ interface Overlay {
 
     fun hide()
 
-    fun publish()
+    fun update()
 
     /**
      * Used to store position information for elements

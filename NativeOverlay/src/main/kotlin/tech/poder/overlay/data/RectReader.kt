@@ -1,4 +1,4 @@
-package tech.poder.overlay
+package tech.poder.overlay.data
 
 import jdk.incubator.foreign.CLinker
 import jdk.incubator.foreign.MemoryAccess
@@ -15,10 +15,7 @@ data class RectReader(val segment: MemorySegment, val left: UInt, val top: UInt,
 
         fun createSegment(): ExternalStorage {
             return ExternalStorage(
-                MemorySegment.allocateNative(
-                    CLinker.C_LONG.byteSize() * 4,
-                    ResourceScope.newSharedScope()
-                )
+                MemorySegment.allocateNative(CLinker.C_LONG.byteSize() * 4, ResourceScope.newSharedScope())
             )
         }
 

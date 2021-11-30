@@ -1,6 +1,8 @@
-package tech.poder.overlay
+package tech.poder.overlay.data
 
 import jdk.incubator.foreign.MemoryAddress
+import tech.poder.overlay.handles.WinAPIHandles
+import tech.poder.overlay.window.WindowManager
 
 data class Process(
     val hWnd: MemoryAddress,
@@ -14,7 +16,7 @@ data class Process(
 
     override fun close() {
         if (handle != MemoryAddress.NULL) {
-            NativeAPI.closeHandle(handle)
+            WinAPIHandles.closeHandle(handle)
         }
     }
 
