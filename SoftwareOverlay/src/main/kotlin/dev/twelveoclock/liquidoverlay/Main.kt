@@ -237,7 +237,12 @@ fun streamingSpeakerRecognize() {
     tmpFile.close()
 
     val data = Files.readAllBytes(binAudio)
+    val floatArray = FloatAudioChannels.process(data, format) as FloatAudioChannels
+
     WavFileWriter.write(data, format, Paths.get("custom.wav").toAbsolutePath())
+    val pcmFormat = FormatData(FormatFlag.PCM, format.channels, format.sampleRate, 4, 16, 16)
+    val pcm = floatArray.toPCMShort() as AudioChannel //Causes compiler crash without cast? has to do with defaults on interfaces
+    WavFileWriter.write(pcm.toBytes(), pcmFormat, Paths.get("custom2.wav"))
 }
 
 /** Performs microphone streaming speech recognition with a duration of 1 minute.  */

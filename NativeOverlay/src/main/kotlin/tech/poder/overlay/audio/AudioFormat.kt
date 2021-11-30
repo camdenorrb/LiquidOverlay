@@ -41,7 +41,6 @@ interface AudioFormat {
                     tagData,
                     channels,
                     sampleRate,
-                    bytesPerSecond,
                     blockAlignment,
                     bitsPerChannel,
                     samples
@@ -66,7 +65,6 @@ interface AudioFormat {
                     tagData,
                     channels,
                     sampleRate,
-                    bytesPerSecond,
                     blockAlignment,
                     bitsPerChannel,
                     bitsPerChannel
@@ -82,7 +80,6 @@ interface AudioFormat {
             val builder = StringBuilder("Audio Format: \n")
             builder.appendLine("Format Tag: ${data.tag}")
             builder.appendLine("Sample Rate: ${data.sampleRate}Hz")
-            builder.appendLine("Bytes Per Second: ${data.bytesPerSecond}")
             builder.appendLine("Block Alignment: ${data.blockAlignment}")
             builder.appendLine("Bits Per Channel: ${data.bitsPerChannel}")
             builder.appendLine("Samples: ${data.samples}")

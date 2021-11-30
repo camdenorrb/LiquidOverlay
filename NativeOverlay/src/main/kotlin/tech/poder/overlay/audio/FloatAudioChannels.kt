@@ -1,13 +1,11 @@
 package tech.poder.overlay.audio
 
 import tech.poder.overlay.general.NumberUtils
+import kotlin.math.round
 
 @JvmInline
-value class FloatAudioChannels(val data: Array<FloatArray>): AudioChannel {
+value class FloatAudioChannels(val data: Array<FloatArray>) : AudioChannel {
     companion object {
-
-        var realMax = -2f
-        var realMin = 2f
 
         fun process(data: ByteArray, format: FormatData, bigEndian: Boolean = false): AudioChannel {
             val bytesPerChannel = 4
@@ -18,34 +16,39 @@ value class FloatAudioChannels(val data: Array<FloatArray>): AudioChannel {
             }
             repeat(amountOfFloats) { floatIndex ->
                 repeat(format.channels.size) { bufferIndex ->
-                    if (bigEndian) {
-                        buffers[bufferIndex][floatIndex] = NumberUtils.floatFromBytesBE(data, offset)
+                    var res = if (bigEndian) {
+                        NumberUtils.floatFromBytesBE(data, offset)
                     } else {
-                        buffers[bufferIndex][floatIndex] = NumberUtils.floatFromBytes(data, offset)
+                        NumberUtils.floatFromBytes(data, offset)
                     }
+                    if (res.isInfinite() || res.isNaN()) {
+                        res = 0f
+                    }
+                    buffers[bufferIndex][floatIndex] = res
                     offset += bytesPerChannel
                 }
             }
             return FloatAudioChannels(buffers)
         }
+
+        fun min(channel: FloatArray): Double {
+            return channel.minOf { it }.toDouble()
+        }
+
+        fun max(channel: FloatArray): Double {
+            return channel.maxOf { it }.toDouble()
+        }
+
+        fun min(channel: FloatAudioChannels): Double {
+            return channel.data.minOf { it.minOf { it } }.toDouble()
+        }
+
+        fun max(channel: FloatAudioChannels): Double {
+            return channel.data.maxOf { it.maxOf { it } }.toDouble()
+        }
     }
 
     override fun toBytes(bigEndian: Boolean): ByteArray {
-        var changed = false
-        val min = data.minOf { it.minOf { it } }
-        val max = data.maxOf { it.maxOf { it } }
-        if (min < realMin) {
-            realMin = min
-            changed = true
-        }
-        if (max > realMax) {
-            realMax = max
-            changed = true
-        }
-        if (changed) {
-            println("Min: $realMin")
-            println("Max: $realMax")
-        }
         val result = ByteArray(data[0].size * Float.SIZE_BYTES * data.size)
         var offset = 0
         repeat(data[0].size) {
@@ -59,5 +62,34 @@ value class FloatAudioChannels(val data: Array<FloatArray>): AudioChannel {
             }
         }
         return result
+    }
+
+    private fun normalize(target: Float, min: Double, max: Double): Double {
+        return (2.0 * ((target.toDouble() - min) / (max - min))) - 1.0
+    }
+
+    fun toPCMShort(independent: Boolean = false): PCMShortAudioChannels {
+
+        var min = if (independent) {
+            0.0
+        } else {
+            min(this)
+        }
+        var max = if (independent) {
+            0.0
+        } else {
+            max(this)
+        }
+
+        return PCMShortAudioChannels(Array(data.size) { index1 ->
+            if (independent) {
+                min = min(data[index1])
+                max = max(data[index1])
+            }
+            ShortArray(data[index1].size) { index2 ->
+                println("${normalize(data[index1][index2], min, max)} -> ${round((normalize(data[index1][index2], min, max) * 32767.0) + 0.5).toInt().toShort()}")
+                round((normalize(data[index1][index2], min, max) * 32767.0) + 0.5).toInt().toShort()
+            }
+        })
     }
 }

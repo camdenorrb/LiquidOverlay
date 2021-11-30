@@ -24,12 +24,12 @@ value class PCMShortAudioChannels(val data: Array<ShortArray>): AudioChannel {
     }
 
     override fun toBytes(bigEndian: Boolean): ByteArray {
-        val result = ByteArray(data[0].size * Float.SIZE_BYTES * data.size)
+        val result = ByteArray(data[0].size * Short.SIZE_BYTES * data.size)
         var offset = 0
         repeat(data[0].size) {
             repeat(data.size) { index ->
                 if (bigEndian) {
-                    TODO()
+                    NumberUtils.bytesFromShort(data[index][it], result, offset) //TODO
                 } else {
                     NumberUtils.bytesFromShort(data[index][it], result, offset)
                 }

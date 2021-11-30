@@ -1,6 +1,5 @@
 package tech.poder.overlay.audio
 
-import jdk.incubator.foreign.MemoryAccess
 import tech.poder.overlay.general.NumberUtils
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -27,8 +26,7 @@ object WavFileWriter {
         channelOut.write(buffer)
         buffer.clear()
         when (format.tag) {
-            FormatFlag.PCM -> TODO()
-            FormatFlag.IEEE_FLOAT -> {
+            FormatFlag.IEEE_FLOAT, FormatFlag.PCM -> {
                 buffer.put(fmt)
                 buffer.putInt(40)
                 buffer.putShort(FormatFlag.extendedBaseFlag)
