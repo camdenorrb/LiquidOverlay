@@ -3,13 +3,13 @@ package tech.poder.overlay.audio
 import tech.poder.overlay.general.NumberUtils
 
 @JvmInline
-value class FloatAudioChannels(val data: Array<FloatArray>): AudioChannels {
+value class FloatAudioChannels(val data: Array<FloatArray>): AudioChannel {
     companion object {
 
         var realMax = -2f
         var realMin = 2f
 
-        fun process(data: ByteArray, format: FormatData, bigEndian: Boolean = true): AudioChannels {
+        fun process(data: ByteArray, format: FormatData, bigEndian: Boolean = false): AudioChannel {
             val bytesPerChannel = 4
             var offset = 0
             val amountOfFloats = (data.size / bytesPerChannel) / format.channels.size

@@ -1,9 +1,9 @@
 package tech.poder.overlay.audio
 
 @JvmInline
-value class PCMByteAudioChannels(val data: Array<ByteArray>) : AudioChannels {
+value class PCMByteAudioChannels(val data: Array<ByteArray>) : AudioChannel {
     companion object {
-        fun process(data: ByteArray, format: FormatData): AudioChannels {
+        fun process(data: ByteArray, format: FormatData): AudioChannel {
             val buffers = Array(format.channels.size) {
                 ByteArray(data.size / format.channels.size)
             }

@@ -4,7 +4,7 @@ import java.io.ByteArrayInputStream
 import javax.sound.sampled.AudioInputStream
 import javax.sound.sampled.AudioSystem
 
-interface AudioChannels {
+interface AudioChannel {
     companion object {
         fun fromOther(input: ByteArray, sampleCount: Long, target: FormatData, given: FormatData): ByteArray {
             val targetFormat = target.toFormat()

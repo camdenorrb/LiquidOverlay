@@ -3,9 +3,9 @@ package tech.poder.overlay.audio
 import tech.poder.overlay.general.NumberUtils
 
 @JvmInline
-value class PCMShortAudioChannels(val data: Array<ShortArray>): AudioChannels {
+value class PCMShortAudioChannels(val data: Array<ShortArray>): AudioChannel {
     companion object {
-        fun process(data: ByteArray, format: FormatData): AudioChannels {
+        fun process(data: ByteArray, format: FormatData): AudioChannel {
             val buffers = Array(format.channels.size) {
                 ShortArray(data.size / format.channels.size)
             }

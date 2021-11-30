@@ -3,13 +3,9 @@ package dev.twelveoclock.liquidoverlay
 import dev.twelveoclock.liquidoverlay.api.Liquipedia
 import dev.twelveoclock.liquidoverlay.modules.sub.PluginModule
 import dev.twelveoclock.liquidoverlay.speech.GoogleSpeechAPI
-import jdk.incubator.foreign.CLinker
 import jdk.incubator.foreign.MemoryAccess
-import jdk.incubator.foreign.MemorySegment
-import jdk.incubator.foreign.ResourceScope
 import tech.poder.overlay.audio.*
 import tech.poder.overlay.general.Callback
-import tech.poder.overlay.general.NumberUtils
 import tech.poder.overlay.video.OverlayImpl
 import tech.poder.overlay.video.WindowClass
 import tech.poder.overlay.video.WindowManager
@@ -161,8 +157,8 @@ fun processFrame(buffer: ByteArray, amountOfSamples: Long, format: FormatData) {
 
     //val result = AudioChannels.fromOther(buffer, amountOfSamples, SpeechToText.getInternalFormat(), format)
     //println(result)
-
-    val data: AudioChannels = when (format.bitsPerChannel.toInt()) {
+    tmpFile.write(buffer)
+    /*val data: AudioChannel = when (format.bitsPerChannel.toInt()) {
         8 -> {
             PCMByteAudioChannels.process(buffer, format)
         }
@@ -180,7 +176,7 @@ fun processFrame(buffer: ByteArray, amountOfSamples: Long, format: FormatData) {
             error("Unknown format $format")
         }
     }
-    tmpFile.write(data.toBytes())
+    tmpFile.write(data.toBytes())*/
     //process speech
 
     //end process speech
@@ -240,14 +236,8 @@ fun streamingSpeakerRecognize() {
     tmpFile.flush()
     tmpFile.close()
 
-    AudioInputStream(
-        Files.newInputStream(binAudio, StandardOpenOption.READ),
-        format.toFormat(),
-        sampleCount.toLong()
-    ).use { from ->
-        AudioSystem.write(from, AudioFileFormat.Type.WAVE, Paths.get("audio.wav").toAbsolutePath().toFile())
-    }
-
+    val data = Files.readAllBytes(binAudio)
+    WavFileWriter.write(data, format, Paths.get("custom.wav").toAbsolutePath())
 }
 
 /** Performs microphone streaming speech recognition with a duration of 1 minute.  */
