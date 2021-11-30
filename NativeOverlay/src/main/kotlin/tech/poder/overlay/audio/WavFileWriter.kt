@@ -1,5 +1,7 @@
 package tech.poder.overlay.audio
 
+import jdk.incubator.foreign.MemoryAccess
+import tech.poder.overlay.general.NumberUtils
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.file.Files
@@ -42,25 +44,52 @@ object WavFileWriter {
                     mask = mask or it.flag
                 }
                 buffer.putInt(mask)
-                buffer.putLong(format.tag.formatGUID.mostSignificantBits)
-                buffer.putLong(format.tag.formatGUID.leastSignificantBits)
+                val byteArray = ByteArray(16)
+                NumberUtils.bytesFromLong(format.tag.formatGUID.mostSignificantBits, byteArray)
+                NumberUtils.bytesFromLong(format.tag.formatGUID.leastSignificantBits, byteArray, 8)
+                var offset = 0
+                buffer.putInt(NumberUtils.intFromBytes(byteArray, offset))
+                offset += Int.SIZE_BYTES
+                buffer.putShort(NumberUtils.shortFromBytes(byteArray, offset))
+                offset += Short.SIZE_BYTES
+                buffer.putShort(NumberUtils.shortFromBytes(byteArray, offset))
+                offset += Short.SIZE_BYTES
+                buffer.put(byteArray[offset])
+                offset++
+                buffer.put(byteArray[offset])
+                offset++
+                buffer.put(byteArray[offset])
+                offset++
+                buffer.put(byteArray[offset])
+                offset++
+                buffer.put(byteArray[offset])
+                offset++
+                buffer.put(byteArray[offset])
+                offset++
+                buffer.put(byteArray[offset])
+                offset++
+                buffer.put(byteArray[offset])
                 buffer.put(fact)
                 buffer.putInt(4)
                 buffer.putInt(data.size / bytesPerSample)
-                buffer.put(dat)
-                buffer.putInt(data.size)
                 buffer.flip()
                 channelOut.write(buffer)
                 buffer.clear()
-                channelOut.write(ByteBuffer.wrap(data))
 
-                val realSize = channelOut.size() - 8L
-                channelOut.position(4)
-                buffer.putInt(realSize.toInt())
-                buffer.flip()
-                channelOut.write(buffer)
             }
             FormatFlag.UNKNOWN -> error("Unsupported format: $format")
         }
+        buffer.put(dat)
+        buffer.putInt(data.size)
+        buffer.flip()
+        channelOut.write(buffer)
+        buffer.clear()
+        channelOut.write(ByteBuffer.wrap(data))
+
+        val realSize = channelOut.size() - 8L
+        channelOut.position(4)
+        buffer.putInt(realSize.toInt())
+        buffer.flip()
+        channelOut.write(buffer)
     }
 }
