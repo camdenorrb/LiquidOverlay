@@ -4,14 +4,17 @@ import dev.twelveoclock.liquidoverlay.api.Liquipedia
 import dev.twelveoclock.liquidoverlay.modules.sub.PluginModule
 import dev.twelveoclock.liquidoverlay.speech.GoogleSpeechAPI
 import jdk.incubator.foreign.MemoryAccess
-import tech.poder.overlay.audio.AudioChannels
-import tech.poder.overlay.audio.FormatData
-import tech.poder.overlay.audio.SpeechToText
+import tech.poder.overlay.audio.*
 import tech.poder.overlay.general.Callback
+import tech.poder.overlay.general.NumberUtils
 import tech.poder.overlay.video.OverlayImpl
 import tech.poder.overlay.video.WindowClass
 import tech.poder.overlay.video.WindowManager
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardOpenOption
 import javax.sound.sampled.*
+import javax.sound.sampled.AudioFormat
 import kotlin.experimental.and
 import kotlin.io.path.Path
 import kotlin.math.min
@@ -74,8 +77,6 @@ object Main {
         */
 
 
-
-
         //val storage = ExternalStorage.fromString("Hi")
         //val clazz = WindowClass.fromStorage(storage)
         //WindowManager.createWindow(WindowManager.WS_EX_OVERLAPPEDWINDOW, clazz, "Hello", style = WindowManager.WS_OVERLAPPEDWINDOW, width = 100, height = 100)
@@ -89,7 +90,7 @@ object Main {
 
     }
 
-    private fun createOverlay(){
+    private fun createOverlay() {
         val processes = Callback.getProcesses()
         println("hi")
     }
@@ -141,11 +142,24 @@ object Main {
 
 }
 
+val binAudio = Paths.get("audio.bin").toAbsolutePath()
+
+val tmpFile = Files.newOutputStream(
+    binAudio,
+    StandardOpenOption.CREATE,
+    StandardOpenOption.TRUNCATE_EXISTING,
+    StandardOpenOption.WRITE
+)
+
+var sampleCount = 0uL
+
 fun processFrame(buffer: ByteArray, amountOfSamples: Long, format: FormatData) {
-    val result = AudioChannels.fromOther(buffer, amountOfSamples, SpeechToText.getInternalFormat(), format)
-    println(result)
-    /*
-    val data: AudioChannels = when(format.bitsPerChannel.toInt()) {
+    sampleCount += amountOfSamples.toULong()
+    tmpFile.write(buffer)
+    //val result = AudioChannels.fromOther(buffer, amountOfSamples, SpeechToText.getInternalFormat(), format)
+    //println(result)
+
+    /*val data: AudioChannels = when (format.bitsPerChannel.toInt()) {
         8 -> {
             PCMByteAudioChannels.process(buffer, format)
         }
@@ -200,9 +214,10 @@ fun streamingSpeakerRecognize() {
             val amountOfFramesInBuffer = Callback.getPNumFramesInPacket(state)
             val pDataLocation = Callback.getPData(state, amountOfFramesInBuffer.toLong() * bytesPerFrame.toLong())
             var currentPos = 0L
+
             while (currentPos < pDataLocation.byteSize()) {
                 val buffer =
-                    pDataLocation.asSlice(currentPos, min(bytesPerSecond, pDataLocation.byteSize() - currentPos))
+                    pDataLocation.asSlice(currentPos, min(bytesPerSecond * 20, pDataLocation.byteSize() - currentPos))
                 processFrame(buffer.toByteArray(), amountOfFramesInBuffer.toLong(), format)
                 currentPos += buffer.byteSize()
             }
@@ -210,6 +225,17 @@ fun streamingSpeakerRecognize() {
             Callback.getNextPacketSize(state)
             packetLength = Callback.getPNumFramesInPacket(state)
         }
+    }
+
+    tmpFile.flush()
+    tmpFile.close()
+
+    AudioInputStream(
+        Files.newInputStream(binAudio, StandardOpenOption.READ),
+        format.toFormat(),
+        sampleCount.toLong()
+    ).use { from ->
+        AudioSystem.write(from, AudioFileFormat.Type.WAVE, Paths.get("audio.wav").toAbsolutePath().toFile())
     }
 
 }
@@ -270,7 +296,8 @@ fun streamingMicRecognize() {
 
         val audioFormat = AudioFormat(16000f, 16, 1, true, false)
         val bytesPerSecond = (audioFormat.sampleRate * audioFormat.sampleSizeInBits) / 8.0
-        val mixer = AudioSystem.getMixer(AudioSystem.getMixerInfo().filter { it.name.contains("Port GNV32DB-DP") }.first())
+        val mixer =
+            AudioSystem.getMixer(AudioSystem.getMixerInfo().filter { it.name.contains("Port GNV32DB-DP") }.first())
         if (!mixer.isOpen) {
             mixer.open()
         }

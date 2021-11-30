@@ -2,7 +2,7 @@ package tech.poder.overlay.audio
 
 import javax.sound.sampled.AudioFormat
 
-data class FormatData(val tag: FormatFlag, val channels: List<Channel>, val sampleRate: Int, val bytesPerSecond: Int, val blockAlignment: Short, val bitsPerChannel: Short, val samples: Short, val unsigned: Boolean = false) {
+data class FormatData(val tag: FormatFlag, val channels: List<Channel>, val sampleRate: Int, val bytesPerSecond: Int, val blockAlignment: Short, val bitsPerChannel: Short, val samples: Short, val unsigned: Boolean = false, val bigEndian: Boolean = false) {
     fun toFormat(): AudioFormat {
         return if (tag == FormatFlag.IEEE_FLOAT) {
             AudioFormat(
@@ -11,8 +11,8 @@ data class FormatData(val tag: FormatFlag, val channels: List<Channel>, val samp
                 blockAlignment * Byte.SIZE_BITS,
                 channels.size,
                 blockAlignment.toInt(),
-                bytesPerSecond / blockAlignment.toFloat(),
-                false
+                sampleRate.toFloat(),
+                bigEndian
             )
         } else {
             if (unsigned) {
@@ -22,8 +22,8 @@ data class FormatData(val tag: FormatFlag, val channels: List<Channel>, val samp
                     blockAlignment * Byte.SIZE_BITS,
                     channels.size,
                     blockAlignment.toInt(),
-                    bytesPerSecond / blockAlignment.toFloat(),
-                    false
+                    sampleRate.toFloat(),
+                    bigEndian
                 )
             } else {
                 AudioFormat(
@@ -32,8 +32,8 @@ data class FormatData(val tag: FormatFlag, val channels: List<Channel>, val samp
                     blockAlignment * Byte.SIZE_BITS,
                     channels.size,
                     blockAlignment.toInt(),
-                    bytesPerSecond / blockAlignment.toFloat(),
-                    false
+                    sampleRate.toFloat(),
+                    bigEndian
                 )
             }
         }

@@ -14,7 +14,7 @@ value class FloatAudioChannels(val data: Array<FloatArray>): AudioChannels {
             }
             repeat(amountOfFloats) { floatIndex ->
                 repeat(format.channels.size) { bufferIndex ->
-                    buffers[bufferIndex][floatIndex] = NumberUtils.floatFromBytes(data, offset)
+                    buffers[bufferIndex][floatIndex] = NumberUtils.floatFromBytesBE(data, offset)
                     offset += bytesPerChannel
                 }
             }
