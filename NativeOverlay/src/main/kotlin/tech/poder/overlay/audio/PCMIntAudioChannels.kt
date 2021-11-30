@@ -22,4 +22,20 @@ value class PCMIntAudioChannels(val data: Array<IntArray>): AudioChannels {
             return PCMIntAudioChannels(buffers)
         }
     }
+
+    override fun toBytes(bigEndian: Boolean): ByteArray {
+        val result = ByteArray(data[0].size * Float.SIZE_BYTES * data.size)
+        var offset = 0
+        repeat(data[0].size) {
+            repeat(data.size) { index ->
+                if (bigEndian) {
+                    TODO()
+                } else {
+                    NumberUtils.bytesFromInt(data[index][it], result, offset)
+                }
+                offset += Int.SIZE_BYTES
+            }
+        }
+        return result
+    }
 }

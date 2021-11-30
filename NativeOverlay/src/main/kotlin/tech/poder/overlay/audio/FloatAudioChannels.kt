@@ -5,7 +5,7 @@ import tech.poder.overlay.general.NumberUtils
 @JvmInline
 value class FloatAudioChannels(val data: Array<FloatArray>): AudioChannels {
     companion object {
-        fun process(data: ByteArray, format: FormatData): AudioChannels {
+        fun process(data: ByteArray, format: FormatData, bigEndian: Boolean = true): AudioChannels {
             val bytesPerChannel = 4
             var offset = 0
             val amountOfFloats = (data.size / bytesPerChannel) / format.channels.size
@@ -14,11 +14,31 @@ value class FloatAudioChannels(val data: Array<FloatArray>): AudioChannels {
             }
             repeat(amountOfFloats) { floatIndex ->
                 repeat(format.channels.size) { bufferIndex ->
-                    buffers[bufferIndex][floatIndex] = NumberUtils.floatFromBytesBE(data, offset)
+                    if (bigEndian) {
+                        buffers[bufferIndex][floatIndex] = NumberUtils.floatFromBytesBE(data, offset)
+                    } else {
+                        buffers[bufferIndex][floatIndex] = NumberUtils.floatFromBytes(data, offset)
+                    }
                     offset += bytesPerChannel
                 }
             }
             return FloatAudioChannels(buffers)
         }
+    }
+
+    override fun toBytes(bigEndian: Boolean): ByteArray {
+        val result = ByteArray(data[0].size * Float.SIZE_BYTES * data.size)
+        var offset = 0
+        repeat(data[0].size) {
+            repeat(data.size) { index ->
+                if (bigEndian) {
+                    NumberUtils.bytesFromFloatBE(data[index][it], result, offset)
+                } else {
+                    NumberUtils.bytesFromFloat(data[index][it], result, offset)
+                }
+                offset += Float.SIZE_BYTES
+            }
+        }
+        return result
     }
 }

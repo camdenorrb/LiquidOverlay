@@ -18,4 +18,6 @@ interface AudioChannels {
         }
     }
 
+
+    fun toBytes(bigEndian: Boolean = false): ByteArray
 }

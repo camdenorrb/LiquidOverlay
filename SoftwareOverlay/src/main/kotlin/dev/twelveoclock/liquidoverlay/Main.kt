@@ -155,11 +155,11 @@ var sampleCount = 0uL
 
 fun processFrame(buffer: ByteArray, amountOfSamples: Long, format: FormatData) {
     sampleCount += amountOfSamples.toULong()
-    tmpFile.write(buffer)
+
     //val result = AudioChannels.fromOther(buffer, amountOfSamples, SpeechToText.getInternalFormat(), format)
     //println(result)
 
-    /*val data: AudioChannels = when (format.bitsPerChannel.toInt()) {
+    val data: AudioChannels = when (format.bitsPerChannel.toInt()) {
         8 -> {
             PCMByteAudioChannels.process(buffer, format)
         }
@@ -176,7 +176,8 @@ fun processFrame(buffer: ByteArray, amountOfSamples: Long, format: FormatData) {
         else -> {
             error("Unknown format $format")
         }
-    }*/
+    }
+    tmpFile.write(data.toBytes())
     //process speech
 
     //end process speech

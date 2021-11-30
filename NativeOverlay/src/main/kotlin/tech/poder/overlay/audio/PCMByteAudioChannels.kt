@@ -1,9 +1,7 @@
 package tech.poder.overlay.audio
 
-import tech.poder.overlay.general.NumberUtils
-
 @JvmInline
-value class PCMByteAudioChannels(val data: Array<ByteArray>): AudioChannels {
+value class PCMByteAudioChannels(val data: Array<ByteArray>) : AudioChannels {
     companion object {
         fun process(data: ByteArray, format: FormatData): AudioChannels {
             val buffers = Array(format.channels.size) {
@@ -21,5 +19,17 @@ value class PCMByteAudioChannels(val data: Array<ByteArray>): AudioChannels {
             }
             return PCMByteAudioChannels(buffers)
         }
+    }
+
+    override fun toBytes(bigEndian: Boolean): ByteArray {
+        val result = ByteArray(data[0].size * data.size)
+        var offset = 0
+        repeat(data[0].size) {
+            repeat(data.size) { index ->
+                data[index][it] = result[offset]
+                offset++
+            }
+        }
+        return result
     }
 }
