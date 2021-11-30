@@ -3,7 +3,10 @@ package dev.twelveoclock.liquidoverlay
 import dev.twelveoclock.liquidoverlay.api.Liquipedia
 import dev.twelveoclock.liquidoverlay.modules.sub.PluginModule
 import dev.twelveoclock.liquidoverlay.speech.GoogleSpeechAPI
+import jdk.incubator.foreign.CLinker
 import jdk.incubator.foreign.MemoryAccess
+import jdk.incubator.foreign.MemorySegment
+import jdk.incubator.foreign.ResourceScope
 import tech.poder.overlay.audio.*
 import tech.poder.overlay.general.Callback
 import tech.poder.overlay.general.NumberUtils
@@ -185,6 +188,12 @@ fun processFrame(buffer: ByteArray, amountOfSamples: Long, format: FormatData) {
 
 fun streamingSpeakerRecognize() {
     val state = Callback.newState()
+    /*val formatList = Callback.newFormatList()
+    MemoryAccess.setIntAtOffset(formatList.segment, formatList[0], 1)
+    val pointerList = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newSharedScope())
+    MemoryAccess.setAddress(pointerList, SpeechToText.getAudioStruct().format.segment.address())
+    MemoryAccess.setAddressAtOffset(formatList.segment, formatList[1], pointerList)
+    Callback.startRecording(state, formatList)*/
     Callback.startRecording(state)
     val hnsPeriod = MemoryAccess.getDoubleAtOffset(state.segment, state[3])
     val sleepTime = ((hnsPeriod / 10_000.0) / 2.0).toLong()

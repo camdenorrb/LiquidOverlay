@@ -5,6 +5,10 @@ import tech.poder.overlay.general.NumberUtils
 @JvmInline
 value class FloatAudioChannels(val data: Array<FloatArray>): AudioChannels {
     companion object {
+
+        var realMax = -2f
+        var realMin = 2f
+
         fun process(data: ByteArray, format: FormatData, bigEndian: Boolean = true): AudioChannels {
             val bytesPerChannel = 4
             var offset = 0
@@ -27,6 +31,21 @@ value class FloatAudioChannels(val data: Array<FloatArray>): AudioChannels {
     }
 
     override fun toBytes(bigEndian: Boolean): ByteArray {
+        var changed = false
+        val min = data.minOf { it.minOf { it } }
+        val max = data.maxOf { it.maxOf { it } }
+        if (min < realMin) {
+            realMin = min
+            changed = true
+        }
+        if (max > realMax) {
+            realMax = max
+            changed = true
+        }
+        if (changed) {
+            println("Min: $realMin")
+            println("Max: $realMax")
+        }
         val result = ByteArray(data[0].size * Float.SIZE_BYTES * data.size)
         var offset = 0
         repeat(data[0].size) {
