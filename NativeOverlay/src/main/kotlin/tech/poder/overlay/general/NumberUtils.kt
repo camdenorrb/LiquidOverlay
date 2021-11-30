@@ -21,6 +21,10 @@ object NumberUtils {
         return value
     }
 
+    fun floatFromBytes(bytes: ByteArray, offset: Int = 0): Float {
+        return Float.fromBits(intFromBytes(bytes, offset))
+    }
+
     fun longFromBytes(bytes: ByteArray, offset: Int = 0): Long {
         var value = 0L
         longUtils.forEachIndexed { index, it ->
@@ -48,5 +52,9 @@ object NumberUtils {
             array[it + offset] = (long shr longUtils[it]).toByte()
         }
         return array
+    }
+
+    fun bytesFromFloat(float: Float, array: ByteArray = ByteArray(intUtils.size), offset: Int = 0): ByteArray {
+        return bytesFromInt(float.toBits(), array, offset)
     }
 }

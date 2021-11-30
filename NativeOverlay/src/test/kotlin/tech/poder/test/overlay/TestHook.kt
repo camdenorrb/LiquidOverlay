@@ -1,8 +1,7 @@
 package tech.poder.test.overlay
 
 import jdk.incubator.foreign.*
-import tech.poder.overlay.audio.AudioFormat
-import tech.poder.overlay.audio.SpeechToText
+import tech.poder.overlay.audio.*
 import tech.poder.overlay.general.Callback
 import tech.poder.overlay.general.StructInstance
 import tech.poder.overlay.video.Overlay
@@ -206,59 +205,44 @@ internal class TestHook {
         overlay.close()
     }
 
-    val AUDCLNT_BUFFERFLAGS_SILENT: Byte = 2
 
-    fun getPNumFramesInPacket(state: StructInstance): UInt {
-        return MemoryAccess.getIntAtOffset(state.segment, state[1]).toUInt()
-    }
 
-    fun getPFlags(state: StructInstance): Byte {
-        return MemoryAccess.getByteAtOffset(state.segment, state[2])
-    }
+    fun processFrame(buffer: ByteArray, format: FormatData) {
+        /*
+        val data: AudioChannels = when(format.bitsPerChannel.toInt()) {
+            8 -> {
+                PCMByteAudioChannels.process(buffer, format)
+            }
+            16 -> {
+                PCMShortAudioChannels.process(buffer, format)
+            }
+            32 -> {
+                if (format.tag == FormatFlag.IEEE_FLOAT) {
+                    FloatAudioChannels.process(buffer, format)
+                } else {
+                    PCMIntAudioChannels.process(buffer, format)
+                }
+            }
+            else -> {
+                error("Unknown format $format")
+            }
+        }*/
+        //process speech
 
-    fun getBitsPerSample(format: StructInstance): Short {
-        return MemoryAccess.getShortAtOffset(format.segment, format[5])
-    }
-
-    fun getNumberOfChannels(format: StructInstance): Short {
-        return MemoryAccess.getShortAtOffset(format.segment, format[1])
-    }
-
-    fun getNumberOfSamplesPerSecond(format: StructInstance): Int {
-        return MemoryAccess.getIntAtOffset(format.segment, format[2])
-    }
-
-    fun getStartPdata(state: StructInstance): MemoryAddress {
-        return MemoryAccess.getAddressAtOffset(state.segment, state[9])
-    }
-
-    fun getBytesPerFrame(format: StructInstance): Short {
-        return MemoryAccess.getShortAtOffset(format.segment, format[4])
-    }
-
-    fun processFrame(buffer: ByteArray, format: StructInstance) {
-
+        //end process speech
     }
 
     @Test
     fun basicAudio() {
-        println("Requesting: ${AudioFormat.getFormat(SpeechToText.getAudioStruct().format)}")
         val state = Callback.newState()
-        val formatList = Callback.newFormatList()
-        MemoryAccess.setIntAtOffset(formatList.segment, formatList[0], 1)
-        val pointerList = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newSharedScope())
-        MemoryAccess.setAddress(pointerList, SpeechToText.getAudioStruct().format.segment.address())
-        MemoryAccess.setAddressAtOffset(formatList.segment, formatList[1], pointerList)
-        Callback.startRecording(state, formatList)
-        //Callback.startRecording(state)
+        Callback.startRecording(state)
         val hnsPeriod = MemoryAccess.getDoubleAtOffset(state.segment, state[3])
         val sleepTime = ((hnsPeriod / 10_000.0) / 2.0).toLong()
         var counter = 0
-        val format = Callback.getFormat(state)
+        val format = AudioFormat.getFormatData(Callback.getFormat(state))
         println(AudioFormat.getFormat(format))
-        val bytesPerFrame =
-            getBytesPerFrame(format)//((getBitsPerSample(format) * getNumberOfChannels(format).toLong()) / 8L).toInt()
-        val framesPerSecond = getNumberOfSamplesPerSecond(format)
+        val bytesPerFrame = format.blockAlignment//((getBitsPerSample(format) * getNumberOfChannels(format).toLong()) / 8L).toInt()
+        val framesPerSecond = format.sampleRate
         val bytesPerSecond = bytesPerFrame * framesPerSecond.toLong()
         if (bytesPerSecond.toInt().toLong() != bytesPerSecond) {
             error("Bytes per second is too big")
@@ -270,16 +254,16 @@ internal class TestHook {
             Thread.sleep(sleepTime)
             counter++
             Callback.getNextPacketSize(state)
-            var packetLength = getPNumFramesInPacket(state)
+            var packetLength = Callback.getPNumFramesInPacket(state)
             while (packetLength != 0u) {
                 Callback.getBuffer(state)
 
-                val flags = getPFlags(state)
-                if (flags and AUDCLNT_BUFFERFLAGS_SILENT != 0.toByte()) {
+                val flags = Callback.getPFlags(state)
+                if (flags and Callback.AUDCLNT_BUFFERFLAGS_SILENT != 0.toByte()) {
                     println("SILENT")
                 }
-                val amountOfFramesInBuffer = getPNumFramesInPacket(state)
-                val pDataLocation = Callback.getPData(getStartPdata(state), amountOfFramesInBuffer.toLong() * bytesPerFrame.toLong())
+                val amountOfFramesInBuffer = Callback.getPNumFramesInPacket(state)
+                val pDataLocation = Callback.getPData(state, amountOfFramesInBuffer.toLong() * bytesPerFrame.toLong())
                 var currentPos = 0L
                 while (currentPos < pDataLocation.byteSize()) {
                     val buffer =
@@ -289,7 +273,7 @@ internal class TestHook {
                 }
                 Callback.releaseBuffer(state)
                 Callback.getNextPacketSize(state)
-                packetLength = getPNumFramesInPacket(state)
+                packetLength = Callback.getPNumFramesInPacket(state)
             }
         }
     }

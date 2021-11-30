@@ -7,20 +7,18 @@ import kotlin.math.max
 
 interface AudioFormat {
     companion object {
-        fun getFormat(format: StructInstance): String {
-            val builder = StringBuilder("Audio Format: \n")
+
+        fun getFormatData(format: StructInstance): FormatData {
             val tag = MemoryAccess.getShortAtOffset(format.segment, format[0])
-            builder.appendLine("Format Tag: $tag")
-            builder.appendLine("Number of Channels: ${MemoryAccess.getShortAtOffset(format.segment, format[1])}")
-            builder.appendLine("Sample Rate: ${MemoryAccess.getIntAtOffset(format.segment, format[2])}Hz")
-            builder.appendLine("Bytes Per Second: ${MemoryAccess.getIntAtOffset(format.segment, format[3])}")
-            builder.appendLine("Block Alignment: ${MemoryAccess.getShortAtOffset(format.segment, format[4])}")
-            builder.appendLine("Bits Per Channel: ${MemoryAccess.getShortAtOffset(format.segment, format[5])}")
-            builder.appendLine("Number of Extra Bytes: ${MemoryAccess.getShortAtOffset(format.segment, format[6])}")
+            val numberOfChannels = MemoryAccess.getShortAtOffset(format.segment, format[1])
+            val sampleRate = MemoryAccess.getIntAtOffset(format.segment, format[2])
+            val bytesPerSecond = MemoryAccess.getIntAtOffset(format.segment, format[3])
+            val blockAlignment = MemoryAccess.getShortAtOffset(format.segment, format[4])
+            val bitsPerChannel = MemoryAccess.getShortAtOffset(format.segment, format[5])
+
             if (tag.toInt() == -2) {
-                builder.appendLine("WAVE_FORMAT_EXTENSIBLE Detected!")
                 val upgraded = Callback.upgradeFormat(format)
-                builder.appendLine("Samples: ${MemoryAccess.getShortAtOffset(upgraded.segment, upgraded[7])}")
+                val samples = MemoryAccess.getShortAtOffset(upgraded.segment, upgraded[7])
                 val channels = mutableListOf<Channel>()
                 val mask = MemoryAccess.getIntAtOffset(upgraded.segment, upgraded[8])
                 Channel.values().forEach {
@@ -28,20 +26,67 @@ interface AudioFormat {
                         channels.add(it)
                     }
                 }
-                builder.appendLine("Channel Mask = $mask: ${channels.joinToString(", ")}")
-                when(val id = Callback.toJavaUUID(Callback.guidFromUpgradedFormat(upgraded))) {
+                val tagData = when (val id = Callback.toJavaUUID(Callback.guidFromUpgradedFormat(upgraded))) {
                     FormatFlag.PCM.formatGUID -> {
-                        builder.appendLine("Sub Format: PCM")
+                        FormatFlag.PCM
                     }
                     FormatFlag.IEEE_FLOAT.formatGUID -> {
-                        builder.appendLine("Sub Format: IEEE_FLOAT")
+                        FormatFlag.IEEE_FLOAT
                     }
                     else -> {
-                        builder.appendLine("Sub Format: UNKNOWN{${id}}")
+                        FormatFlag.UNKNOWN
                     }
                 }
-
+                return FormatData(
+                    tagData,
+                    channels,
+                    sampleRate,
+                    bytesPerSecond,
+                    blockAlignment,
+                    bitsPerChannel,
+                    samples
+                )
+            } else {
+                val channels = mutableListOf<Channel>()
+                repeat(numberOfChannels.toInt()) {
+                    channels.add(Channel.values()[it])
+                }
+                val tagData = when (tag) {
+                    FormatFlag.PCM.baseFlag -> {
+                        FormatFlag.PCM
+                    }
+                    FormatFlag.IEEE_FLOAT.baseFlag -> {
+                        FormatFlag.IEEE_FLOAT
+                    }
+                    else -> {
+                        FormatFlag.UNKNOWN
+                    }
+                }
+                return FormatData(
+                    tagData,
+                    channels,
+                    sampleRate,
+                    bytesPerSecond,
+                    blockAlignment,
+                    bitsPerChannel,
+                    bitsPerChannel
+                )
             }
+        }
+
+        fun getFormat(format: StructInstance): String {
+            return getFormat(getFormatData(format))
+        }
+
+        fun getFormat(data: FormatData): String {
+            val builder = StringBuilder("Audio Format: \n")
+            builder.appendLine("Format Tag: ${data.tag}")
+            builder.appendLine("Sample Rate: ${data.sampleRate}Hz")
+            builder.appendLine("Bytes Per Second: ${data.bytesPerSecond}")
+            builder.appendLine("Block Alignment: ${data.blockAlignment}")
+            builder.appendLine("Bits Per Channel: ${data.bitsPerChannel}")
+            builder.appendLine("Samples: ${data.samples}")
+            builder.appendLine("Channels = ${data.channels.joinToString(", ")}")
 
             return builder.toString()
         }
@@ -77,7 +122,11 @@ interface AudioFormat {
             MemoryAccess.setShortAtOffset(format.segment, format[5], channelBitWidth)
             if (extended) {
                 MemoryAccess.setShortAtOffset(format.segment, format[6], 22)
-                MemoryAccess.setShortAtOffset(format.segment, format[7], channelBitWidth)//todo set format[7]: UNION of Samples (channelBitWidth?)
+                MemoryAccess.setShortAtOffset(
+                    format.segment,
+                    format[7],
+                    channelBitWidth
+                )//todo set format[7]: UNION of Samples (channelBitWidth?)
                 var mask = 0
                 channels.forEach {
                     mask = mask or it.flag
@@ -94,4 +143,8 @@ interface AudioFormat {
     }
 
     fun getAudioStruct(): GeneratedFormat
+
+    fun getInternalFormat(): FormatData {
+        return getFormatData(this.getAudioStruct().format)
+    }
 }

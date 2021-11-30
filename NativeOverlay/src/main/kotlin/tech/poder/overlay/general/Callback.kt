@@ -596,8 +596,18 @@ object Callback {
         return state.new()
     }
 
-    fun getPData(address: MemoryAddress, size: Long): MemorySegment {
-        return address.asSegment(size, ResourceScope.globalScope())
+    val AUDCLNT_BUFFERFLAGS_SILENT: Byte = 2
+
+    fun getPNumFramesInPacket(state: StructInstance): UInt {
+        return MemoryAccess.getIntAtOffset(state.segment, state[1]).toUInt()
+    }
+
+    fun getPFlags(state: StructInstance): Byte {
+        return MemoryAccess.getByteAtOffset(state.segment, state[2])
+    }
+
+    fun getPData(state: StructInstance, size: Long): MemorySegment {
+        return MemoryAccess.getAddressAtOffset(state.segment, state[9]).asSegment(size, ResourceScope.globalScope())
     }
 
     fun startRecording(state: StructInstance, formats: StructInstance? = null) {
