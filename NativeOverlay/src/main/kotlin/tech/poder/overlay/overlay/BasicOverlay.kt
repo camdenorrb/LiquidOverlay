@@ -9,6 +9,7 @@ import tech.poder.overlay.overlay.base.Overlay
 import tech.poder.overlay.window.WindowManager
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
+import kotlin.concurrent.thread
 import kotlin.concurrent.write
 import kotlin.io.path.Path
 
@@ -16,8 +17,8 @@ class BasicOverlay(private val self: WindowManager, private val selected: Window
 
     var onRedraw: (Overlay) -> Unit = {}
 
-    val storageBitmap = Path("test.bmp").toAbsolutePath()
-    val pathString = ExternalStorage.fromString(storageBitmap.toString())
+    private val storageBitmap = Path("test.bmp").toAbsolutePath()
+    private val storageBitmapPath = ExternalStorage.fromString(storageBitmap.toString())
 
     private val currentRectStorage = RectReader.createSegment().apply {
         self.getWindowRect(this)
@@ -31,7 +32,11 @@ class BasicOverlay(private val self: WindowManager, private val selected: Window
     private var prevList = WinAPIHandles.imageListCreate(canvasWidth, canvasHeight, 0x00000001, 1, 1) as MemoryAddress
     private var internal = BufferedImage(canvasWidth, canvasHeight, BufferedImage.TYPE_INT_RGB)
 
-    private val checker = Thread {
+    init {
+        self.setWindowPosition(WindowManager.HWND_TOPMOST)
+    }
+
+    private val checker = thread {
 
         val newRectStorage = RectReader.createSegment().apply {
             self.getWindowRect(this)
@@ -74,11 +79,6 @@ class BasicOverlay(private val self: WindowManager, private val selected: Window
         }
 
         newRectStorage.close()
-    }
-
-    init {
-        self.setWindowPosition(WindowManager.HWND_TOPMOST)
-        checker.start()
     }
 
     fun remake(): Boolean {
@@ -131,10 +131,9 @@ class BasicOverlay(private val self: WindowManager, private val selected: Window
     override fun update() {
 
         prevList = WinAPIHandles.imageListCreate(canvasWidth, canvasHeight, 0x00000001, 1, 1) as MemoryAddress
-
         ImageIO.write(internal, "bmp", storageBitmap.toFile())
 
-        WinAPIHandles.imageListAdd(prevList, WinAPI.loadImage(pathString), WindowManager.invisible)
+        WinAPIHandles.imageListAdd(prevList, WinAPI.loadImage(storageBitmapPath), WindowManager.invisible)
         WinAPIHandles.imageListDestroy(WinAPI.currentImageList)
 
         WinAPI.repaintLock.write {
@@ -145,7 +144,6 @@ class BasicOverlay(private val self: WindowManager, private val selected: Window
         check(self.updateWindow()) {
             "Failed to update window: ${WinAPIHandles.getLastError()}"
         }
-
     }
 
     private fun onResize(callback: (Overlay) -> Unit): Boolean {

@@ -67,8 +67,14 @@ interface Overlay {
      */
     fun show()
 
+    /**
+     * Hide the overlay
+     */
     fun hide()
 
+    /**
+     * Updates the overlay
+     */
     fun update()
 
     /**
