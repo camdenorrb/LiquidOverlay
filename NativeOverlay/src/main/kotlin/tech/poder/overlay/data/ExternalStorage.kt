@@ -11,7 +11,6 @@ value class ExternalStorage(val segment: MemorySegment) : AutoCloseable {
         segment.scope().close()
     }
 
-
     companion object {
 
         private val nullChar = "\u0000".toByteArray(Charsets.UTF_16LE)

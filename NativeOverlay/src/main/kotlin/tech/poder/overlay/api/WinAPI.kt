@@ -1,14 +1,17 @@
 package tech.poder.overlay.api
 
 import jdk.incubator.foreign.*
-import tech.poder.overlay.data.ExternalStorage
-import tech.poder.overlay.data.NativeBuffer
-import tech.poder.overlay.data.Process
-import tech.poder.overlay.data.RectReader
+import tech.poder.overlay.audio.AudioFormat
+import tech.poder.overlay.data.*
+import tech.poder.overlay.handles.KatDLLHandles
 import tech.poder.overlay.handles.WinAPIHandles
+import tech.poder.overlay.structs.KatDLLStructs
+import tech.poder.overlay.structs.WinAPIStructs
 import tech.poder.overlay.utils.NativeUtils
+import tech.poder.overlay.utils.NumberUtils
 import tech.poder.overlay.values.WinAPIValues
 import tech.poder.overlay.window.WindowManager
+import java.util.*
 import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -106,7 +109,6 @@ object WinAPI {
 			WinAPIHandles.getWindow.invoke(hwnd, 4) == MemoryAddress.NULL
 		)
 	}
-
 
 	fun getProcesses(): List<Process> {
 
@@ -400,6 +402,220 @@ object WinAPI {
 		val id = register(value)
 		block(id)
 		registry.remove(id)
+	}
+
+
+
+	// TODO: New things to cleanup
+
+	fun upgradeFormat(format: StructInstance): StructInstance {
+		return StructInstance(
+			format.segment.address().asSegment(WinAPIStructs.waveFormatEx2.size, ResourceScope.globalScope()),
+			WinAPIStructs.waveFormatEx2
+		)
+	}
+
+	fun newFormat(): StructInstance {
+		return WinAPIStructs.waveFormatEx.new()
+	}
+
+	fun newFormatList(): StructInstance {
+		return WinAPIStructs.formatList.new()
+	}
+
+	fun getPCMgUID(): StructInstance {
+		val address = KatDLLHandles.getPCMID() as MemoryAddress
+		return StructInstance(address.asSegment(WinAPIStructs.guid.size, ResourceScope.globalScope()), WinAPIStructs.guid)
+	}
+
+	fun toJavaUUID(guid: StructInstance): UUID {
+		val data = ByteArray(16)
+		var offset = 0
+		NumberUtils.bytesFromInt(MemoryAccess.getIntAtOffset(guid.segment, guid[0]), data, offset)
+		offset += Int.SIZE_BYTES
+		NumberUtils.bytesFromShort(MemoryAccess.getShortAtOffset(guid.segment, guid[1]), data, offset)
+		offset += Short.SIZE_BYTES
+		NumberUtils.bytesFromShort(MemoryAccess.getShortAtOffset(guid.segment, guid[2]), data, offset)
+		offset += Short.SIZE_BYTES
+		data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid[3]))
+		offset++
+		data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid[4]))
+		offset++
+		data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid[5]))
+		offset++
+		data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid[6]))
+		offset++
+		data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid[7]))
+		offset++
+		data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid[8]))
+		offset++
+		data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid[9]))
+		offset++
+		data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid[10]))
+		val most = NumberUtils.longFromBytes(data)
+		val least = NumberUtils.longFromBytes(data, 8)
+		return UUID(most, least)
+	}
+
+	fun toGUID(uuid: UUID, guid: StructInstance) {
+		val byteArray = ByteArray(16)
+		NumberUtils.bytesFromLong(uuid.mostSignificantBits, byteArray)
+		NumberUtils.bytesFromLong(uuid.leastSignificantBits, byteArray, 8)
+		var offset = 0
+		MemoryAccess.setIntAtOffset(guid.segment, guid[0], NumberUtils.intFromBytes(byteArray, offset))
+		offset += Int.SIZE_BYTES
+		MemoryAccess.setShortAtOffset(guid.segment, guid[1], NumberUtils.shortFromBytes(byteArray, offset))
+		offset += Short.SIZE_BYTES
+		MemoryAccess.setShortAtOffset(guid.segment, guid[2], NumberUtils.shortFromBytes(byteArray, offset))
+		offset += Short.SIZE_BYTES
+		MemoryAccess.setByteAtOffset(guid.segment, guid[3], byteArray[offset])
+		offset++
+		MemoryAccess.setByteAtOffset(guid.segment, guid[4], byteArray[offset])
+		offset++
+		MemoryAccess.setByteAtOffset(guid.segment, guid[5], byteArray[offset])
+		offset++
+		MemoryAccess.setByteAtOffset(guid.segment, guid[6], byteArray[offset])
+		offset++
+		MemoryAccess.setByteAtOffset(guid.segment, guid[7], byteArray[offset])
+		offset++
+		MemoryAccess.setByteAtOffset(guid.segment, guid[8], byteArray[offset])
+		offset++
+		MemoryAccess.setByteAtOffset(guid.segment, guid[9], byteArray[offset])
+		offset++
+		MemoryAccess.setByteAtOffset(guid.segment, guid[10], byteArray[offset])
+	}
+
+	fun toGUID(uuid: UUID): StructInstance {
+		val format = WinAPIStructs.guid.new()
+		toGUID(uuid, format)
+		return format
+	}
+
+	fun toFormat(address: MemoryAddress): StructInstance {
+		return StructInstance(
+			address.asSegment(WinAPIStructs.waveFormatEx2.size, ResourceScope.globalScope()),
+			WinAPIStructs.waveFormatEx
+		)
+	}
+
+	fun guidFromUpgradedFormat(format: StructInstance): StructInstance {
+		return StructInstance(format.segment.asSlice(format[9]), WinAPIStructs.guid)
+	}
+
+	fun getFormat(state: StructInstance): StructInstance {
+		val scope = ResourceScope.globalScope()
+		val seg = MemoryAccess.getAddressAtOffset(state.segment, state[8]).asSegment(WinAPIStructs.waveFormatEx.size, scope)
+		return StructInstance(seg, WinAPIStructs.waveFormatEx)
+	}
+
+
+	fun newState(): StructInstance {
+		return KatDLLStructs.state.new()
+	}
+
+	val AUDCLNT_BUFFERFLAGS_SILENT: Byte = 2
+
+	fun getPNumFramesInPacket(state: StructInstance): UInt {
+		return MemoryAccess.getIntAtOffset(state.segment, state[1]).toUInt()
+	}
+
+	fun getPFlags(state: StructInstance): Byte {
+		return MemoryAccess.getByteAtOffset(state.segment, state[2])
+	}
+
+	fun getPData(state: StructInstance, size: Long): MemorySegment {
+		return MemoryAccess.getAddressAtOffset(state.segment, state[9]).asSegment(size, ResourceScope.globalScope())
+	}
+
+	fun startRecording(state: StructInstance, formats: StructInstance? = null) {
+		KatDLLHandles.startRecording(
+			state.segment.address(),
+			formats?.segment?.address() ?: MemoryAddress.NULL
+		)
+		val hr = MemoryAccess.getIntAtOffset(state.segment, state[0])
+		check(hr >= 0) {
+			val alts = mutableListOf<String>()
+			if (formats != null) {
+				val amount = MemoryAccess.getIntAtOffset(formats.segment, formats[0])
+				val start = MemoryAccess.getAddressAtOffset(formats.segment, formats[1])
+					.asSegment(CLinker.C_POINTER.byteSize() * amount, ResourceScope.globalScope())
+				repeat(amount) {
+					val formatAddress = MemoryAccess.getAddressAtIndex(start, it.toLong())
+					if (formatAddress != MemoryAddress.NULL) {
+						val format = toFormat(formatAddress)
+						alts.add(AudioFormat.getFormat(format))
+					}
+				}
+			}
+			error("Failed to start recording! Code: $hr MSG: ${
+				CLinker.toJavaString(
+					MemoryAccess.getAddressAtOffset(
+						state.segment,
+						state[4]
+					)
+				)
+			} ${if (alts.isNotEmpty()) "ALTS: ${alts.joinToString(", ")}" else ""}")
+		}
+	}
+
+	fun getNextPacketSize(state: StructInstance) {
+		KatDLLHandles.getNextPacketSize(state.segment.address())
+		val hr = MemoryAccess.getIntAtOffset(state.segment, state[0])
+		check(hr >= 0) {
+			error("Failed to get next packet size! Code: $hr  MSG: ${
+				CLinker.toJavaString(
+					MemoryAccess.getAddressAtOffset(
+						state.segment,
+						state[4]
+					)
+				)
+			}")
+		}
+	}
+
+	fun getBuffer(state: StructInstance) {
+		KatDLLHandles.getBuffer(state.segment.address())
+		val hr = MemoryAccess.getIntAtOffset(state.segment, state[0])
+		check(hr >= 0) {
+			error("Failed to get buffer! Code: $hr  MSG: ${
+				CLinker.toJavaString(
+					MemoryAccess.getAddressAtOffset(
+						state.segment,
+						state[4]
+					)
+				)
+			}")
+		}
+	}
+
+	fun releaseBuffer(state: StructInstance) {
+		KatDLLHandles.releaseBuffer(state.segment.address())
+		val hr = MemoryAccess.getIntAtOffset(state.segment, state[0])
+		check(hr >= 0) {
+			error("Failed to release buffer! Code: $hr  MSG: ${
+				CLinker.toJavaString(
+					MemoryAccess.getAddressAtOffset(
+						state.segment,
+						state[4]
+					)
+				)
+			}")
+		}
+	}
+
+	fun stopRecording(state: StructInstance) {
+		KatDLLHandles.stopRecording(state.segment.address())
+		val hr = MemoryAccess.getIntAtOffset(state.segment, state[0])
+		check(hr >= 0) {
+			error("Failed to stop recording! Code: $hr  MSG: ${
+				CLinker.toJavaString(
+					MemoryAccess.getAddressAtOffset(
+						state.segment,
+						state[4]
+					)
+				)
+			}")
+		}
 	}
 
 }

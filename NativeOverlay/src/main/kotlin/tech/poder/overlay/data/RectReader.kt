@@ -32,6 +32,7 @@ data class RectReader(val segment: MemorySegment, val left: UInt, val top: UInt,
                 MemoryAccess.getIntAtIndex(segment, 3).toUInt()
             )
         }
+
     }
 
 }

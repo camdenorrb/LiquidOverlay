@@ -14,4 +14,5 @@ open module PoderTech.overlay {
 	exports tech.poder.overlay.utils;
 	exports tech.poder.overlay.values;
 	exports tech.poder.overlay.window;
+    exports tech.poder.overlay.audio;
 }

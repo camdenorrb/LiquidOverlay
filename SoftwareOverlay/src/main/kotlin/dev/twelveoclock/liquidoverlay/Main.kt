@@ -3,16 +3,24 @@ package dev.twelveoclock.liquidoverlay
 import dev.twelveoclock.liquidoverlay.api.Liquipedia
 import dev.twelveoclock.liquidoverlay.modules.sub.PluginModule
 import dev.twelveoclock.liquidoverlay.speech.GoogleSpeechAPI
+import jdk.incubator.foreign.MemoryAccess
 import tech.poder.overlay.api.WinAPI
+import tech.poder.overlay.audio.*
 import tech.poder.overlay.overlay.BasicOverlay
 import tech.poder.overlay.window.WindowClass
 import tech.poder.overlay.window.WindowManager
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardOpenOption
 import javax.sound.sampled.*
+import javax.sound.sampled.AudioFormat
+import kotlin.experimental.and
 import kotlin.io.path.Path
+import kotlin.math.min
 import kotlin.system.exitProcess
 
 
-val LIQUIPEDIA = Liquipedia(TODO())
+val LIQUIPEDIA by lazy { Liquipedia(TODO()) }
 
 
 object Main {
@@ -20,8 +28,9 @@ object Main {
     @JvmStatic
     fun main(args: Array<String>) {
 
+        streamingSpeakerRecognize()
         //GUI.createApplication()
-        pluginThingy()
+        //pluginThingy()
 
         /*
         val processes = Callback.getProcesses()
@@ -134,6 +143,109 @@ object Main {
 
 }
 
+val binAudio = Paths.get("audio.bin").toAbsolutePath()
+
+val tmpFile = Files.newOutputStream(
+    binAudio,
+    StandardOpenOption.CREATE,
+    StandardOpenOption.TRUNCATE_EXISTING,
+    StandardOpenOption.WRITE
+)
+
+var sampleCount = 0uL
+
+fun processFrame(buffer: ByteArray, amountOfSamples: Long, format: FormatData) {
+    sampleCount += amountOfSamples.toULong()
+
+    //val result = AudioChannels.fromOther(buffer, amountOfSamples, SpeechToText.getInternalFormat(), format)
+    //println(result)
+    tmpFile.write(buffer)
+    /*val data: AudioChannel = when (format.bitsPerChannel.toInt()) {
+        8 -> {
+            PCMByteAudioChannels.process(buffer, format)
+        }
+        16 -> {
+            PCMShortAudioChannels.process(buffer, format)
+        }
+        32 -> {
+            if (format.tag == FormatFlag.IEEE_FLOAT) {
+                FloatAudioChannels.process(buffer, format)
+            } else {
+                PCMIntAudioChannels.process(buffer, format)
+            }
+        }
+        else -> {
+            error("Unknown format $format")
+        }
+    }
+    tmpFile.write(data.toBytes())*/
+    //process speech
+
+    //end process speech
+}
+
+fun streamingSpeakerRecognize() {
+    val state = WinAPI.newState()
+    /*val formatList = Callback.newFormatList()
+    MemoryAccess.setIntAtOffset(formatList.segment, formatList[0], 1)
+    val pointerList = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newSharedScope())
+    MemoryAccess.setAddress(pointerList, SpeechToText.getAudioStruct().format.segment.address())
+    MemoryAccess.setAddressAtOffset(formatList.segment, formatList[1], pointerList)
+    Callback.startRecording(state, formatList)*/
+    WinAPI.startRecording(state)
+    val hnsPeriod = MemoryAccess.getDoubleAtOffset(state.segment, state[3])
+    val sleepTime = ((hnsPeriod / 10_000.0) / 2.0).toLong()
+    var counter = 0
+    val format = tech.poder.overlay.audio.AudioFormat.getFormatData(WinAPI.getFormat(state))
+    println(tech.poder.overlay.audio.AudioFormat.getFormat(format))
+    val bytesPerFrame = format.blockAlignment
+    val framesPerSecond = format.sampleRate
+    val bytesPerSecond = bytesPerFrame * framesPerSecond.toLong()
+    if (bytesPerSecond.toInt().toLong() != bytesPerSecond) {
+        error("Bytes per second is too big")
+    }
+
+    while (counter < 30) {
+        println("at top of loop")
+        // Sleep for half the buffer duration.
+        Thread.sleep(sleepTime)
+        counter++
+        WinAPI.getNextPacketSize(state)
+        var packetLength = WinAPI.getPNumFramesInPacket(state)
+        while (packetLength != 0u) {
+            WinAPI.getBuffer(state)
+
+            val flags = WinAPI.getPFlags(state)
+            if (flags and WinAPI.AUDCLNT_BUFFERFLAGS_SILENT != 0.toByte()) {
+                println("SILENT")
+            }
+            val amountOfFramesInBuffer = WinAPI.getPNumFramesInPacket(state)
+            val pDataLocation = WinAPI.getPData(state, amountOfFramesInBuffer.toLong() * bytesPerFrame.toLong())
+            var currentPos = 0L
+
+            while (currentPos < pDataLocation.byteSize()) {
+                val buffer =
+                    pDataLocation.asSlice(currentPos, min(bytesPerSecond * 20, pDataLocation.byteSize() - currentPos))
+                processFrame(buffer.toByteArray(), amountOfFramesInBuffer.toLong(), format)
+                currentPos += buffer.byteSize()
+            }
+            WinAPI.releaseBuffer(state)
+            WinAPI.getNextPacketSize(state)
+            packetLength = WinAPI.getPNumFramesInPacket(state)
+        }
+    }
+
+    tmpFile.flush()
+    tmpFile.close()
+
+    val data = Files.readAllBytes(binAudio)
+    val floatArray = FloatAudioChannels.process(data, format) as FloatAudioChannels
+
+    WavFileWriter.write(data, format, Paths.get("custom.wav").toAbsolutePath())
+    val pcmFormat = FormatData(FormatFlag.PCM, format.channels, format.sampleRate, 4, 16, 16)
+    val pcm = floatArray.toPCMShort() as AudioChannel //Causes compiler crash without cast? has to do with defaults on interfaces
+    WavFileWriter.write(pcm.toBytes(), pcmFormat, Paths.get("custom2.wav"))
+}
 
 /** Performs microphone streaming speech recognition with a duration of 1 minute.  */
 
@@ -191,7 +303,8 @@ fun streamingMicRecognize() {
 
         val audioFormat = AudioFormat(16000f, 16, 1, true, false)
         val bytesPerSecond = (audioFormat.sampleRate * audioFormat.sampleSizeInBits) / 8.0
-        val mixer = AudioSystem.getMixer(AudioSystem.getMixerInfo().filter { it.name.contains("Port GNV32DB-DP") }.first())
+        val mixer =
+            AudioSystem.getMixer(AudioSystem.getMixerInfo().filter { it.name.contains("Port GNV32DB-DP") }.first())
         if (!mixer.isOpen) {
             mixer.open()
         }

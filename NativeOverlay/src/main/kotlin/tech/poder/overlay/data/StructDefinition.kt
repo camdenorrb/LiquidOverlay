@@ -1,6 +1,8 @@
 package tech.poder.overlay.data
 
 import jdk.incubator.foreign.MemoryLayout
+import jdk.incubator.foreign.MemorySegment
+import jdk.incubator.foreign.ResourceScope
 import tech.poder.overlay.utils.NativeUtils
 
 data class StructDefinition(val offset: List<Long>, val size: Long) {
@@ -9,9 +11,13 @@ data class StructDefinition(val offset: List<Long>, val size: Long) {
         return offset[index]
     }
 
+    fun new(scope: ResourceScope = ResourceScope.newSharedScope()): StructInstance {
+        return StructInstance(MemorySegment.allocateNative(size, scope), this)
+    }
 
     companion object {
 
+        // TODO: Make varargs
         fun generate(dataTypes: List<Class<*>>): StructDefinition {
 
             val types = dataTypes.map(NativeUtils::classToMemoryLayout)

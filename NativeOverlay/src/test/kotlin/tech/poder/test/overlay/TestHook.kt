@@ -2,9 +2,9 @@ package tech.poder.test.overlay
 
 import tech.poder.overlay.api.WinAPI
 import tech.poder.overlay.overlay.BasicOverlay
+import tech.poder.overlay.overlay.base.Overlay
 import tech.poder.overlay.window.WindowClass
 import tech.poder.overlay.window.WindowManager
-import tech.poder.overlay.overlay.base.Overlay
 import java.awt.Color
 import java.awt.image.BufferedImage
 import kotlin.math.ceil
