@@ -64,8 +64,16 @@ value class FloatAudioChannels(val data: Array<FloatArray>) : AudioChannel {
         return result
     }
 
-    private fun normalize(target: Float, min: Double, max: Double): Double {
-        return (2.0 * ((target.toDouble() - min) / (max - min))) - 1.0
+    private fun normalize(target: Float, left: Double, right: Double): Double {
+        return left * target.toDouble() + right
+    }
+
+    fun calcLeft(a: Double, b: Double, c: Double, d: Double): Double {
+        return (d - c) / (b - a)
+    }
+
+    fun calcRight(a: Double, b: Double, c: Double, d: Double): Double {
+        return (c*b - a*d) / (b - a)
     }
 
     fun toPCMShort(independent: Boolean = false): PCMShortAudioChannels {
@@ -81,14 +89,27 @@ value class FloatAudioChannels(val data: Array<FloatArray>) : AudioChannel {
             max(this)
         }
 
+        var left = if (independent) {
+            0.0
+        } else {
+            calcLeft(min, max, -1.0, 1.0)
+        }
+        var right = if (independent) {
+            0.0
+        } else {
+            calcRight(min, max, -1.0, 1.0)
+        }
+
         return PCMShortAudioChannels(Array(data.size) { index1 ->
             if (independent) {
                 min = min(data[index1])
                 max = max(data[index1])
+                left = calcLeft(min, max, -1.0, 1.0)
+                right = calcRight(min, max, -1.0, 1.0)
             }
             ShortArray(data[index1].size) { index2 ->
-                println("${normalize(data[index1][index2], min, max)} -> ${round((normalize(data[index1][index2], min, max) * 32767.0) + 0.5).toInt().toShort()}")
-                round((normalize(data[index1][index2], min, max) * 32767.0) + 0.5).toInt().toShort()
+                println("${normalize(data[index1][index2], left, right)} -> ${round((normalize(data[index1][index2], left, right) * 32767.0) + 0.5).toInt().toShort()}")
+                round((normalize(data[index1][index2], left, right) * 32767.0) + 0.5).toInt().toShort()
             }
         })
     }

@@ -2,8 +2,7 @@ package tech.poder.test.overlay
 
 import jdk.incubator.foreign.MemoryAccess
 import tech.poder.overlay.api.WinAPI
-import tech.poder.overlay.audio.AudioFormat
-import tech.poder.overlay.audio.FormatData
+import tech.poder.overlay.audio.*
 import tech.poder.overlay.overlay.BasicOverlay
 import tech.poder.overlay.overlay.base.Overlay
 import tech.poder.overlay.window.WindowClass
@@ -155,8 +154,8 @@ internal class TestHook {
 
 
     fun processFrame(buffer: ByteArray, format: FormatData) {
-        /*
-        val data: AudioChannels = when(format.bitsPerChannel.toInt()) {
+
+        /*val data: AudioChannel = when(format.bitsPerChannel.toInt()) {
             8 -> {
                 PCMByteAudioChannels.process(buffer, format)
             }
@@ -173,7 +172,8 @@ internal class TestHook {
             else -> {
                 error("Unknown format $format")
             }
-        }*/
+        }
+        println("$format $data")*/
         //process speech
 
         //end process speech
