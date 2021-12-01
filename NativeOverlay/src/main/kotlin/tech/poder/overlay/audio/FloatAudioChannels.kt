@@ -31,20 +31,20 @@ value class FloatAudioChannels(val data: Array<FloatArray>) : AudioChannel {
             return FloatAudioChannels(buffers)
         }
 
-        fun min(channel: FloatArray): Double {
-            return channel.minOf { it }.toDouble()
+        fun min(channel: FloatArray): Float {
+            return channel.minOf { it }
         }
 
-        fun max(channel: FloatArray): Double {
-            return channel.maxOf { it }.toDouble()
+        fun max(channel: FloatArray): Float {
+            return channel.maxOf { it }
         }
 
-        fun min(channel: FloatAudioChannels): Double {
-            return channel.data.minOf { it.minOf { it } }.toDouble()
+        fun min(channel: FloatAudioChannels): Float {
+            return channel.data.minOf { it.minOf { it } }
         }
 
-        fun max(channel: FloatAudioChannels): Double {
-            return channel.data.maxOf { it.maxOf { it } }.toDouble()
+        fun max(channel: FloatAudioChannels): Float {
+            return channel.data.maxOf { it.maxOf { it } }
         }
     }
 
@@ -64,52 +64,90 @@ value class FloatAudioChannels(val data: Array<FloatArray>) : AudioChannel {
         return result
     }
 
-    private fun normalize(target: Float, left: Double, right: Double): Double {
-        return left * target.toDouble() + right
+    private fun normalize(target: Float, left: Float, right: Float): Float {
+        return left * target + right
     }
 
-    fun calcLeft(a: Double, b: Double, c: Double, d: Double): Double {
+    fun calcLeft(a: Float, b: Float, c: Float, d: Float): Float {
         return (d - c) / (b - a)
     }
 
-    fun calcRight(a: Double, b: Double, c: Double, d: Double): Double {
+    fun calcRight(a: Float, b: Float, c: Float, d: Float): Float {
         return (c*b - a*d) / (b - a)
     }
 
     fun toPCMShort(independent: Boolean = false): PCMShortAudioChannels {
 
         var min = if (independent) {
-            0.0
+            0f
         } else {
             min(this)
         }
         var max = if (independent) {
-            0.0
+            0f
         } else {
             max(this)
         }
 
         var left = if (independent) {
-            0.0
+            0f
         } else {
-            calcLeft(min, max, -1.0, 1.0)
+            calcLeft(min, max, -1f, 1f)
         }
         var right = if (independent) {
-            0.0
+            0f
         } else {
-            calcRight(min, max, -1.0, 1.0)
+            calcRight(min, max, -1f, 1f)
         }
 
         return PCMShortAudioChannels(Array(data.size) { index1 ->
             if (independent) {
                 min = min(data[index1])
                 max = max(data[index1])
-                left = calcLeft(min, max, -1.0, 1.0)
-                right = calcRight(min, max, -1.0, 1.0)
+                left = calcLeft(min, max, -1f, 1f)
+                right = calcRight(min, max, -1f, 1f)
             }
             ShortArray(data[index1].size) { index2 ->
                 println("${normalize(data[index1][index2], left, right)} -> ${round((normalize(data[index1][index2], left, right) * 32767.0) + 0.5).toInt().toShort()}")
                 round((normalize(data[index1][index2], left, right) * 32767.0) + 0.5).toInt().toShort()
+            }
+        })
+    }
+
+    fun toNormal(independent: Boolean = false): FloatAudioChannels {
+
+        var min = if (independent) {
+            0f
+        } else {
+            min(this)
+        }
+        var max = if (independent) {
+            0f
+        } else {
+            max(this)
+        }
+
+        var left = if (independent) {
+            0f
+        } else {
+            calcLeft(min, max, -1f, 1f)
+        }
+        var right = if (independent) {
+            0f
+        } else {
+            calcRight(min, max, -1f, 1f)
+        }
+
+        return FloatAudioChannels(Array(data.size) { index1 ->
+            if (independent) {
+                min = min(data[index1])
+                max = max(data[index1])
+                left = calcLeft(min, max, -1f, 1f)
+                right = calcRight(min, max, -1f, 1f)
+            }
+            FloatArray(data[index1].size) { index2 ->
+                println("${data[index1][index2]} -> ${normalize(data[index1][index2], left, right)}")
+                normalize(data[index1][index2], left, right)
             }
         })
     }
