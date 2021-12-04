@@ -4,8 +4,13 @@ import dev.twelveoclock.liquidoverlay.api.Liquipedia
 import dev.twelveoclock.liquidoverlay.modules.sub.PluginModule
 import dev.twelveoclock.liquidoverlay.speech.GoogleSpeechAPI
 import jdk.incubator.foreign.MemoryAccess
+import jdk.incubator.foreign.ResourceScope
 import tech.poder.overlay.api.WinAPI
-import tech.poder.overlay.audio.*
+import tech.poder.overlay.audio.FloatAudioChannels
+import tech.poder.overlay.audio.FormatData
+import tech.poder.overlay.audio.FormatFlag
+import tech.poder.overlay.audio.WavFileWriter
+import tech.poder.overlay.audio.base.AudioChannel
 import tech.poder.overlay.overlay.BasicOverlay
 import tech.poder.overlay.window.WindowClass
 import tech.poder.overlay.window.WindowManager
@@ -13,7 +18,6 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 import javax.sound.sampled.*
-import javax.sound.sampled.AudioFormat
 import kotlin.experimental.and
 import kotlin.io.path.Path
 import kotlin.math.min
@@ -28,7 +32,8 @@ object Main {
     @JvmStatic
     fun main(args: Array<String>) {
 
-        streamingSpeakerRecognize()
+        val resourceScope = ResourceScope.newConfinedScope()
+        streamingSpeakerRecognize(resourceScope)
         //GUI.createApplication()
         //pluginThingy()
 
@@ -88,17 +93,21 @@ object Main {
         println(LIQUIPEDIA.player(listOf(Liquipedia.Wiki.VALORANT)))
     }
     */
+        resourceScope.close()
 
     }
 
-    private fun createOverlay(){
-        val processes = WinAPI.getProcesses()
+    private fun createOverlay(resourceScope: ResourceScope) {
+
+        val processes = WinAPI.getProcesses(resourceScope)
         println("hi")
     }
 
     private fun pluginThingy() {
 
-        val selected = WinAPI.getProcesses().find { "Notepad.exe" in it.exeLocation }!!
+        val resourceScope = ResourceScope.newConfinedScope()
+
+        val selected = WinAPI.getProcesses(resourceScope).find { "Notepad.exe" in it.exeLocation }!!
         val clazz = WindowClass.define("Kats")
 
         val window = WindowManager.createWindow(
@@ -184,20 +193,20 @@ fun processFrame(buffer: ByteArray, amountOfSamples: Long, format: FormatData) {
     //end process speech
 }
 
-fun streamingSpeakerRecognize() {
-    val state = WinAPI.newState()
+fun streamingSpeakerRecognize(resourceScope: ResourceScope) {
+    val state = WinAPI.newState(resourceScope)
     /*val formatList = Callback.newFormatList()
     MemoryAccess.setIntAtOffset(formatList.segment, formatList[0], 1)
     val pointerList = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newSharedScope())
     MemoryAccess.setAddress(pointerList, SpeechToText.getAudioStruct().format.segment.address())
     MemoryAccess.setAddressAtOffset(formatList.segment, formatList[1], pointerList)
     Callback.startRecording(state, formatList)*/
-    WinAPI.startRecording(state)
-    val hnsPeriod = MemoryAccess.getDoubleAtOffset(state.segment, state[3])
+    WinAPI.startRecording(resourceScope)
+    val hnsPeriod = MemoryAccess.getDoubleAtOffset(state.segment, state.struct[3])
     val sleepTime = ((hnsPeriod / 10_000.0) / 2.0).toLong()
     var counter = 0
-    val format = tech.poder.overlay.audio.AudioFormat.getFormatData(WinAPI.getFormat(state))
-    println(tech.poder.overlay.audio.AudioFormat.getFormat(format))
+    val format = tech.poder.overlay.audio.base.AudioFormat.getFormatData(resourceScope, state.getFormat(resourceScope))
+    println(tech.poder.overlay.audio.base.AudioFormat.getFormat(format))
     val bytesPerFrame = format.blockAlignment
     val framesPerSecond = format.sampleRate
     val bytesPerSecond = bytesPerFrame * framesPerSecond.toLong()
@@ -210,17 +219,18 @@ fun streamingSpeakerRecognize() {
         // Sleep for half the buffer duration.
         Thread.sleep(sleepTime)
         counter++
-        WinAPI.getNextPacketSize(state)
-        var packetLength = WinAPI.getPNumFramesInPacket(state)
+        WinAPI.getNextPacketSize(resourceScope)
+        var packetLength = state.pNumFramesInPacket
         while (packetLength != 0u) {
-            WinAPI.getBuffer(state)
 
-            val flags = WinAPI.getPFlags(state)
+            WinAPI.getBuffer(resourceScope)
+
+            val flags = state.pFlags
             if (flags and WinAPI.AUDCLNT_BUFFERFLAGS_SILENT != 0.toByte()) {
                 println("SILENT")
             }
-            val amountOfFramesInBuffer = WinAPI.getPNumFramesInPacket(state)
-            val pDataLocation = WinAPI.getPData(state, amountOfFramesInBuffer.toLong() * bytesPerFrame.toLong())
+            val amountOfFramesInBuffer = state.pNumFramesInPacket
+            val pDataLocation = state.getPData(resourceScope, amountOfFramesInBuffer.toLong() * bytesPerFrame.toLong())
             var currentPos = 0L
 
             while (currentPos < pDataLocation.byteSize()) {
@@ -229,9 +239,9 @@ fun streamingSpeakerRecognize() {
                 processFrame(buffer.toByteArray(), amountOfFramesInBuffer.toLong(), format)
                 currentPos += buffer.byteSize()
             }
-            WinAPI.releaseBuffer(state)
-            WinAPI.getNextPacketSize(state)
-            packetLength = WinAPI.getPNumFramesInPacket(state)
+            WinAPI.releaseBuffer(resourceScope)
+            WinAPI.getNextPacketSize(resourceScope)
+            packetLength = state.pNumFramesInPacket
         }
     }
 

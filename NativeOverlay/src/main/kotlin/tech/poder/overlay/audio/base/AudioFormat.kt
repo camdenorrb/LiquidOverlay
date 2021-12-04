@@ -1,27 +1,36 @@
-package tech.poder.overlay.audio
+package tech.poder.overlay.audio.base
 
 import jdk.incubator.foreign.MemoryAccess
+import jdk.incubator.foreign.ResourceScope
 import tech.poder.overlay.api.WinAPI
-import tech.poder.overlay.data.StructInstance
-import tech.poder.overlay.handles.WinAPIHandles
+import tech.poder.overlay.audio.*
+import tech.poder.overlay.instance.BasicInstance
 import kotlin.math.max
 
 interface AudioFormat {
+
+    fun getAudioStruct(): GeneratedFormat
+
+    fun getInternalFormat(scope: ResourceScope): FormatData {
+        return getFormatData(scope, getAudioStruct().format)
+    }
+
+
     companion object {
 
-        fun getFormatData(format: StructInstance): FormatData {
-            val tag = MemoryAccess.getShortAtOffset(format.segment, format[0])
-            val numberOfChannels = MemoryAccess.getShortAtOffset(format.segment, format[1])
-            val sampleRate = MemoryAccess.getIntAtOffset(format.segment, format[2])
-            val bytesPerSecond = MemoryAccess.getIntAtOffset(format.segment, format[3])
-            val blockAlignment = MemoryAccess.getShortAtOffset(format.segment, format[4])
-            val bitsPerChannel = MemoryAccess.getShortAtOffset(format.segment, format[5])
+        fun getFormatData(scope: ResourceScope, format: BasicInstance): FormatData {
+            val tag = MemoryAccess.getShortAtOffset(format.segment, format.struct[0])
+            val numberOfChannels = MemoryAccess.getShortAtOffset(format.segment, format.struct[1])
+            val sampleRate = MemoryAccess.getIntAtOffset(format.segment, format.struct[2])
+            val bytesPerSecond = MemoryAccess.getIntAtOffset(format.segment, format.struct[3])
+            val blockAlignment = MemoryAccess.getShortAtOffset(format.segment, format.struct[4])
+            val bitsPerChannel = MemoryAccess.getShortAtOffset(format.segment, format.struct[5])
 
             if (tag.toInt() == -2) {
-                val upgraded = WinAPI.upgradeFormat(format)
-                val samples = MemoryAccess.getShortAtOffset(upgraded.segment, upgraded[7])
+                val upgraded = WinAPI.upgradeFormat(scope, format)
+                val samples = MemoryAccess.getShortAtOffset(upgraded.segment, upgraded.struct[7])
                 val channels = mutableListOf<Channel>()
-                val mask = MemoryAccess.getIntAtOffset(upgraded.segment, upgraded[8])
+                val mask = MemoryAccess.getIntAtOffset(upgraded.segment, upgraded.struct[8])
                 Channel.values().forEach {
                     if (mask and it.flag != 0) {
                         channels.add(it)
@@ -73,8 +82,8 @@ interface AudioFormat {
             }
         }
 
-        fun getFormat(format: StructInstance): String {
-            return getFormat(getFormatData(format))
+        fun getFormat(scope: ResourceScope, format: BasicInstance): String {
+            return getFormat(getFormatData(scope, format))
         }
 
         fun getFormat(data: FormatData): String {
@@ -91,58 +100,54 @@ interface AudioFormat {
 
         fun generateFormat(
             formatFlag: FormatFlag,
+            scope: ResourceScope,
             channels: List<Channel> = ChannelShortCut.KSAUDIO_SPEAKER_STEREO.channels,
             sampleRate: Int = 44100,
             channelBitWidth: Short = 16,
-            extended: Boolean = true
+            extended: Boolean = true,
         ): GeneratedFormat {
-            var format = WinAPI.newFormat()
+            var format = WinAPI.newFormat(scope)
             val channelSize = max(channels.size, 1).toShort()
             if (extended) {
-                format = WinAPI.upgradeFormat(format)
-                MemoryAccess.setShortAtOffset(format.segment, format[0], FormatFlag.extendedBaseFlag)
+                format = WinAPI.upgradeFormat(scope, format)
+                MemoryAccess.setShortAtOffset(format.segment, format.struct[0], FormatFlag.extendedBaseFlag)
             } else {
-                MemoryAccess.setShortAtOffset(format.segment, format[0], formatFlag.baseFlag)
+                MemoryAccess.setShortAtOffset(format.segment, format.struct[0], formatFlag.baseFlag)
             }
-            MemoryAccess.setShortAtOffset(format.segment, format[1], channelSize)
-            MemoryAccess.setIntAtOffset(format.segment, format[2], sampleRate)
+            MemoryAccess.setShortAtOffset(format.segment, format.struct[1], channelSize)
+            MemoryAccess.setIntAtOffset(format.segment, format.struct[2], sampleRate)
             val blockAlignment = ((channelBitWidth.toLong() * channelSize.toLong()) / 8L).toShort()
             MemoryAccess.setIntAtOffset(
                 format.segment,
-                format[3],
+                format.struct[3],
                 (sampleRate.toLong() * blockAlignment).toInt()
             )
             MemoryAccess.setShortAtOffset(
                 format.segment,
-                format[4],
+                format.struct[4],
                 blockAlignment
             )
-            MemoryAccess.setShortAtOffset(format.segment, format[5], channelBitWidth)
+            MemoryAccess.setShortAtOffset(format.segment, format.struct[5], channelBitWidth)
             if (extended) {
-                MemoryAccess.setShortAtOffset(format.segment, format[6], 22)
+                MemoryAccess.setShortAtOffset(format.segment, format.struct[6], 22)
                 MemoryAccess.setShortAtOffset(
                     format.segment,
-                    format[7],
+                    format.struct[7],
                     channelBitWidth
-                )//todo set format[7]: UNION of Samples (channelBitWidth?)
+                )//todo set format.struct[7]: UNION of Samples (channelBitWidth?)
                 var mask = 0
                 channels.forEach {
                     mask = mask or it.flag
                 }
-                MemoryAccess.setIntAtOffset(format.segment, format[8], mask)
+                MemoryAccess.setIntAtOffset(format.segment, format.struct[8], mask)
                 val guidPart = WinAPI.guidFromUpgradedFormat(format)
                 WinAPI.toGUID(formatFlag.formatGUID, guidPart)
             } else {
-                MemoryAccess.setShortAtOffset(format.segment, format[6], 0)
+                MemoryAccess.setShortAtOffset(format.segment, format.struct[6], 0)
             }
 
             return GeneratedFormat(format)
         }
     }
 
-    fun getAudioStruct(): GeneratedFormat
-
-    fun getInternalFormat(): FormatData {
-        return getFormatData(this.getAudioStruct().format)
-    }
 }

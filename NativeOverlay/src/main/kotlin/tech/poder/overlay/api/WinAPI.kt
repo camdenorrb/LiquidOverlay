@@ -1,10 +1,16 @@
 package tech.poder.overlay.api
 
 import jdk.incubator.foreign.*
-import tech.poder.overlay.audio.AudioFormat
-import tech.poder.overlay.data.*
+import tech.poder.overlay.audio.base.AudioFormat
+import tech.poder.overlay.data.ExternalStorage
+import tech.poder.overlay.data.NativeBuffer
+import tech.poder.overlay.data.Process
+import tech.poder.overlay.data.RectReader
 import tech.poder.overlay.handles.KatDLLHandles
 import tech.poder.overlay.handles.WinAPIHandles
+import tech.poder.overlay.instance.BasicInstance
+import tech.poder.overlay.instance.katdll.StateInstance
+import tech.poder.overlay.instance.winapi.FormatListInstance
 import tech.poder.overlay.structs.KatDLLStructs
 import tech.poder.overlay.structs.WinAPIStructs
 import tech.poder.overlay.utils.NativeUtils
@@ -28,6 +34,12 @@ object WinAPI {
 
 	internal val repaintLock = ReentrantReadWriteLock()
 
+
+	var currentImageList = MemoryAddress.NULL
+	var images = 0
+
+	var lastWindow = WindowManager(MemoryAddress.NULL)
+
 	val forEachWindowUpcall = NativeUtils.lookupStaticMethodUpcall(
 		this::class.java,
 		"forEachWindow",
@@ -39,20 +51,15 @@ object WinAPI {
 	)
 
 
-	var currentImageList = MemoryAddress.NULL
-	var images = 0
-
-	var lastWindow = WindowManager(MemoryAddress.NULL)
-
 	fun loadImage(pathString: ExternalStorage): MemoryAddress {
 
-		val res = WinAPIHandles.loadImageW(MemoryAddress.NULL, pathString.segment.address(), 0, 0, 0, 0x00000010) as MemoryAddress
+		val handle = WinAPIHandles.loadImageW(MemoryAddress.NULL, pathString.segment.address(), 0, 0, 0, 0x00000010) as MemoryAddress
 
-		check(res != MemoryAddress.NULL) {
+		check(handle != MemoryAddress.NULL) {
 			"LoadImage failed: ${WinAPIHandles.getLastError()}"
 		}
 
-		return res
+		return handle
 	}
 
 	private fun repaint(hwnd: MemoryAddress) {
@@ -110,9 +117,8 @@ object WinAPI {
 		)
 	}
 
-	fun getProcesses(): List<Process> {
+	fun getProcesses(scope: ResourceScope): List<Process> {
 
-		val confinedStatic = ResourceScope.newConfinedScope()
 		val processes = mutableListOf<MemoryAddress>()
 
 		tempRegister(processes) { id ->
@@ -128,12 +134,12 @@ object WinAPI {
 		val PROCESS_QUERY_INFORMATION = 1024
 		//val PROCESS_VM_READ = 16
 		//val PROCESS_VM_WRITE = 32
-		val rectPlaceholder = MemorySegment.allocateNative(CLinker.C_LONG.byteSize() * 4, confinedStatic)
+		val rectPlaceholder = MemorySegment.allocateNative(CLinker.C_LONG.byteSize() * 4, scope)
 		val denseProcesses = mutableListOf<Process>()
 
 		processes.forEach { processData ->
 
-			val pidSegment = MemorySegment.allocateNative(CLinker.C_INT.byteSize(), confinedStatic)
+			val pidSegment = MemorySegment.allocateNative(CLinker.C_INT.byteSize(), scope)
 
 			check(WinAPIHandles.getWindowThreadProcessId(processData, pidSegment.address()) as Int != 0) {
 				"Could not get pid"
@@ -211,7 +217,6 @@ object WinAPI {
 
 		}
 
-		confinedStatic.close()
 		return denseProcesses
 	}
 
@@ -226,20 +231,19 @@ object WinAPI {
 		return 1
 	}
 
-	fun getEnumerator(): MemoryAddress {
+	fun getEnumerator(scope: ResourceScope): MemoryAddress {
 
 		if (!isCoInitialized) {
 
-			val result = WinAPIHandles.coInitializeEx(MemoryAddress.NULL, 0) as Int
-
-			check(result >= 0) {
-				"CoInitializeEx failed: $result ${WinAPIHandles.getLastError()}"
-			}
+			checkSuccess(
+				"CoInitializeEx",
+				WinAPIHandles.coInitializeEx(MemoryAddress.NULL, 0) as Int
+			)
 
 			isCoInitialized = true
 		}
 
-		val enumerator = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newConfinedScope())
+		val enumerator = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), scope)
 
 		val result = WinAPIHandles.coCreateInstance(
 			WinAPIValues.GUID.CLSID_MMDeviceEnumerator.address(),
@@ -249,75 +253,73 @@ object WinAPI {
 			enumerator.address()
 		) as Int
 
-		check(result >= 0) {
-			"CoCreateInstance failed: $result ${WinAPIHandles.getLastError()}"
-		}
+		checkSuccess("CoCreateInstance", result)
 
 		return MemoryAccess.getAddress(enumerator)
 	}
 
-	fun getDefaultAudioDevice(): MemoryAddress {
+	fun getDefaultAudioDevice(scope: ResourceScope): MemoryAddress {
 
-		val enumerator = getEnumerator()
-		val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newConfinedScope())
-		val result = WinAPIHandles.getAudioDeviceEndpoint(enumerator, tmp.address()) as Int
+		val enumerator = getEnumerator(scope)
+		val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), scope)
 
-		check(result >= 0) {
-			"GetAudioDeviceEndpoint failed: $result ${WinAPIHandles.getLastError()}"
-		}
+		checkSuccess(
+			"GetAudioDeviceEndpoint",
+			WinAPIHandles.getAudioDeviceEndpoint(enumerator, tmp.address()) as Int
+		)
 
-		return MemoryAccess.getAddress(tmp).apply { tmp.scope().close() }
+		return MemoryAccess.getAddress(tmp).apply { tmp.unload() }
 	}
 
-	fun activateAudioClient(device: MemoryAddress): MemoryAddress {
+	fun activateAudioClient(device: MemoryAddress, scope: ResourceScope): MemoryAddress {
 
-		val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newConfinedScope())
-		val result = WinAPIHandles.deviceActivate(device, tmp.address()) as Int
+		val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), scope)
 
-		check(result >= 0) {
-			"DeviceActivate failed: $result ${WinAPIHandles.getLastError()}"
-		}
+		checkSuccess(
+			"DeviceActivate",
+			WinAPIHandles.deviceActivate(device, tmp.address()) as Int
+		)
 
-		return MemoryAccess.getAddress(tmp).apply { tmp.scope().close() }
+		return MemoryAccess.getAddress(tmp).apply { tmp.unload() }
 	}
 
-	fun getMixFormat(client: MemoryAddress, REFTIMES_PER_SEC: Int = 10_000_000): MemoryAddress {
+	fun getMixFormat(client: MemoryAddress, scope: ResourceScope, REFTIMES_PER_SEC: Int = 10_000_000): MemoryAddress {
 
-		val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newConfinedScope())
-		val result = WinAPIHandles.getMixFormat(client, tmp.address(), REFTIMES_PER_SEC) as Int
+		val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), scope)
 
-		check(result >= 0) {
-			"GetMixFormat failed: $result ${WinAPIHandles.getLastError()}"
-		}
+		checkSuccess(
+			"GetMixFormat",
+			WinAPIHandles.getMixFormat(client, tmp.address(), REFTIMES_PER_SEC) as Int
+		)
 
 		return MemoryAccess.getAddress(tmp).apply {
-			tmp.scope().close()
+			tmp.unload()
 		}
 	}
 
-	fun getBufferSize(client: MemoryAddress): UInt {
+	fun getBufferSize(client: MemoryAddress, scope: ResourceScope): UInt {
 
-		val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newConfinedScope())
-		val result = WinAPIHandles.getBufferSize(client, tmp.address()) as Int
+		val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), scope)
 
-		check(result >= 0) {
-			"GetBufferSize failed: $result ${WinAPIHandles.getLastError()}"
-		}
+		checkSuccess(
+			"GetBufferSize",
+			WinAPIHandles.getBufferSize(client, tmp.address()) as Int
+		)
 
-		return MemoryAccess.getInt(tmp).apply { tmp.scope().close() }.toUInt()
+		return MemoryAccess.getInt(tmp).apply { tmp.unload() }.toUInt()
 	}
 
-	fun getService(client: MemoryAddress): MemoryAddress {
+	fun getService(client: MemoryAddress, scope: ResourceScope): MemoryAddress {
 
-		val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newConfinedScope())
-		val result = WinAPIHandles.getService(client, tmp.address()) as Int
+		val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), scope)
 
-		check(result >= 0) {
-			"DeviceGetService failed: $result ${WinAPIHandles.getLastError()}"
-		}
+		checkSuccess(
+			"DeviceGetService",
+			WinAPIHandles.getService(client, tmp.address()) as Int
+		)
 
 		return MemoryAccess.getAddress(tmp).apply {
-			tmp.scope().close()
+			tmp.unload()
 		}
 	}
 
@@ -326,62 +328,56 @@ object WinAPI {
 	}
 
 	fun start(client: MemoryAddress) {
-
-		val result = WinAPIHandles.clientStart(client) as Int
-
-		check(result >= 0) {
-			"Start failed: $result ${WinAPIHandles.getLastError()}"
-		}
+		checkSuccess(
+			"Start",
+			WinAPIHandles.clientStart(client) as Int
+		)
 	}
 
 	fun stop(client: MemoryAddress) {
-
-		val result = WinAPIHandles.clientStop(client) as Int
-
-		check(result >= 0) {
-			"Stop failed: $result ${WinAPIHandles.getLastError()}"
-		}
+		checkSuccess(
+			"Stop",
+			WinAPIHandles.clientStop(client) as Int
+		)
 	}
 
-	fun getNextPacketSize(service: MemoryAddress): UInt {
+	fun getNextPacketSize(service: MemoryAddress, scope: ResourceScope): UInt {
 
-		val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newConfinedScope())
-		val result = WinAPIHandles.getNextPacketSize(service, tmp.address()) as Int
+		val tmp = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), scope)
 
-		check(result >= 0) {
-			"GetNextPacketSize failed: $result ${WinAPIHandles.getLastError()}"
-		}
+		checkSuccess(
+			"GetNextPacketSize",
+			WinAPIHandles.getNextPacketSize(service, tmp.address()) as Int
+		)
 
-		return MemoryAccess.getInt(tmp).apply { tmp.scope().close() }.toUInt()
+		return MemoryAccess.getInt(tmp).apply { tmp.unload() }.toUInt()
 	}
 
-	fun getPacket(service: MemoryAddress): NativeBuffer {
+	fun getPacket(service: MemoryAddress, scope: ResourceScope): NativeBuffer {
 
-		val pData = MemorySegment.allocateNative(CLinker.C_CHAR.byteSize(), ResourceScope.newConfinedScope())
+		val pData = MemorySegment.allocateNative(CLinker.C_CHAR.byteSize(), scope)
 		val numFramesAvailable = MemorySegment.allocateNative(CLinker.C_INT.byteSize(), pData.scope())
 		val flags = MemorySegment.allocateNative(CLinker.C_INT.byteSize(), pData.scope())
-		val result = WinAPIHandles.getBuffer(service, pData.address(), numFramesAvailable.address(), flags.address()) as Int
 
-		check(result >= 0) {
-			"GetPacket failed: $result ${WinAPIHandles.getLastError()}"
-		}
+		checkSuccess(
+			"GetNextPacket",
+			WinAPIHandles.getBuffer(service, pData.address(), numFramesAvailable.address(), flags.address()) as Int
+		)
 
 		return NativeBuffer(
 			MemoryAccess.getByte(pData),
 			MemoryAccess.getInt(flags),
 			MemoryAccess.getInt(numFramesAvailable).toUInt()
 		).apply {
-			pData.scope().close()
+			pData.unload()
 		}
 	}
 
 	fun deletePacket(service: MemoryAddress, buffer: NativeBuffer) {
-
-		val result = WinAPIHandles.releaseBuffer(service, buffer.numFramesAvailable) as Int
-
-		check(result >= 0) {
-			"DeletePacket failed: $result ${WinAPIHandles.getLastError()}"
-		}
+		checkSuccess(
+			"DeletePacket",
+			WinAPIHandles.releaseBuffer(service, buffer.numFramesAvailable) as Int
+		)
 	}
 
 
@@ -399,222 +395,204 @@ object WinAPI {
 	}
 
 	private inline fun tempRegister(value: Any, block: (id: Long) -> Unit) {
-		val id = register(value)
-		block(id)
-		registry.remove(id)
+		register(value).let { id ->
+			block(id)
+			registry.remove(id)
+		}
 	}
 
 
 
 	// TODO: New things to cleanup
 
-	fun upgradeFormat(format: StructInstance): StructInstance {
-		return StructInstance(
-			format.segment.address().asSegment(WinAPIStructs.waveFormatEx2.size, ResourceScope.globalScope()),
+	fun upgradeFormat(scope: ResourceScope, format: BasicInstance): BasicInstance {
+		return BasicInstance(
+			format.segment.address().asSegment(WinAPIStructs.waveFormatEx2.size, scope),
 			WinAPIStructs.waveFormatEx2
 		)
 	}
 
-	fun newFormat(): StructInstance {
-		return WinAPIStructs.waveFormatEx.new()
+	fun newFormat(scope: ResourceScope): BasicInstance {
+		return WinAPIStructs.waveFormatEx.new(scope)
 	}
 
-	fun newFormatList(): StructInstance {
-		return WinAPIStructs.formatList.new()
+	fun newFormatList(scope: ResourceScope): BasicInstance {
+		return KatD.formatList.new(scope)
 	}
 
-	fun getPCMgUID(): StructInstance {
-		val address = KatDLLHandles.getPCMID() as MemoryAddress
-		return StructInstance(address.asSegment(WinAPIStructs.guid.size, ResourceScope.globalScope()), WinAPIStructs.guid)
+	fun getPCMgUID(scope: ResourceScope): BasicInstance {
+		return BasicInstance(
+			(KatDLLHandles.getPCMID() as MemoryAddress).asSegment(WinAPIStructs.guid.size, scope),
+			WinAPIStructs.guid
+		)
 	}
 
-	fun toJavaUUID(guid: StructInstance): UUID {
+	fun toJavaUUID(guid: BasicInstance): UUID {
+
 		val data = ByteArray(16)
 		var offset = 0
-		NumberUtils.bytesFromInt(MemoryAccess.getIntAtOffset(guid.segment, guid[0]), data, offset)
+
+		NumberUtils.bytesFromInt(MemoryAccess.getIntAtOffset(guid.segment, guid.struct[0]), data, offset)
 		offset += Int.SIZE_BYTES
-		NumberUtils.bytesFromShort(MemoryAccess.getShortAtOffset(guid.segment, guid[1]), data, offset)
+		NumberUtils.bytesFromShort(MemoryAccess.getShortAtOffset(guid.segment, guid.struct[1]), data, offset)
 		offset += Short.SIZE_BYTES
-		NumberUtils.bytesFromShort(MemoryAccess.getShortAtOffset(guid.segment, guid[2]), data, offset)
+		NumberUtils.bytesFromShort(MemoryAccess.getShortAtOffset(guid.segment, guid.struct[2]), data, offset)
 		offset += Short.SIZE_BYTES
-		data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid[3]))
+		data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid.struct[3]))
 		offset++
-		data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid[4]))
+		data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid.struct[4]))
 		offset++
-		data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid[5]))
+		data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid.struct[5]))
 		offset++
-		data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid[6]))
+		data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid.struct[6]))
 		offset++
-		data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid[7]))
+		data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid.struct[7]))
 		offset++
-		data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid[8]))
+		data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid.struct[8]))
 		offset++
-		data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid[9]))
+		data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid.struct[9]))
 		offset++
-		data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid[10]))
-		val most = NumberUtils.longFromBytes(data)
-		val least = NumberUtils.longFromBytes(data, 8)
-		return UUID(most, least)
+		data[offset] = (MemoryAccess.getByteAtOffset(guid.segment, guid.struct[10]))
+
+		return UUID(NumberUtils.longFromBytes(data), NumberUtils.longFromBytes(data, 8))
 	}
 
-	fun toGUID(uuid: UUID, guid: StructInstance) {
+	fun toGUID(uuid: UUID, guid: BasicInstance) {
+
 		val byteArray = ByteArray(16)
+
 		NumberUtils.bytesFromLong(uuid.mostSignificantBits, byteArray)
 		NumberUtils.bytesFromLong(uuid.leastSignificantBits, byteArray, 8)
+
 		var offset = 0
-		MemoryAccess.setIntAtOffset(guid.segment, guid[0], NumberUtils.intFromBytes(byteArray, offset))
+		MemoryAccess.setIntAtOffset(guid.segment, guid.struct[0], NumberUtils.intFromBytes(byteArray, offset))
 		offset += Int.SIZE_BYTES
-		MemoryAccess.setShortAtOffset(guid.segment, guid[1], NumberUtils.shortFromBytes(byteArray, offset))
+		MemoryAccess.setShortAtOffset(guid.segment, guid.struct[1], NumberUtils.shortFromBytes(byteArray, offset))
 		offset += Short.SIZE_BYTES
-		MemoryAccess.setShortAtOffset(guid.segment, guid[2], NumberUtils.shortFromBytes(byteArray, offset))
+		MemoryAccess.setShortAtOffset(guid.segment, guid.struct[2], NumberUtils.shortFromBytes(byteArray, offset))
 		offset += Short.SIZE_BYTES
-		MemoryAccess.setByteAtOffset(guid.segment, guid[3], byteArray[offset])
+		MemoryAccess.setByteAtOffset(guid.segment, guid.struct[3], byteArray[offset])
 		offset++
-		MemoryAccess.setByteAtOffset(guid.segment, guid[4], byteArray[offset])
+		MemoryAccess.setByteAtOffset(guid.segment, guid.struct[4], byteArray[offset])
 		offset++
-		MemoryAccess.setByteAtOffset(guid.segment, guid[5], byteArray[offset])
+		MemoryAccess.setByteAtOffset(guid.segment, guid.struct[5], byteArray[offset])
 		offset++
-		MemoryAccess.setByteAtOffset(guid.segment, guid[6], byteArray[offset])
+		MemoryAccess.setByteAtOffset(guid.segment, guid.struct[6], byteArray[offset])
 		offset++
-		MemoryAccess.setByteAtOffset(guid.segment, guid[7], byteArray[offset])
+		MemoryAccess.setByteAtOffset(guid.segment, guid.struct[7], byteArray[offset])
 		offset++
-		MemoryAccess.setByteAtOffset(guid.segment, guid[8], byteArray[offset])
+		MemoryAccess.setByteAtOffset(guid.segment, guid.struct[8], byteArray[offset])
 		offset++
-		MemoryAccess.setByteAtOffset(guid.segment, guid[9], byteArray[offset])
+		MemoryAccess.setByteAtOffset(guid.segment, guid.struct[9], byteArray[offset])
 		offset++
-		MemoryAccess.setByteAtOffset(guid.segment, guid[10], byteArray[offset])
+		MemoryAccess.setByteAtOffset(guid.segment, guid.struct[10], byteArray[offset])
 	}
 
-	fun toGUID(uuid: UUID): StructInstance {
-		val format = WinAPIStructs.guid.new()
-		toGUID(uuid, format)
-		return format
+	fun toGUID(scope: ResourceScope, uuid: UUID): BasicInstance {
+		return WinAPIStructs.guid.new(scope).also {
+			toGUID(uuid, it)
+		}
 	}
 
-	fun toFormat(address: MemoryAddress): StructInstance {
-		return StructInstance(
-			address.asSegment(WinAPIStructs.waveFormatEx2.size, ResourceScope.globalScope()),
+	fun toFormat(address: MemoryAddress, scope: ResourceScope): BasicInstance {
+		return BasicInstance(
+			address.asSegment(WinAPIStructs.waveFormatEx2.size, scope),
 			WinAPIStructs.waveFormatEx
 		)
 	}
 
-	fun guidFromUpgradedFormat(format: StructInstance): StructInstance {
-		return StructInstance(format.segment.asSlice(format[9]), WinAPIStructs.guid)
+	fun guidFromUpgradedFormat(format: BasicInstance): BasicInstance {
+		return BasicInstance(format.segment.asSlice(format.struct[9]), WinAPIStructs.guid)
 	}
 
-	fun getFormat(state: StructInstance): StructInstance {
-		val scope = ResourceScope.globalScope()
-		val seg = MemoryAccess.getAddressAtOffset(state.segment, state[8]).asSegment(WinAPIStructs.waveFormatEx.size, scope)
-		return StructInstance(seg, WinAPIStructs.waveFormatEx)
-	}
-
-
-	fun newState(): StructInstance {
-		return KatDLLStructs.state.new()
+	fun newState(scope: ResourceScope): StateInstance {
+		return StateInstance(
+			MemorySegment.allocateNative(KatDLLStructs.state.size, scope)
+		)
 	}
 
 	val AUDCLNT_BUFFERFLAGS_SILENT: Byte = 2
 
-	fun getPNumFramesInPacket(state: StructInstance): UInt {
-		return MemoryAccess.getIntAtOffset(state.segment, state[1]).toUInt()
-	}
 
-	fun getPFlags(state: StructInstance): Byte {
-		return MemoryAccess.getByteAtOffset(state.segment, state[2])
-	}
+	fun startRecording(scope: ResourceScope, formats: FormatListInstance? = null): StateInstance {
 
-	fun getPData(state: StructInstance, size: Long): MemorySegment {
-		return MemoryAccess.getAddressAtOffset(state.segment, state[9]).asSegment(size, ResourceScope.globalScope())
-	}
+		val state = newState(scope)
 
-	fun startRecording(state: StructInstance, formats: StructInstance? = null) {
 		KatDLLHandles.startRecording(
 			state.segment.address(),
 			formats?.segment?.address() ?: MemoryAddress.NULL
 		)
-		val hr = MemoryAccess.getIntAtOffset(state.segment, state[0])
-		check(hr >= 0) {
-			val alts = mutableListOf<String>()
-			if (formats != null) {
-				val amount = MemoryAccess.getIntAtOffset(formats.segment, formats[0])
-				val start = MemoryAccess.getAddressAtOffset(formats.segment, formats[1])
-					.asSegment(CLinker.C_POINTER.byteSize() * amount, ResourceScope.globalScope())
-				repeat(amount) {
-					val formatAddress = MemoryAccess.getAddressAtIndex(start, it.toLong())
-					if (formatAddress != MemoryAddress.NULL) {
-						val format = toFormat(formatAddress)
-						alts.add(AudioFormat.getFormat(format))
-					}
-				}
+
+		checkSuccess("startRecording", state) {
+
+			if (formats == null) {
+				return@checkSuccess emptyMap()
 			}
-			error("Failed to start recording! Code: $hr MSG: ${
-				CLinker.toJavaString(
-					MemoryAccess.getAddressAtOffset(
-						state.segment,
-						state[4]
-					)
-				)
-			} ${if (alts.isNotEmpty()) "ALTS: ${alts.joinToString(", ")}" else ""}")
+
+			val start = formats.start
+
+			mapOf(
+				// TODO: Test this, please for the love of cats
+				"Alts: " to List(formats.amount) { index ->
+					AudioFormat.getFormat(scope, toFormat(start.addOffset(index * CLinker.C_POINTER.byteSize()), scope))
+				}.joinToString(", ")
+			)
 		}
+
+		return state
 	}
 
-	fun getNextPacketSize(state: StructInstance) {
+	// TODO: Scream at moocow for making everything store to State lmao
+	fun getNextPacketSize(scope: ResourceScope) {
+		val state = newState(scope)
 		KatDLLHandles.getNextPacketSize(state.segment.address())
-		val hr = MemoryAccess.getIntAtOffset(state.segment, state[0])
-		check(hr >= 0) {
-			error("Failed to get next packet size! Code: $hr  MSG: ${
-				CLinker.toJavaString(
-					MemoryAccess.getAddressAtOffset(
-						state.segment,
-						state[4]
-					)
-				)
-			}")
-		}
+		checkSuccess("getNextPacketSize", state)
 	}
 
-	fun getBuffer(state: StructInstance) {
+	fun getBuffer(scope: ResourceScope) {
+		val state = newState(scope)
 		KatDLLHandles.getBuffer(state.segment.address())
-		val hr = MemoryAccess.getIntAtOffset(state.segment, state[0])
-		check(hr >= 0) {
-			error("Failed to get buffer! Code: $hr  MSG: ${
-				CLinker.toJavaString(
-					MemoryAccess.getAddressAtOffset(
-						state.segment,
-						state[4]
-					)
-				)
-			}")
-		}
+		checkSuccess("getBuffer", state)
 	}
 
-	fun releaseBuffer(state: StructInstance) {
+	fun releaseBuffer(scope: ResourceScope) {
+		val state = newState(scope)
 		KatDLLHandles.releaseBuffer(state.segment.address())
-		val hr = MemoryAccess.getIntAtOffset(state.segment, state[0])
-		check(hr >= 0) {
-			error("Failed to release buffer! Code: $hr  MSG: ${
-				CLinker.toJavaString(
-					MemoryAccess.getAddressAtOffset(
-						state.segment,
-						state[4]
-					)
-				)
-			}")
+		checkSuccess("releaseBuffer", state)
+	}
+
+	fun stopRecording(scope: ResourceScope) {
+		val state = newState(scope)
+		KatDLLHandles.stopRecording(state.segment.address())
+		checkSuccess("stopRecording", state)
+	}
+
+
+	private fun checkSuccess(methodName: String, result: Int, lastError: Int = WinAPIHandles.getLastError() as Int) {
+		check(result >= 0) {
+			"""
+				Failed to $methodName!
+				Result Code: $result
+				Last Error Code: $lastError
+			""".trimIndent()
 		}
 	}
 
-	fun stopRecording(state: StructInstance) {
-		KatDLLHandles.stopRecording(state.segment.address())
-		val hr = MemoryAccess.getIntAtOffset(state.segment, state[0])
-		check(hr >= 0) {
-			error("Failed to stop recording! Code: $hr  MSG: ${
-				CLinker.toJavaString(
-					MemoryAccess.getAddressAtOffset(
-						state.segment,
-						state[4]
-					)
-				)
-			}")
+	private inline fun checkSuccess(
+		methodName: String,
+		state: StateInstance,
+		additionalMessages: () -> Map<String, Any> = { emptyMap() }
+	) {
+
+		val hresult = state.hresult
+
+		check(hresult >= 0) {
+			"""
+				Failed to $methodName! 
+				Code: $hresult
+				Message: ${state.message} 
+				${additionalMessages().entries.joinToString("\n") { "${it.key}: ${it.value}" }}
+			""".trimIndent()
 		}
 	}
 

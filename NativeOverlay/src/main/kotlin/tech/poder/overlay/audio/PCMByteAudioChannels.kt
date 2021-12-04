@@ -1,5 +1,7 @@
 package tech.poder.overlay.audio
 
+import tech.poder.overlay.audio.base.AudioChannel
+
 @JvmInline
 value class PCMByteAudioChannels(val data: Array<ByteArray>) : AudioChannel {
     companion object {

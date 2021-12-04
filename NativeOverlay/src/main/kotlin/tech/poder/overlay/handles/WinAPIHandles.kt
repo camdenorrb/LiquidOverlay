@@ -17,6 +17,11 @@ object WinAPIHandles {
     }
 
 
+    val getLastError = NativeUtils.lookupMethodHandle(
+        "GetLastError",
+        Int::class.java
+    )
+
     val clientStart = NativeUtils.lookupMethodHandle(
         "Start",
         Int::class.java,
@@ -27,11 +32,6 @@ object WinAPIHandles {
         "Stop",
         Int::class.java,
         listOf(MemoryAddress::class.java)
-    )
-
-    val getLastError = NativeUtils.lookupMethodHandle(
-        "GetLastError",
-        Int::class.java
     )
 
     val failed = NativeUtils.lookupMethodHandle(
@@ -96,6 +96,12 @@ object WinAPIHandles {
 
     val getModuleHandleA = NativeUtils.lookupMethodHandle(
         "GetModuleHandleA",
+        MemoryAddress::class.java,
+        listOf(MemoryAddress::class.java)
+    )
+
+    val getDC = NativeUtils.lookupMethodHandle(
+        "GetDC",
         MemoryAddress::class.java,
         listOf(MemoryAddress::class.java)
     )
@@ -236,12 +242,6 @@ object WinAPIHandles {
         )
     )
 
-    val getDC = NativeUtils.lookupMethodHandle(
-        "GetDC",
-        MemoryAddress::class.java,
-        listOf(MemoryAddress::class.java)
-    )
-
     val getClassNameA = NativeUtils.lookupMethodHandle(
         "GetClassNameA",
         Int::class.java,
@@ -292,6 +292,36 @@ object WinAPIHandles {
         )
     )
 
+    val getMixFormat = NativeUtils.lookupMethodHandle(
+        "GetMixFormat",
+        Int::class.java,
+        listOf(
+            MemoryAddress::class.java,
+            MemoryAddress::class.java,
+            Int::class.java
+        )
+    )
+
+    val getHNSActualDuration = NativeUtils.lookupMethodHandle(
+        "GetHNSActualDuration",
+        Double::class.java,
+        listOf(
+            MemoryAddress::class.java,
+            Int::class.java,
+            Int::class.java,
+        )
+    )
+
+    val invalidateRect = NativeUtils.lookupMethodHandle(
+        "InvalidateRect",
+        Boolean::class.java,
+        listOf(
+            MemoryAddress::class.java,
+            MemoryAddress::class.java,
+            Boolean::class.java,
+        )
+    )
+
     val getModuleFileNameExA = NativeUtils.lookupMethodHandle(
         "GetModuleFileNameExA",
         Int::class.java,
@@ -311,6 +341,50 @@ object WinAPIHandles {
             MemoryAddress::class.java,
             Int::class.java,
             MemoryAddress::class.java
+        )
+    )
+
+    val setLayeredWindowAttributes = NativeUtils.lookupMethodHandle(
+        "SetLayeredWindowAttributes",
+        Boolean::class.java,
+        listOf(
+            MemoryAddress::class.java,
+            Int::class.java,
+            Byte::class.java,
+            Int::class.java,
+        )
+    )
+
+    val getMessageW = NativeUtils.lookupMethodHandle(
+        "GetMessageW",
+        Boolean::class.java,
+        listOf(
+            MemoryAddress::class.java,
+            MemoryAddress::class.java,
+            Int::class.java,
+            Int::class.java,
+        )
+    )
+
+    val defWindowProcW = NativeUtils.lookupMethodHandle(
+        "DefWindowProcW",
+        MemoryAddress::class.java,
+        listOf(
+            MemoryAddress::class.java,
+            Int::class.java,
+            MemoryAddress::class.java,
+            MemoryAddress::class.java,
+        )
+    )
+
+    val getBuffer = NativeUtils.lookupMethodHandle(
+        "GetBuffer",
+        Int::class.java,
+        listOf(
+            MemoryAddress::class.java,
+            MemoryAddress::class.java,
+            MemoryAddress::class.java,
+            MemoryAddress::class.java,
         )
     )
 
@@ -361,80 +435,6 @@ object WinAPIHandles {
             Int::class.java,
             MemoryAddress::class.java,
             MemoryAddress::class.java
-        )
-    )
-
-    val getMixFormat = NativeUtils.lookupMethodHandle(
-        "GetMixFormat",
-        Int::class.java,
-        listOf(
-            MemoryAddress::class.java,
-            MemoryAddress::class.java,
-            Int::class.java
-        )
-    )
-
-    val getHNSActualDuration = NativeUtils.lookupMethodHandle(
-        "GetHNSActualDuration",
-        Double::class.java,
-        listOf(
-            MemoryAddress::class.java,
-            Int::class.java,
-            Int::class.java,
-        )
-    )
-
-    val invalidateRect = NativeUtils.lookupMethodHandle(
-        "InvalidateRect",
-        Boolean::class.java,
-        listOf(
-            MemoryAddress::class.java,
-            MemoryAddress::class.java,
-            Boolean::class.java,
-        )
-    )
-
-    val getBuffer = NativeUtils.lookupMethodHandle(
-        "GetBuffer",
-        Int::class.java,
-        listOf(
-            MemoryAddress::class.java,
-            MemoryAddress::class.java,
-            MemoryAddress::class.java,
-            MemoryAddress::class.java,
-        )
-    )
-
-    val setLayeredWindowAttributes = NativeUtils.lookupMethodHandle(
-        "SetLayeredWindowAttributes",
-        Boolean::class.java,
-        listOf(
-            MemoryAddress::class.java,
-            Int::class.java,
-            Byte::class.java,
-            Int::class.java,
-        )
-    )
-
-    val getMessageW = NativeUtils.lookupMethodHandle(
-        "GetMessageW",
-        Boolean::class.java,
-        listOf(
-            MemoryAddress::class.java,
-            MemoryAddress::class.java,
-            Int::class.java,
-            Int::class.java,
-        )
-    )
-
-    val defWindowProcW = NativeUtils.lookupMethodHandle(
-        "DefWindowProcW",
-        MemoryAddress::class.java,
-        listOf(
-            MemoryAddress::class.java,
-            Int::class.java,
-            MemoryAddress::class.java,
-            MemoryAddress::class.java,
         )
     )
 

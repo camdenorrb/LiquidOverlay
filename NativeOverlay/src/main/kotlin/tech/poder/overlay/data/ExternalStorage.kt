@@ -8,8 +8,9 @@ import jdk.incubator.foreign.ResourceScope
 value class ExternalStorage(val segment: MemorySegment) : AutoCloseable {
 
     override fun close() {
-        segment.scope().close()
+        segment.unload()
     }
+
 
     companion object {
 

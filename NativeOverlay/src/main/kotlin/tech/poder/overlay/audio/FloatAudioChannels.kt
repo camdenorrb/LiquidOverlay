@@ -1,5 +1,6 @@
 package tech.poder.overlay.audio
 
+import tech.poder.overlay.audio.base.AudioChannel
 import tech.poder.overlay.utils.NumberUtils
 import kotlin.math.round
 

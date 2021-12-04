@@ -1,8 +1,11 @@
 package tech.poder.test.overlay
 
 import jdk.incubator.foreign.MemoryAccess
+import jdk.incubator.foreign.MemorySegment
+import jdk.incubator.foreign.ResourceScope
 import tech.poder.overlay.api.WinAPI
-import tech.poder.overlay.audio.*
+import tech.poder.overlay.audio.FormatData
+import tech.poder.overlay.audio.base.AudioFormat
 import tech.poder.overlay.overlay.BasicOverlay
 import tech.poder.overlay.overlay.base.Overlay
 import tech.poder.overlay.window.WindowClass
@@ -18,7 +21,10 @@ internal class TestHook {
     @Test
     fun drawCat() {
 
-        val processes = WinAPI.getProcesses()
+        val resourceScope = ResourceScope.newImplicitScope()
+
+        MemorySegment.globalNativeSegment()
+        val processes = WinAPI.getProcesses(resourceScope)
         var i = 0
         processes.forEachIndexed { index, process ->
             if (process.exeLocation.contains("notepad++.exe")) {
@@ -58,13 +64,17 @@ internal class TestHook {
         }
 
         window.doLoop()
+
         overlay.close()
+        resourceScope.close()
     }
 
     @Test
     fun nateDraw() {
 
-        val processes = WinAPI.getProcesses()
+        val resourceScope = ResourceScope.newConfinedScope()
+
+        val processes = WinAPI.getProcesses(resourceScope)
         var i = 0
         processes.forEachIndexed { index, process ->
             if (process.exeLocation.contains("Overwatch.exe")) {
@@ -103,17 +113,21 @@ internal class TestHook {
         }
 
         window.doLoop()
+
         overlay.close()
+        resourceScope.close()
     }
 
     @Test
     fun basicAudio() {
-        val state = WinAPI.newState()
-        WinAPI.startRecording(state)
-        val hnsPeriod = MemoryAccess.getDoubleAtOffset(state.segment, state[3])
+
+        val resourceScope = ResourceScope.newConfinedScope()
+
+        val state = WinAPI.startRecording(resourceScope)
+        val hnsPeriod = MemoryAccess.getDoubleAtOffset(state.segment, state.struct[3])
         val sleepTime = ((hnsPeriod / 10_000.0) / 2.0).toLong()
         var counter = 0
-        val format = AudioFormat.getFormatData(WinAPI.getFormat(state))
+        val format = AudioFormat.getFormatData(resourceScope, state.getFormat(resourceScope))
         println(AudioFormat.getFormat(format))
         val bytesPerFrame = format.blockAlignment//((getBitsPerSample(format) * getNumberOfChannels(format).toLong()) / 8L).toInt()
         val framesPerSecond = format.sampleRate
@@ -127,17 +141,22 @@ internal class TestHook {
             // Sleep for half the buffer duration.
             Thread.sleep(sleepTime)
             counter++
-            WinAPI.getNextPacketSize(state)
-            var packetLength = WinAPI.getPNumFramesInPacket(state)
+            WinAPI.getNextPacketSize(resourceScope)
+            var packetLength = state.pNumFramesInPacket
             while (packetLength != 0u) {
-                WinAPI.getBuffer(state)
 
-                val flags = WinAPI.getPFlags(state)
+                WinAPI.getBuffer(resourceScope)
+
+                val flags = state.pFlags
+
                 if (flags and WinAPI.AUDCLNT_BUFFERFLAGS_SILENT != 0.toByte()) {
                     println("SILENT")
                 }
-                val amountOfFramesInBuffer = WinAPI.getPNumFramesInPacket(state)
-                val pDataLocation = WinAPI.getPData(state, amountOfFramesInBuffer.toLong() * bytesPerFrame.toLong())
+                val amountOfFramesInBuffer = state.pNumFramesInPacket
+                val pDataLocation = state.getPData(
+                    resourceScope,
+                    amountOfFramesInBuffer.toLong() * bytesPerFrame.toLong()
+                )
                 var currentPos = 0L
                 while (currentPos < pDataLocation.byteSize()) {
                     val buffer =
@@ -145,11 +164,13 @@ internal class TestHook {
                     processFrame(buffer.toByteArray(), format)
                     currentPos += buffer.byteSize()
                 }
-                WinAPI.releaseBuffer(state)
-                WinAPI.getNextPacketSize(state)
-                packetLength = WinAPI.getPNumFramesInPacket(state)
+                WinAPI.releaseBuffer(resourceScope)
+                WinAPI.getNextPacketSize(resourceScope)
+                packetLength = state.pNumFramesInPacket
             }
         }
+
+        resourceScope.close()
     }
 
 

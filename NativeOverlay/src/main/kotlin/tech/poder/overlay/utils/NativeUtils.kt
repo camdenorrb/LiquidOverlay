@@ -18,7 +18,6 @@ object NativeUtils {
 	private val handleLookup = MethodHandles.lookup()
 
 
-
 	fun loadLibrary(path: Path) {
 		if (loadedLibraries.add(path.name.lowercase())) {
 			System.load(path.toAbsolutePath().toString())
@@ -112,16 +111,16 @@ object NativeUtils {
 	}
 
 
+	private fun generateType(returnType: Class<*>?, parameterTypes: List<Class<*>>): MethodType {
+		return MethodType.methodType(classAsPrimitive(returnType ?: Void.TYPE), parameterTypes.map(::classAsPrimitive))
+	}
+
 	private fun dataTypesToMethod(location: Addressable, returnType: Class<*>?, parameterTypes: List<Class<*>>): MethodHandle {
 		return CLinker.getInstance().downcallHandle(
 			location,
 			generateType(returnType, parameterTypes),
 			generateDescriptor(returnType, parameterTypes)
 		)
-	}
-
-	private fun generateType(returnType: Class<*>?, parameterTypes: List<Class<*>>): MethodType {
-		return MethodType.methodType(classAsPrimitive(returnType ?: Void.TYPE), parameterTypes.map(::classAsPrimitive))
 	}
 
 	private fun generateDescriptor(returnType: Class<*>?, parameterTypes: List<Class<*>>): FunctionDescriptor {

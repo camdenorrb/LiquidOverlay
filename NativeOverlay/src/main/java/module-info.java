@@ -8,6 +8,10 @@ open module PoderTech.overlay {
 	exports tech.poder.overlay.api;
 	exports tech.poder.overlay.data;
 	exports tech.poder.overlay.handles;
+	exports tech.poder.overlay.instance;
+	exports tech.poder.overlay.instance.base;
+	exports tech.poder.overlay.instance.katdll;
+	exports tech.poder.overlay.instance.winapi;
 	exports tech.poder.overlay.overlay;
 	exports tech.poder.overlay.overlay.base;
 	exports tech.poder.overlay.structs;
@@ -15,4 +19,5 @@ open module PoderTech.overlay {
 	exports tech.poder.overlay.values;
 	exports tech.poder.overlay.window;
     exports tech.poder.overlay.audio;
+    exports tech.poder.overlay.audio.base;
 }

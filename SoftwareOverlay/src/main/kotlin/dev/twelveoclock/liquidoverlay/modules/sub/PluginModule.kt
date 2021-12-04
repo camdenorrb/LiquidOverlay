@@ -29,6 +29,7 @@ class PluginModule(val pluginsFolder: Path, val overlay: Overlay) : BasicModule(
             val pluginClassLoader = URLClassLoader(arrayOf(pluginPath.toUri().toURL()), mainClassLoader)
             val config = Json.decodeFromString(OverlayPlugin.Config.serializer(), pluginClassLoader.getResource("plugin.json")!!.readText())
 
+            @Suppress("UNCHECKED_CAST")
             (pluginClassLoader.loadClass(config.mainClassPath).kotlin as KClass<OverlayPlugin>).objectInstance!!.also {
                 it.overlay = overlay
                 it.enable()

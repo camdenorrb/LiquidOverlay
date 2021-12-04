@@ -1,9 +1,10 @@
 package tech.poder.overlay.audio
 
-import tech.poder.overlay.data.StructInstance
+import tech.poder.overlay.audio.base.AudioFormat
+import tech.poder.overlay.instance.BasicInstance
 
 @JvmInline
-value class GeneratedFormat(val format: StructInstance) : AudioFormat {
+value class GeneratedFormat(val format: BasicInstance) : AudioFormat {
     override fun getAudioStruct(): GeneratedFormat {
         return this
     }

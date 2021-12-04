@@ -11,9 +11,9 @@ object KatDLLHandles {
     }
 
 
-    val startRecording = NativeUtils.lookupMethodHandle(
-        "StartRecording",
-        parameterTypes = listOf(MemoryAddress::class.java, MemoryAddress::class.java)
+    val getPCMID = NativeUtils.lookupMethodHandle(
+        "GetPCMID",
+        MemoryAddress::class.java
     )
 
     val stopRecording = NativeUtils.lookupMethodHandle(
@@ -26,19 +26,22 @@ object KatDLLHandles {
         parameterTypes = listOf(MemoryAddress::class.java)
     )
 
-    val getBuffer = NativeUtils.lookupMethodHandle(
-        "GetBuffer",
-        parameterTypes = listOf(MemoryAddress::class.java)
-    )
-
     val releaseBuffer = NativeUtils.lookupMethodHandle(
         "ReleaseBuffer",
         parameterTypes = listOf(MemoryAddress::class.java)
     )
 
-    val getPCMID = NativeUtils.lookupMethodHandle(
-        "GetPCMID",
-        MemoryAddress::class.java
+    val getBuffer = NativeUtils.lookupMethodHandle(
+        "GetBuffer",
+        parameterTypes = listOf(MemoryAddress::class.java)
+    )
+
+    val startRecording = NativeUtils.lookupMethodHandle(
+        "StartRecording",
+        parameterTypes = listOf(
+            MemoryAddress::class.java,
+            MemoryAddress::class.java
+        )
     )
 
 }

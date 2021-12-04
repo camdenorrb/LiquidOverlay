@@ -6,7 +6,7 @@ package tech.poder.overlay.general
 >>>>>>>> master:NativeOverlay/src/main/kotlin/tech/poder/overlay/general/Callback.kt
 
 import jdk.incubator.foreign.*
-import tech.poder.overlay.audio.AudioFormat
+import tech.poder.overlay.audio.base.AudioFormat
 import tech.poder.overlay.video.RectReader
 import tech.poder.overlay.video.WindowManager
 import java.nio.file.Paths

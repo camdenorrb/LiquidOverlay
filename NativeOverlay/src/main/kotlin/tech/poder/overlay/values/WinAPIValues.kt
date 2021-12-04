@@ -26,7 +26,6 @@ object WinAPIValues {
             0x2E
         )
 
-
         val IID_IMMDeviceEnumerator = defineGUID(
             0xa95664d2,
             0x9614.toShort(),
@@ -88,7 +87,7 @@ object WinAPIValues {
             a: Long, b: Short, c: Short, d: Byte, e: Byte, f: Byte, g: Byte, h: Byte, i: Byte, j: Byte, k: Byte
         ): MemorySegment {
 
-            ResourceScope.newSharedScope().use { confinedStatic ->
+            ResourceScope.newConfinedScope().use { confinedStatic ->
 
                 val data = MemorySegment.allocateNative(WinAPIStructs.guid.size, confinedStatic)
 
@@ -113,7 +112,7 @@ object WinAPIValues {
             a: Long, b: Short, c: Short, d: Byte, e: Byte, f: Byte, g: Byte, h: Byte, i: Byte, j: Byte, k: Byte, l: Int
         ): MemorySegment {
 
-            ResourceScope.newSharedScope().use { confinedStatic ->
+            ResourceScope.newConfinedScope().use { confinedStatic ->
 
                 val data = MemorySegment.allocateNative(WinAPIStructs.propertyKey.size, confinedStatic)
 
