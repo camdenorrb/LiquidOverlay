@@ -1,8 +1,9 @@
 package tech.poder.overlay.audio
 
 import jdk.incubator.foreign.MemoryAccess
-import tech.poder.overlay.general.Callback
-import tech.poder.overlay.general.StructInstance
+import tech.poder.overlay.api.WinAPI
+import tech.poder.overlay.data.StructInstance
+import tech.poder.overlay.handles.WinAPIHandles
 import kotlin.math.max
 
 interface AudioFormat {
@@ -17,7 +18,7 @@ interface AudioFormat {
             val bitsPerChannel = MemoryAccess.getShortAtOffset(format.segment, format[5])
 
             if (tag.toInt() == -2) {
-                val upgraded = Callback.upgradeFormat(format)
+                val upgraded = WinAPI.upgradeFormat(format)
                 val samples = MemoryAccess.getShortAtOffset(upgraded.segment, upgraded[7])
                 val channels = mutableListOf<Channel>()
                 val mask = MemoryAccess.getIntAtOffset(upgraded.segment, upgraded[8])
@@ -26,7 +27,7 @@ interface AudioFormat {
                         channels.add(it)
                     }
                 }
-                val tagData = when (val id = Callback.toJavaUUID(Callback.guidFromUpgradedFormat(upgraded))) {
+                val tagData = when (val id = WinAPI.toJavaUUID(WinAPI.guidFromUpgradedFormat(upgraded))) {
                     FormatFlag.PCM.formatGUID -> {
                         FormatFlag.PCM
                     }
@@ -95,10 +96,10 @@ interface AudioFormat {
             channelBitWidth: Short = 16,
             extended: Boolean = true
         ): GeneratedFormat {
-            var format = Callback.newFormat()
+            var format = WinAPI.newFormat()
             val channelSize = max(channels.size, 1).toShort()
             if (extended) {
-                format = Callback.upgradeFormat(format)
+                format = WinAPI.upgradeFormat(format)
                 MemoryAccess.setShortAtOffset(format.segment, format[0], FormatFlag.extendedBaseFlag)
             } else {
                 MemoryAccess.setShortAtOffset(format.segment, format[0], formatFlag.baseFlag)
@@ -129,8 +130,8 @@ interface AudioFormat {
                     mask = mask or it.flag
                 }
                 MemoryAccess.setIntAtOffset(format.segment, format[8], mask)
-                val guidPart = Callback.guidFromUpgradedFormat(format)
-                Callback.toGUID(formatFlag.formatGUID, guidPart)
+                val guidPart = WinAPI.guidFromUpgradedFormat(format)
+                WinAPI.toGUID(formatFlag.formatGUID, guidPart)
             } else {
                 MemoryAccess.setShortAtOffset(format.segment, format[6], 0)
             }

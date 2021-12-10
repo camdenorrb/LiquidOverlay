@@ -1,13 +1,12 @@
 package tech.poder.test.overlay
 
-import jdk.incubator.foreign.*
+import jdk.incubator.foreign.MemoryAccess
+import tech.poder.overlay.api.WinAPI
 import tech.poder.overlay.audio.*
-import tech.poder.overlay.general.Callback
-import tech.poder.overlay.general.StructInstance
-import tech.poder.overlay.video.Overlay
-import tech.poder.overlay.video.OverlayImpl
-import tech.poder.overlay.video.WindowClass
-import tech.poder.overlay.video.WindowManager
+import tech.poder.overlay.overlay.BasicOverlay
+import tech.poder.overlay.overlay.base.Overlay
+import tech.poder.overlay.window.WindowClass
+import tech.poder.overlay.window.WindowManager
 import java.awt.Color
 import java.awt.image.BufferedImage
 import kotlin.experimental.and
@@ -15,6 +14,172 @@ import kotlin.math.min
 import kotlin.test.Test
 
 internal class TestHook {
+
+    @Test
+    fun drawCat() {
+
+        val processes = WinAPI.getProcesses()
+        var i = 0
+        processes.forEachIndexed { index, process ->
+            if (process.exeLocation.contains("notepad++.exe")) {
+                i = index
+            }
+            println("$index: ${process.title}(${process.exeLocation})")
+        }
+        println("Choose: $i")
+        val selected = processes[i]
+        val clazz = WindowClass.define("Kats")
+
+        val window = WindowManager.createWindow(
+            WindowManager.WS_EX_TOPMOST or WindowManager.WS_EX_TRANSPARENT or WindowManager.WS_EX_LAYERED,
+            clazz = clazz,
+            windowName = "LiquidOverlay",
+            style = WindowManager.WS_POPUP.toInt(),
+            x = selected.rect.left.toInt(),
+            y = selected.rect.top.toInt(),
+            width = selected.rect.width.toInt(),
+            height = selected.rect.height.toInt()
+        )
+
+        val selectedWindow = selected.asWindow()
+        val overlay = BasicOverlay(window, selectedWindow)
+
+        overlay.onRedraw = {
+
+            val bufferedImage = BufferedImage(it.canvasWidth, it.canvasHeight, BufferedImage.TYPE_INT_RGB)
+            val graphics = bufferedImage.createGraphics()
+
+            graphics.color = Color(0, 100, 0)
+            graphics.fillRect(0, 0, bufferedImage.width, bufferedImage.height)
+
+            it.image(bufferedImage, Overlay.Position(0, 0), it.canvasWidth, it.canvasHeight)
+
+            graphics.dispose()
+        }
+
+        window.doLoop()
+        overlay.close()
+    }
+
+    @Test
+    fun nateDraw() {
+
+        val processes = WinAPI.getProcesses()
+        var i = 0
+        processes.forEachIndexed { index, process ->
+            if (process.exeLocation.contains("Overwatch.exe")) {
+                i = index
+            }
+            println("$index: ${process.title}(${process.exeLocation})")
+        }
+        println("Choose: $i")
+        val selected = processes[i]
+        val clazz = WindowClass.define("Kats")
+        val window = WindowManager.createWindow(
+            WindowManager.WS_EX_TOPMOST or WindowManager.WS_EX_TRANSPARENT or WindowManager.WS_EX_LAYERED,
+            clazz = clazz,
+            windowName = "LiquidOverlay",
+            style = WindowManager.WS_POPUP.toInt(),
+            x = selected.rect.left.toInt(),
+            y = selected.rect.top.toInt(),
+            width = selected.rect.width.toInt(),
+            height = selected.rect.height.toInt()
+        )
+        val selectedWindow = selected.asWindow()
+
+        val overlay = BasicOverlay(window, selectedWindow)
+
+        overlay.onRedraw = {
+
+            val bufferedImage = BufferedImage(overlay.canvasWidth, overlay.canvasHeight, BufferedImage.TYPE_INT_RGB)
+            val graphics = bufferedImage.createGraphics()
+
+            graphics.color = Color(0, 100, 0)
+            graphics.fillRect(0, 0, bufferedImage.width, bufferedImage.height)
+
+            overlay.image(bufferedImage, Overlay.Position(0, 0), overlay.canvasWidth, overlay.canvasHeight)
+
+            graphics.dispose()
+        }
+
+        window.doLoop()
+        overlay.close()
+    }
+
+    @Test
+    fun basicAudio() {
+        val state = WinAPI.newState()
+        WinAPI.startRecording(state)
+        val hnsPeriod = MemoryAccess.getDoubleAtOffset(state.segment, state[3])
+        val sleepTime = ((hnsPeriod / 10_000.0) / 2.0).toLong()
+        var counter = 0
+        val format = AudioFormat.getFormatData(WinAPI.getFormat(state))
+        println(AudioFormat.getFormat(format))
+        val bytesPerFrame = format.blockAlignment//((getBitsPerSample(format) * getNumberOfChannels(format).toLong()) / 8L).toInt()
+        val framesPerSecond = format.sampleRate
+        val bytesPerSecond = bytesPerFrame * framesPerSecond.toLong()
+        if (bytesPerSecond.toInt().toLong() != bytesPerSecond) {
+            error("Bytes per second is too big")
+        }
+
+        while (counter < 30) {
+            println("at top of loop")
+            // Sleep for half the buffer duration.
+            Thread.sleep(sleepTime)
+            counter++
+            WinAPI.getNextPacketSize(state)
+            var packetLength = WinAPI.getPNumFramesInPacket(state)
+            while (packetLength != 0u) {
+                WinAPI.getBuffer(state)
+
+                val flags = WinAPI.getPFlags(state)
+                if (flags and WinAPI.AUDCLNT_BUFFERFLAGS_SILENT != 0.toByte()) {
+                    println("SILENT")
+                }
+                val amountOfFramesInBuffer = WinAPI.getPNumFramesInPacket(state)
+                val pDataLocation = WinAPI.getPData(state, amountOfFramesInBuffer.toLong() * bytesPerFrame.toLong())
+                var currentPos = 0L
+                while (currentPos < pDataLocation.byteSize()) {
+                    val buffer =
+                        pDataLocation.asSlice(currentPos, min(bytesPerSecond, pDataLocation.byteSize() - currentPos))
+                    processFrame(buffer.toByteArray(), format)
+                    currentPos += buffer.byteSize()
+                }
+                WinAPI.releaseBuffer(state)
+                WinAPI.getNextPacketSize(state)
+                packetLength = WinAPI.getPNumFramesInPacket(state)
+            }
+        }
+    }
+
+
+    fun processFrame(buffer: ByteArray, format: FormatData) {
+
+        /*val data: AudioChannel = when(format.bitsPerChannel.toInt()) {
+            8 -> {
+                PCMByteAudioChannels.process(buffer, format)
+            }
+            16 -> {
+                PCMShortAudioChannels.process(buffer, format)
+            }
+            32 -> {
+                if (format.tag == FormatFlag.IEEE_FLOAT) {
+                    FloatAudioChannels.process(buffer, format)
+                } else {
+                    PCMIntAudioChannels.process(buffer, format)
+                }
+            }
+            else -> {
+                error("Unknown format $format")
+            }
+        }
+        println("$format $data")*/
+        //process speech
+
+        //end process speech
+    }
+
+
 
     /*
     @Test
@@ -108,174 +273,5 @@ internal class TestHook {
         println("Window End")
         Thread.sleep(10000)
     }*/
-
-    @Test
-    fun drawCat() {
-
-        val processes = Callback.getProcesses()
-        var i = 0
-        processes.forEachIndexed { index, process ->
-            if (process.exeLocation.contains("Notepad.exe")) {
-                i = index
-            }
-            println("$index: ${process.title}(${process.exeLocation})")
-        }
-        println("Choose: $i")
-        val selected = processes[i]
-        val clazz = WindowClass.define("Kats")
-        val window = WindowManager.createWindow(
-            WindowManager.WS_EX_TOPMOST or WindowManager.WS_EX_TRANSPARENT or WindowManager.WS_EX_LAYERED,
-            clazz = clazz,
-            windowName = "LiquidOverlay",
-            style = WindowManager.WS_POPUP.toInt(),
-            x = selected.rect.left.toInt(),
-            y = selected.rect.top.toInt(),
-            width = selected.rect.width.toInt(),
-            height = selected.rect.height.toInt()
-        )
-        val selectedWindow = selected.asWindow()
-
-        val overlay = OverlayImpl(window, selectedWindow)
-
-        overlay.onRedraw = {
-
-            val bufferedImage = BufferedImage(it.canvasWidth, it.canvasHeight, BufferedImage.TYPE_INT_RGB)
-            val graphics = bufferedImage.createGraphics()
-
-            graphics.color = Color(0, 100, 0)
-            graphics.fillRect(0, 0, bufferedImage.width, bufferedImage.height)
-
-            it.image(bufferedImage, Overlay.Position(0, 0), it.canvasWidth, it.canvasHeight)
-
-            graphics.dispose()
-        }
-
-
-        window.doLoop()
-
-        overlay.close()
-    }
-
-    @Test
-    fun nateDraw() {
-
-        val processes = Callback.getProcesses()
-        var i = 0
-        processes.forEachIndexed { index, process ->
-            if (process.exeLocation.contains("Overwatch.exe")) {
-                i = index
-            }
-            println("$index: ${process.title}(${process.exeLocation})")
-        }
-        println("Choose: $i")
-        val selected = processes[i]
-        val clazz = WindowClass.define("Kats")
-        val window = WindowManager.createWindow(
-            WindowManager.WS_EX_TOPMOST or WindowManager.WS_EX_TRANSPARENT or WindowManager.WS_EX_LAYERED,
-            clazz = clazz,
-            windowName = "LiquidOverlay",
-            style = WindowManager.WS_POPUP.toInt(),
-            x = selected.rect.left.toInt(),
-            y = selected.rect.top.toInt(),
-            width = selected.rect.width.toInt(),
-            height = selected.rect.height.toInt()
-        )
-        val selectedWindow = selected.asWindow()
-
-        fun draw(overlay: Overlay) {
-
-            val bufferedImage = BufferedImage(overlay.canvasWidth, overlay.canvasHeight, BufferedImage.TYPE_INT_RGB)
-            val graphics = bufferedImage.createGraphics()
-
-            graphics.color = Color(0, 100, 0)
-            graphics.fillRect(0, 0, bufferedImage.width, bufferedImage.height)
-
-            overlay.image(bufferedImage, Overlay.Position(0, 0), overlay.canvasWidth, overlay.canvasHeight)
-
-            graphics.dispose()
-        }
-
-        val overlay = OverlayImpl(window, selectedWindow)
-
-        overlay.onRedraw = {
-            draw(it)
-        }
-
-        window.doLoop()
-        overlay.close()
-    }
-
-
-
-    fun processFrame(buffer: ByteArray, format: FormatData) {
-        /*
-        val data: AudioChannels = when(format.bitsPerChannel.toInt()) {
-            8 -> {
-                PCMByteAudioChannels.process(buffer, format)
-            }
-            16 -> {
-                PCMShortAudioChannels.process(buffer, format)
-            }
-            32 -> {
-                if (format.tag == FormatFlag.IEEE_FLOAT) {
-                    FloatAudioChannels.process(buffer, format)
-                } else {
-                    PCMIntAudioChannels.process(buffer, format)
-                }
-            }
-            else -> {
-                error("Unknown format $format")
-            }
-        }*/
-        //process speech
-
-        //end process speech
-    }
-
-    @Test
-    fun basicAudio() {
-        val state = Callback.newState()
-        Callback.startRecording(state)
-        val hnsPeriod = MemoryAccess.getDoubleAtOffset(state.segment, state[3])
-        val sleepTime = ((hnsPeriod / 10_000.0) / 2.0).toLong()
-        var counter = 0
-        val format = AudioFormat.getFormatData(Callback.getFormat(state))
-        println(AudioFormat.getFormat(format))
-        val bytesPerFrame = format.blockAlignment//((getBitsPerSample(format) * getNumberOfChannels(format).toLong()) / 8L).toInt()
-        val framesPerSecond = format.sampleRate
-        val bytesPerSecond = bytesPerFrame * framesPerSecond.toLong()
-        if (bytesPerSecond.toInt().toLong() != bytesPerSecond) {
-            error("Bytes per second is too big")
-        }
-
-        while (counter < 30) {
-            println("at top of loop")
-            // Sleep for half the buffer duration.
-            Thread.sleep(sleepTime)
-            counter++
-            Callback.getNextPacketSize(state)
-            var packetLength = Callback.getPNumFramesInPacket(state)
-            while (packetLength != 0u) {
-                Callback.getBuffer(state)
-
-                val flags = Callback.getPFlags(state)
-                if (flags and Callback.AUDCLNT_BUFFERFLAGS_SILENT != 0.toByte()) {
-                    println("SILENT")
-                }
-                val amountOfFramesInBuffer = Callback.getPNumFramesInPacket(state)
-                val pDataLocation = Callback.getPData(state, amountOfFramesInBuffer.toLong() * bytesPerFrame.toLong())
-                var currentPos = 0L
-                while (currentPos < pDataLocation.byteSize()) {
-                    val buffer =
-                        pDataLocation.asSlice(currentPos, min(bytesPerSecond, pDataLocation.byteSize() - currentPos))
-                    processFrame(buffer.toByteArray(), format)
-                    currentPos += buffer.byteSize()
-                }
-                Callback.releaseBuffer(state)
-                Callback.getNextPacketSize(state)
-                packetLength = Callback.getPNumFramesInPacket(state)
-            }
-        }
-    }
 
 }

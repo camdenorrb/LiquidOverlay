@@ -1,14 +1,15 @@
 package dev.twelveoclock.liquidoverlay
 
 import dev.twelveoclock.liquidoverlay.api.Liquipedia
+import dev.twelveoclock.liquidoverlay.gui.GUI
 import dev.twelveoclock.liquidoverlay.modules.sub.PluginModule
 import dev.twelveoclock.liquidoverlay.speech.GoogleSpeechAPI
 import jdk.incubator.foreign.MemoryAccess
+import tech.poder.overlay.api.WinAPI
 import tech.poder.overlay.audio.*
-import tech.poder.overlay.general.Callback
-import tech.poder.overlay.video.OverlayImpl
-import tech.poder.overlay.video.WindowClass
-import tech.poder.overlay.video.WindowManager
+import tech.poder.overlay.overlay.BasicOverlay
+import tech.poder.overlay.window.WindowClass
+import tech.poder.overlay.window.WindowManager
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
@@ -20,16 +21,15 @@ import kotlin.math.min
 import kotlin.system.exitProcess
 
 
-val LIQUIPEDIA by lazy { Liquipedia(TODO()) }
+//val LIQUIPEDIA by lazy { Liquipedia(TODO()) }
 
 
 object Main {
 
     @JvmStatic
     fun main(args: Array<String>) {
-
-        streamingSpeakerRecognize()
-        //GUI.createApplication()
+        //streamingSpeakerRecognize()
+        GUI.createApplication()
         //pluginThingy()
 
         /*
@@ -76,6 +76,8 @@ object Main {
         */
 
 
+
+
         //val storage = ExternalStorage.fromString("Hi")
         //val clazz = WindowClass.fromStorage(storage)
         //WindowManager.createWindow(WindowManager.WS_EX_OVERLAPPEDWINDOW, clazz, "Hello", style = WindowManager.WS_OVERLAPPEDWINDOW, width = 100, height = 100)
@@ -89,14 +91,14 @@ object Main {
 
     }
 
-    private fun createOverlay() {
-        val processes = Callback.getProcesses()
+    private fun createOverlay(){
+        val processes = WinAPI.getProcesses()
         println("hi")
     }
 
     private fun pluginThingy() {
 
-        val selected = Callback.getProcesses().find { "Notepad.exe" in it.exeLocation }!!
+        val selected = WinAPI.getProcesses().find { "Notepad.exe" in it.exeLocation }!!
         val clazz = WindowClass.define("Kats")
 
         val window = WindowManager.createWindow(
@@ -112,7 +114,7 @@ object Main {
 
         val selectedWindow = selected.asWindow()
 
-        val overlay = OverlayImpl(window, selectedWindow)
+        val overlay = BasicOverlay(window, selectedWindow)
 
         val pluginModule = PluginModule(Path("Plugins"), overlay).apply { enable() }
 
@@ -183,18 +185,18 @@ fun processFrame(buffer: ByteArray, amountOfSamples: Long, format: FormatData) {
 }
 
 fun streamingSpeakerRecognize() {
-    val state = Callback.newState()
+    val state = WinAPI.newState()
     /*val formatList = Callback.newFormatList()
     MemoryAccess.setIntAtOffset(formatList.segment, formatList[0], 1)
     val pointerList = MemorySegment.allocateNative(CLinker.C_POINTER.byteSize(), ResourceScope.newSharedScope())
     MemoryAccess.setAddress(pointerList, SpeechToText.getAudioStruct().format.segment.address())
     MemoryAccess.setAddressAtOffset(formatList.segment, formatList[1], pointerList)
     Callback.startRecording(state, formatList)*/
-    Callback.startRecording(state)
+    WinAPI.startRecording(state)
     val hnsPeriod = MemoryAccess.getDoubleAtOffset(state.segment, state[3])
     val sleepTime = ((hnsPeriod / 10_000.0) / 2.0).toLong()
     var counter = 0
-    val format = tech.poder.overlay.audio.AudioFormat.getFormatData(Callback.getFormat(state))
+    val format = tech.poder.overlay.audio.AudioFormat.getFormatData(WinAPI.getFormat(state))
     println(tech.poder.overlay.audio.AudioFormat.getFormat(format))
     val bytesPerFrame = format.blockAlignment
     val framesPerSecond = format.sampleRate
@@ -208,17 +210,17 @@ fun streamingSpeakerRecognize() {
         // Sleep for half the buffer duration.
         Thread.sleep(sleepTime)
         counter++
-        Callback.getNextPacketSize(state)
-        var packetLength = Callback.getPNumFramesInPacket(state)
+        WinAPI.getNextPacketSize(state)
+        var packetLength = WinAPI.getPNumFramesInPacket(state)
         while (packetLength != 0u) {
-            Callback.getBuffer(state)
+            WinAPI.getBuffer(state)
 
-            val flags = Callback.getPFlags(state)
-            if (flags and Callback.AUDCLNT_BUFFERFLAGS_SILENT != 0.toByte()) {
+            val flags = WinAPI.getPFlags(state)
+            if (flags and WinAPI.AUDCLNT_BUFFERFLAGS_SILENT != 0.toByte()) {
                 println("SILENT")
             }
-            val amountOfFramesInBuffer = Callback.getPNumFramesInPacket(state)
-            val pDataLocation = Callback.getPData(state, amountOfFramesInBuffer.toLong() * bytesPerFrame.toLong())
+            val amountOfFramesInBuffer = WinAPI.getPNumFramesInPacket(state)
+            val pDataLocation = WinAPI.getPData(state, amountOfFramesInBuffer.toLong() * bytesPerFrame.toLong())
             var currentPos = 0L
 
             while (currentPos < pDataLocation.byteSize()) {
@@ -227,9 +229,9 @@ fun streamingSpeakerRecognize() {
                 processFrame(buffer.toByteArray(), amountOfFramesInBuffer.toLong(), format)
                 currentPos += buffer.byteSize()
             }
-            Callback.releaseBuffer(state)
-            Callback.getNextPacketSize(state)
-            packetLength = Callback.getPNumFramesInPacket(state)
+            WinAPI.releaseBuffer(state)
+            WinAPI.getNextPacketSize(state)
+            packetLength = WinAPI.getPNumFramesInPacket(state)
         }
     }
 
@@ -237,12 +239,14 @@ fun streamingSpeakerRecognize() {
     tmpFile.close()
 
     val data = Files.readAllBytes(binAudio)
-    val floatArray = FloatAudioChannels.process(data, format) as FloatAudioChannels
+    val floatArrays = FloatAudioChannels.process(data, format) as FloatAudioChannels
 
-    WavFileWriter.write(data, format, Paths.get("custom.wav").toAbsolutePath())
+    WavFileWriter.write((floatArrays as AudioChannel).toBytes(), format, Paths.get("custom.wav").toAbsolutePath())
     val pcmFormat = FormatData(FormatFlag.PCM, format.channels, format.sampleRate, 4, 16, 16)
-    val pcm = floatArray.toPCMShort() as AudioChannel //Causes compiler crash without cast? has to do with defaults on interfaces
+    val pcm = floatArrays.toPCMShort() as AudioChannel //Causes compiler crash without cast? has to do with defaults on interfaces
+    //val float2 = floatArrays.toNormal() as AudioChannel
     WavFileWriter.write(pcm.toBytes(), pcmFormat, Paths.get("custom2.wav"))
+    //WavFileWriter.write(float2.toBytes(), format, Paths.get("custom3.wav").toAbsolutePath())
 }
 
 /** Performs microphone streaming speech recognition with a duration of 1 minute.  */

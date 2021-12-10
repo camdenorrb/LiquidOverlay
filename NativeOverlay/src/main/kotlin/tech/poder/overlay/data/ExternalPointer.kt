@@ -1,4 +1,4 @@
-package tech.poder.overlay.general
+package tech.poder.overlay.data
 
 import jdk.incubator.foreign.MemoryAddress
 

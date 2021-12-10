@@ -1,6 +1,8 @@
-package tech.poder.overlay.general
+package tech.poder.overlay.utils
+
 
 object NumberUtils {
+
     private val shortUtils = listOf(8, 0)
     private val intUtils = listOf(24, 16, 8, 0)
     private val intUtilsBE = intUtils.reversed()

@@ -1,6 +1,6 @@
 package tech.poder.overlay.audio
 
-import tech.poder.overlay.general.NumberUtils
+import tech.poder.overlay.utils.NumberUtils
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.file.Files

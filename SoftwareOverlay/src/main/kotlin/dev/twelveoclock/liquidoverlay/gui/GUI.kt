@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDropDown
-import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.runtime.*
@@ -17,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.consumeAllChanges
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
@@ -28,11 +26,8 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import dev.twelveoclock.liquidoverlay.LIQUIPEDIA
-import dev.twelveoclock.liquidoverlay.api.Liquipedia
-import kotlinx.coroutines.runBlocking
+//import dev.twelveoclock.liquidoverlay.LIQUIPEDIA
 import kotlin.math.roundToInt
-import kotlin.random.Random
 
 object GUI {
 
@@ -46,15 +41,15 @@ object GUI {
 		Window(
 			onCloseRequest = ::exitApplication,
 			title = "LiquidOverlay",
-			state = rememberWindowState(width = 1000.dp, height = 1000.dp, position = WindowPosition(Alignment.Center)),
+			state = rememberWindowState(width = 1000.dp, position = WindowPosition(Alignment.Center)),
 			icon = painterResource("logo/logoOverlay.svg"),
 		) {
 
-			val section = remember { mutableStateOf(Section.HOME) }
+			val section = remember { mutableStateOf(Section.OVERLAY) }
 
 			MaterialTheme {
 				when (section.value) {
-					Section.HOME -> HomeScreen(section)
+					//Section.HOME -> HomeScreen(section)
 					Section.OVERLAY -> OverlayScreen(section)
 					Section.SETTINGS -> SettingsScreen(section)
 				}
@@ -62,6 +57,7 @@ object GUI {
 		}
 	}
 
+	/*
 	@Composable
 	fun HomeScreen(section: MutableState<Section>) {
 
@@ -80,7 +76,7 @@ object GUI {
 			Column(modifier = Modifier.fillMaxHeight().padding(colPadding).width(firstColumnWidth)) {
 
 				// Notification Box
-				Column (modifier = Modifier.height(170.dp).fillMaxWidth().background(boxColor), horizontalAlignment = Alignment.CenterHorizontally){
+				Column (modifier = Modifier.height(170.dp).fillMaxWidth().background(boxColor), horizontalAlignment = Alignment.CenterHorizontally) {
 
 					Spacer(Modifier.height(10.dp))
 					Icon(
@@ -109,19 +105,44 @@ object GUI {
 
 				Spacer(Modifier.height(50.dp))
 
-				val playersNames = mutableListOf<String>()
-				val playerNationality = mutableListOf<String>()
-				val playerTeam = mutableListOf<Float>()
+				val playersNames = mutableListOf(
+					"Cam",
+					"Cam",
+					"Cam",
+					"Cam",
+					"Cam",
+					"Cam",
+				)
+
+				val playerNationality = mutableListOf(
+					"Cam",
+					"Cam",
+					"Cam",
+					"Cam",
+					"Cam",
+					"Cam",
+				)
+				val playerTeam = mutableListOf(
+					0.0f,
+					0.0f,
+					0.0f,
+					0.0f,
+					0.0f,
+					0.0f,
+				)
+
 
 				// Getting Player info
 				runBlocking {
+					/*
 					val playerInfo = LIQUIPEDIA.player(listOf(Liquipedia.Wiki.VALORANT))
-					for (i in 0..5){
+					for (i in 0..5) {
 						var num = Random.nextInt(0, playerInfo.result.size)
 						playersNames.add(playerInfo.result[num].name)
 						playerNationality.add(playerInfo.result[num].nationality)
 						playerTeam.add(playerInfo.result[num].earnings)
 					}
+					*/
 				}
 
 				// Top Player Box
@@ -189,14 +210,22 @@ object GUI {
 					)
 				}
 				// For last item bottom left
-				var sponsor = mutableListOf<String>()
+				var sponsor = mutableListOf<String>(
+					"Camden",
+					"Camden",
+					"Camden",
+					"Camden",
+					"Camden",
+					"Camden",
+				)
 
+				/*
 				runBlocking {
 					val tournamentInfo = LIQUIPEDIA.tournament(listOf(Liquipedia.Wiki.VALORANT))
 					for (i in 0..3) {
 						sponsor.add(tournamentInfo.result[Random.nextInt(0, tournamentInfo.result.size)].sponsors)
 					}
-				}
+				}*/
 
 				Spacer(Modifier.height(50.dp))
 
@@ -267,6 +296,7 @@ object GUI {
 			}
 		}
 	}
+	*/
 
 	@Composable
 	fun OverlayScreen(section: MutableState<Section>) {
@@ -274,12 +304,14 @@ object GUI {
 		val rowPadding = 5.dp
 		val rowHeight = 150.dp
 		val colPadding = 20.dp
-		val colWidth = 200.dp
+		val colWidth = 100.dp
+		val colFontSize = 10.sp
 
 		val offColor = Color(33, 41, 54)
 		val onColor = Color(81, 142, 240)
 		val textColor = Color.White
 
+		/*
 		val notActivated = 0f
 		val activated = 1f
 
@@ -287,47 +319,55 @@ object GUI {
 		val footstepsOffsetY = 225.dp
 		val gunshotsOffsetX = 0.dp
 		val gunshotsOffsetY = 175.dp
+		*/
 
-		var captionsActivated by remember { mutableStateOf(false) }
-		var footstepsActivated by remember { mutableStateOf(false) }
-		var gunshotsActivated by remember { mutableStateOf(false) }
-		var translateActivated by remember { mutableStateOf(false) }
-		var musicActivated by remember { mutableStateOf(false) }
+		var isCaptionsActivated by remember { mutableStateOf(false) }
+		//var footstepsActivated by remember { mutableStateOf(false) }
+		//var gunshotsActivated by remember { mutableStateOf(false) }
+		var isTranslateActivated by remember { mutableStateOf(false) }
+		var isMusicActivated by remember { mutableStateOf(false) }
 
 		NavigationMenu(section)
 
-		Column(modifier = Modifier.padding(start = NAVIGATION_WIDTH).fillMaxSize().background(BACKGROUND_COLOR)){
+		Column(
+			modifier = Modifier.padding(start = NAVIGATION_WIDTH).fillMaxSize().background(BACKGROUND_COLOR)
+		) {
 
 			// Menu
 			Row(
 				modifier = Modifier.padding(rowPadding).fillMaxWidth().height(rowHeight),
-				horizontalArrangement = Arrangement.Center
+				//horizontalArrangement = Arrangement.Center
 			) {
 
 				// Captions
 				Column(
-					modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth).background(if (captionsActivated) onColor else offColor).clickable { captionsActivated = !captionsActivated},
-					horizontalAlignment = Alignment.CenterHorizontally){
-
+					modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth)
+						.background(if (isCaptionsActivated) onColor else offColor)
+						.clickable { isCaptionsActivated = !isCaptionsActivated },
+					horizontalAlignment = Alignment.CenterHorizontally
+				) {
 					Icon(
 						painterResource("font-icons/captions.svg"),
-						modifier = Modifier.padding(5.dp),
+						modifier = Modifier.padding(rowPadding),
 						tint = textColor,
 						contentDescription = "Captions",
 					)
-
 					Text(
 						text = "Captions",
 						color = textColor,
-						fontSize = 20.sp,
+						fontSize = colFontSize,
 						fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
 					)
 				}
 
 				// Visual Footsteps
+				/*
 				Column(
-					modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth).background(if (footstepsActivated) onColor else offColor).clickable { footstepsActivated = !footstepsActivated},
-					horizontalAlignment = Alignment.CenterHorizontally){
+					modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth)
+						.background(if (footstepsActivated) onColor else offColor)
+						.clickable { footstepsActivated = !footstepsActivated },
+					horizontalAlignment = Alignment.CenterHorizontally
+				) {
 
 					Icon(
 						painterResource("font-icons/shoe.svg"),
@@ -339,15 +379,18 @@ object GUI {
 					Text(
 						text = "Visual Footsteps",
 						color = textColor,
-						fontSize = 20.sp,
+						fontSize = colFontSize,
 						fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
 					)
 				}
+				*/
 
 				// Visual Gunshots
+				/*
 				Column(
 					modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth).background(if (gunshotsActivated) onColor else offColor).clickable { gunshotsActivated = !gunshotsActivated},
-					horizontalAlignment = Alignment.CenterHorizontally){
+					horizontalAlignment = Alignment.CenterHorizontally
+				) {
 
 					Icon(
 						painterResource("font-icons/gun.svg"),
@@ -359,66 +402,70 @@ object GUI {
 					Text(
 						text = "Visual Gunshots",
 						color = textColor,
-						fontSize = 20.sp,
+						fontSize = colFontSize,
 						fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
 					)
 				}
+				*/
 
 				// Translate
 				Column(
-					modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth).background(if (translateActivated) onColor else offColor).clickable { translateActivated = !translateActivated},
-					horizontalAlignment = Alignment.CenterHorizontally){
-
+					modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth)
+						.background(if (isTranslateActivated) onColor else offColor)
+						.clickable { isTranslateActivated = !isTranslateActivated },
+					horizontalAlignment = Alignment.CenterHorizontally
+				) {
 					Icon(
 						painterResource("font-icons/translate.svg"),
-						modifier = Modifier.padding(5.dp),
+						modifier = Modifier.padding(rowPadding),
 						tint = textColor,
 						contentDescription = "Translate",
 					)
-
 					Text(
 						text = "Translate",
 						color = textColor,
-						fontSize = 20.sp,
+						fontSize = colFontSize,
 						fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
 					)
 				}
 
 				// Music
 				Column(
-					modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth).background(if (musicActivated) onColor else offColor).clickable { musicActivated = !musicActivated},
-					horizontalAlignment = Alignment.CenterHorizontally){
-
+					modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth)
+						.background(if (isMusicActivated) onColor else offColor)
+						.clickable { isMusicActivated = !isMusicActivated },
+					horizontalAlignment = Alignment.CenterHorizontally
+				) {
 					Icon(
 						painterResource("font-icons/music.svg"),
 						modifier = Modifier.padding(17.dp),
 						tint = textColor,
 						contentDescription = "Music"
 					)
-
 					Text(
 						text = "Music",
 						color = textColor,
-						fontSize = 20.sp,
+						fontSize = colFontSize,
 						fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
 					)
 				}
+
 			}
 
 			// Gameplay Image
 			Row(
-				modifier = Modifier.padding(rowPadding).fillMaxWidth().fillMaxHeight(),
+				modifier = Modifier.fillMaxWidth(),
 				horizontalArrangement = Arrangement.Center
 			) {
 
 				Box {
-					//Gameplay Image
 
+					//Gameplay Image
 					Image(
 						painterResource("image/valorant.jpg"),
 						"Valorant Gameplay Image",
-						modifier = Modifier.fillMaxHeight(),
-						contentScale = ContentScale.Crop
+						modifier = Modifier.fillMaxWidth(),
+						//contentScale = ContentScale.Crop
 					)
 
 					var captionOffsetX by remember { mutableStateOf(0f) }
@@ -432,8 +479,9 @@ object GUI {
 					Image(
 						painterResource("draggable/captions.svg"),
 						"Draggable Captions",
-						alpha = if (captionsActivated) activated else notActivated,
+						alpha = if (isCaptionsActivated) 1f else 0f,
 						modifier = Modifier
+							.width(300.dp)
 							.offset { IntOffset(captionOffsetX.roundToInt(), captionOffsetY.roundToInt()) }
 							.pointerInput(Unit) {
 								detectDragGestures { change, dragAmount ->
@@ -448,8 +496,9 @@ object GUI {
 					Image(
 						painterResource("draggable/translate.svg"),
 						"Draggable Translation",
-						alpha = if (translateActivated) activated else notActivated,
+						alpha = if (isTranslateActivated) 1f else 0f,
 						modifier = Modifier
+							.width(300.dp)
 							.offset { IntOffset(translateOffsetX.roundToInt(), translateOffsetY.roundToInt()) }
 							.pointerInput(Unit) {
 								detectDragGestures { change, dragAmount ->
@@ -464,7 +513,7 @@ object GUI {
 					Image(
 						painterResource("draggable/music.svg"),
 						"Draggable Music",
-						alpha = if (musicActivated) activated else notActivated,
+						alpha = if (isMusicActivated) 1f else 0f,
 						modifier = Modifier
 							.offset { IntOffset(musicOffsetX.roundToInt(), musicOffsetY.roundToInt()) }
 							.pointerInput(Unit) {
@@ -477,20 +526,24 @@ object GUI {
 					)
 
 					// Footsteps Toggle
+					/*
 					Image(
 						painterResource("image/footprints.svg"),
 						"Visual Footprints",
 						alpha = if (footstepsActivated) activated else notActivated,
 						modifier = Modifier.padding(horizontal = footstepsOffsetX, vertical = footstepsOffsetY)
 					)
+					*/
 
 					// Gunshots Toggle
+					/*
 					Image(
 						painterResource("image/gunshots.svg"),
 						"Visual Gunshots",
 						alpha = if (gunshotsActivated) activated else notActivated,
 						modifier = Modifier.padding(horizontal = gunshotsOffsetX, vertical = gunshotsOffsetY)
 					)
+					*/
 
 				}
 			}
@@ -508,7 +561,9 @@ object GUI {
 		val rowHeight = 50.dp
 		val rowPadding = 20.dp
 
-		Column(modifier = Modifier.padding(start = NAVIGATION_WIDTH).fillMaxSize().background(BACKGROUND_COLOR)){
+		Column(
+			modifier = Modifier.padding(start = NAVIGATION_WIDTH).fillMaxSize().background(BACKGROUND_COLOR)
+		) {
 
 			// Color blind
 			Row(
@@ -534,9 +589,11 @@ object GUI {
 					)
 				}
 
+				var isChecked by remember { mutableStateOf(true) }
+
 				Switch(
-					checked = true,
-					onCheckedChange = {},
+					checked = isChecked,
+					onCheckedChange = { isChecked = !isChecked },
 				)
 			}
 
@@ -564,9 +621,11 @@ object GUI {
 					)
 				}
 
+				var isChecked by remember { mutableStateOf(true) }
+
 				Switch(
-					checked = true,
-					onCheckedChange = {},
+					checked = isChecked,
+					onCheckedChange = { isChecked = !isChecked },
 				)
 			}
 
@@ -595,14 +654,18 @@ object GUI {
 				}
 
 				val languages = listOf("English", "中文", "Español")
-				var language : String by remember { mutableStateOf(languages[0]) }
-				var expanded by remember { mutableStateOf(false) }
+				var languageChoice by remember { mutableStateOf(languages[0]) }
+				var isExpanded by remember { mutableStateOf(false) }
 
-				Row (modifier = Modifier.padding(end = 10.dp, top = 10.dp).clickable{ expanded = !expanded }, horizontalArrangement = Arrangement.Center) {
+				Row(
+					modifier = Modifier.padding(top = 10.dp, end = 10.dp)
+						.clickable{ isExpanded = !isExpanded },
+					horizontalArrangement = Arrangement.Center
+				) {
 
 					Text(
-						text = language,
-						modifier = Modifier.clickable { expanded = !expanded },
+						text = languageChoice,
+						modifier = Modifier.clickable { isExpanded = !isExpanded },
 						color = Color.White,
 						fontSize = 14.sp,
 						fontFamily = FontFamily(Font("font/Roboto-Medium.ttf")),
@@ -611,23 +674,24 @@ object GUI {
 						imageVector = Icons.Rounded.ArrowDropDown,
 						contentDescription = "DropDown",
 						tint = Color.White,
-						modifier = Modifier.size(30.dp).offset(x = 0.dp, y = -7.dp).clickable { expanded = !expanded}
+						modifier = Modifier.size(30.dp).offset(x = 0.dp, y = (-7).dp)
+							.clickable { isExpanded = !isExpanded}
 					)
 
 					DropdownMenu(
-						expanded = expanded,
-						onDismissRequest = {
-							expanded = false
-						}) {
-						languages.forEach { mylanguage ->
+						expanded = isExpanded,
+						onDismissRequest = { isExpanded = false }
+					) {
+						languages.forEach { language ->
 							DropdownMenuItem(onClick = {
-								expanded = false
-								language = mylanguage
+								isExpanded = false
+								languageChoice = language
 							}) {
-								Text(mylanguage)
+								Text(language)
 							}
 						}
 					}
+
 				}
 			}
 		}
@@ -662,6 +726,7 @@ object GUI {
 			Divider(color = Color.Transparent, thickness = 50.dp)
 
 			// Home Row
+			/*
 			Row(
 				modifier = Modifier.height(rowHeight).fillMaxWidth().clickable { section.value = Section.HOME },
 				verticalAlignment = Alignment.CenterVertically,
@@ -686,6 +751,7 @@ object GUI {
 				)
 
 			}
+			*/
 
 			// Overlay Row
 			Row(
@@ -768,7 +834,7 @@ object GUI {
 
 
 	enum class Section {
-		HOME,
+		//HOME,
 		OVERLAY,
 		SETTINGS,
 	}

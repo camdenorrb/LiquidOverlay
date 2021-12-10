@@ -1,5 +1,6 @@
-package tech.poder.overlay.general
+package tech.poder.overlay.old
 
+/*
 import jdk.incubator.foreign.*
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
@@ -7,6 +8,7 @@ import java.lang.invoke.MethodType
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
+
 
 object NativeRegistry {
 
@@ -79,6 +81,17 @@ object NativeRegistry {
         Void.TYPE to Void.TYPE
     )
 
+    /**
+     * Registers a function descriptor to the registry.
+     *
+     * @param name The name of the function.
+     * @param returnType The return type of the function.
+     * @param params The parameter types of the function.
+     * @return The id of the function.
+     */
+    fun register(name: String, returnType: Class<*>? = null, params: List<Class<*>> = emptyList()): Int {
+        return register(FunctionDescription(name, returnType, params))
+    }
 
     /**
      * Registers a function descriptor
@@ -149,4 +162,4 @@ object NativeRegistry {
         }
     }
 
-}
+}*/

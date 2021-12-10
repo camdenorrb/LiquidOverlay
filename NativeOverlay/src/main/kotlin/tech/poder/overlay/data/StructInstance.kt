@@ -1,8 +1,9 @@
-package tech.poder.overlay.general
+package tech.poder.overlay.data
 
 import jdk.incubator.foreign.MemorySegment
 
 data class StructInstance(val segment: MemorySegment, val def: StructDefinition) : AutoCloseable {
+
     override fun close() {
         segment.scope().close()
     }
@@ -10,4 +11,5 @@ data class StructInstance(val segment: MemorySegment, val def: StructDefinition)
     operator fun get(index: Int): Long {
         return def[index]
     }
+
 }

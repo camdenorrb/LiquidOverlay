@@ -1,8 +1,8 @@
-package tech.poder.overlay.general
+package tech.poder.overlay.data
 
 import jdk.incubator.foreign.MemoryAddress
-import tech.poder.overlay.video.RectReader
-import tech.poder.overlay.video.WindowManager
+import tech.poder.overlay.handles.WinAPIHandles
+import tech.poder.overlay.window.WindowManager
 
 data class Process(
     val hWnd: MemoryAddress,
@@ -16,7 +16,7 @@ data class Process(
 
     override fun close() {
         if (handle != MemoryAddress.NULL) {
-            NativeRegistry[Callback.closeHandle].invoke(handle)
+            WinAPIHandles.closeHandle(handle)
         }
     }
 

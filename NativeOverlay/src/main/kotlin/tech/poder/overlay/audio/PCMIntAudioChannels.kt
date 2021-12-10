@@ -1,6 +1,6 @@
 package tech.poder.overlay.audio
 
-import tech.poder.overlay.general.NumberUtils
+import tech.poder.overlay.utils.NumberUtils
 
 @JvmInline
 value class PCMIntAudioChannels(val data: Array<IntArray>): AudioChannel {

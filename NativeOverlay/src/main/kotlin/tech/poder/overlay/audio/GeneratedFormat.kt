@@ -1,6 +1,6 @@
 package tech.poder.overlay.audio
 
-import tech.poder.overlay.general.StructInstance
+import tech.poder.overlay.data.StructInstance
 
 @JvmInline
 value class GeneratedFormat(val format: StructInstance) : AudioFormat {
