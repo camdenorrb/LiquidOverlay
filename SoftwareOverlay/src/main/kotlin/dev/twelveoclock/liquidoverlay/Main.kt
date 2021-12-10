@@ -1,6 +1,7 @@
 package dev.twelveoclock.liquidoverlay
 
 import dev.twelveoclock.liquidoverlay.api.Liquipedia
+import dev.twelveoclock.liquidoverlay.gui.GUI
 import dev.twelveoclock.liquidoverlay.modules.sub.PluginModule
 import dev.twelveoclock.liquidoverlay.speech.GoogleSpeechAPI
 import jdk.incubator.foreign.MemoryAccess
@@ -20,15 +21,15 @@ import kotlin.math.min
 import kotlin.system.exitProcess
 
 
-val LIQUIPEDIA by lazy { Liquipedia(TODO()) }
+//val LIQUIPEDIA by lazy { Liquipedia(TODO()) }
 
 
 object Main {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        streamingSpeakerRecognize()
-        //GUI.createApplication()
+        //streamingSpeakerRecognize()
+        GUI.createApplication()
         //pluginThingy()
 
         /*
