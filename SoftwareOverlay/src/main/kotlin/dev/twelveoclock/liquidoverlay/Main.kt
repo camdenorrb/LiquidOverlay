@@ -27,7 +27,6 @@ object Main {
 
     @JvmStatic
     fun main(args: Array<String>) {
-
         streamingSpeakerRecognize()
         //GUI.createApplication()
         //pluginThingy()
@@ -242,11 +241,11 @@ fun streamingSpeakerRecognize() {
     val floatArrays = FloatAudioChannels.process(data, format) as FloatAudioChannels
 
     WavFileWriter.write((floatArrays as AudioChannel).toBytes(), format, Paths.get("custom.wav").toAbsolutePath())
-    //val pcmFormat = FormatData(FormatFlag.PCM, format.channels, format.sampleRate, 4, 16, 16)
-    //val pcm = floatArrays.toPCMShort() as AudioChannel //Causes compiler crash without cast? has to do with defaults on interfaces
-    val float2 = floatArrays.toNormal() as AudioChannel
-    //WavFileWriter.write(pcm.toBytes(), pcmFormat, Paths.get("custom2.wav"))
-    WavFileWriter.write(float2.toBytes(), format, Paths.get("custom3.wav").toAbsolutePath())
+    val pcmFormat = FormatData(FormatFlag.PCM, format.channels, format.sampleRate, 4, 16, 16)
+    val pcm = floatArrays.toPCMShort() as AudioChannel //Causes compiler crash without cast? has to do with defaults on interfaces
+    //val float2 = floatArrays.toNormal() as AudioChannel
+    WavFileWriter.write(pcm.toBytes(), pcmFormat, Paths.get("custom2.wav"))
+    //WavFileWriter.write(float2.toBytes(), format, Paths.get("custom3.wav").toAbsolutePath())
 }
 
 /** Performs microphone streaming speech recognition with a duration of 1 minute.  */

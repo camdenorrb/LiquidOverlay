@@ -1,6 +1,8 @@
 package tech.poder.overlay.audio
 
 import tech.poder.overlay.utils.NumberUtils
+import kotlin.math.log10
+import kotlin.math.pow
 import kotlin.math.round
 
 @JvmInline
@@ -31,20 +33,20 @@ value class FloatAudioChannels(val data: Array<FloatArray>) : AudioChannel {
             return FloatAudioChannels(buffers)
         }
 
-        fun min(channel: FloatArray): Float {
-            return channel.minOf { it }
+        fun min(channel: FloatArray): Double {
+            return channel.minOf { it }.toDouble()
         }
 
-        fun max(channel: FloatArray): Float {
-            return channel.maxOf { it }
+        fun max(channel: FloatArray): Double {
+            return channel.maxOf { it }.toDouble()
         }
 
-        fun min(channel: FloatAudioChannels): Float {
-            return channel.data.minOf { it.minOf { it } }
+        fun min(channel: FloatAudioChannels): Double {
+            return channel.data.minOf { min(it) }
         }
 
-        fun max(channel: FloatAudioChannels): Float {
-            return channel.data.maxOf { it.maxOf { it } }
+        fun max(channel: FloatAudioChannels): Double {
+            return channel.data.maxOf { max(it) }
         }
     }
 
@@ -64,90 +66,70 @@ value class FloatAudioChannels(val data: Array<FloatArray>) : AudioChannel {
         return result
     }
 
-    private fun normalize(target: Float, left: Float, right: Float): Float {
+    private fun normalize(target: Double, left: Double, right: Double): Double {
         return left * target + right
     }
 
-    fun calcLeft(a: Float, b: Float, c: Float, d: Float): Float {
+    fun calcLeft(a: Double, b: Double, c: Double, d: Double): Double {
         return (d - c) / (b - a)
     }
 
-    fun calcRight(a: Float, b: Float, c: Float, d: Float): Float {
-        return (c*b - a*d) / (b - a)
+    fun calcRight(a: Double, b: Double, c: Double, d: Double): Double {
+        return (c * b - a * d) / (b - a)
+    }
+
+    fun calcDb(target: Double): Double {
+        if (target == 0.0) {
+            return target
+        }
+        return 20 * log10(target)
+    }
+
+    fun raw(target: Double): Double {
+        if (target == 0.0) {
+            return target
+        }
+        return 10.0.pow(target / 20.0)
+    }
+
+    fun rawToShort(target: Double): Short {
+        if (target == 0.0) {
+            return 0
+        }
+        return round(target * 65536).toInt().toShort()
     }
 
     fun toPCMShort(independent: Boolean = false): PCMShortAudioChannels {
+        val min = -758.0
+        val max = 770.0
 
-        var min = if (independent) {
-            0f
-        } else {
-            min(this)
-        }
-        var max = if (independent) {
-            0f
-        } else {
-            max(this)
-        }
-
-        var left = if (independent) {
-            0f
-        } else {
-            calcLeft(min, max, -1f, 1f)
-        }
-        var right = if (independent) {
-            0f
-        } else {
-            calcRight(min, max, -1f, 1f)
-        }
+        val left = calcLeft(min, max, -96.0, 0.0)
+        val right = calcRight(min, max, -96.0, 0.0)
 
         return PCMShortAudioChannels(Array(data.size) { index1 ->
-            if (independent) {
-                min = min(data[index1])
-                max = max(data[index1])
-                left = calcLeft(min, max, -1f, 1f)
-                right = calcRight(min, max, -1f, 1f)
-            }
             ShortArray(data[index1].size) { index2 ->
-                println("${normalize(data[index1][index2], left, right)} -> ${round((normalize(data[index1][index2], left, right) * 32767.0) + 0.5).toInt().toShort()}")
-                round((normalize(data[index1][index2], left, right) * 32767.0) + 0.5).toInt().toShort()
-            }
-        })
-    }
-
-    fun toNormal(independent: Boolean = false): FloatAudioChannels {
-
-        var min = if (independent) {
-            0f
-        } else {
-            min(this)
-        }
-        var max = if (independent) {
-            0f
-        } else {
-            max(this)
-        }
-
-        var left = if (independent) {
-            0f
-        } else {
-            calcLeft(min, max, -1f, 1f)
-        }
-        var right = if (independent) {
-            0f
-        } else {
-            calcRight(min, max, -1f, 1f)
-        }
-
-        return FloatAudioChannels(Array(data.size) { index1 ->
-            if (independent) {
-                min = min(data[index1])
-                max = max(data[index1])
-                left = calcLeft(min, max, -1f, 1f)
-                right = calcRight(min, max, -1f, 1f)
-            }
-            FloatArray(data[index1].size) { index2 ->
-                println("${data[index1][index2]} -> ${normalize(data[index1][index2], left, right)}")
-                normalize(data[index1][index2], left, right)
+                println(
+                    "${data[index1][index2]} -> ${calcDb(data[index1][index2].toDouble())} -> ${
+                        normalize(
+                            calcDb(
+                                data[index1][index2].toDouble()
+                            ), left, right
+                        )
+                    } -> ${raw(normalize(calcDb(data[index1][index2].toDouble()), left, right))} -> ${rawToShort(raw(normalize(calcDb(data[index1][index2].toDouble()), left, right)))}"
+                )
+                println(
+                    "${data[index1][index2]} -> ${calcDb(data[index1][index2].toDouble())} -> ${
+                        normalize(
+                            calcDb(
+                                data[index1][index2].toDouble()
+                            ), left, right
+                        )
+                    } -> ${raw(normalize(calcDb(data[index1][index2].toDouble()), left, right))} -> ${rawToShort(raw(normalize(calcDb(data[index1][index2].toDouble()), left, right)))}"
+                )
+                rawToShort(raw(normalize(calcDb(data[index1][index2].toDouble()), left, right)))
+                //normalize(data[index1][index2].toDouble(), left, right).toInt().toShort()
+                //println("${normalize(data[index1][index2], left, right)} -> ${round((normalize(data[index1][index2], left, right) * 32767.0) + 0.5).toInt().toShort()}")
+                //round((normalize(data[index1][index2], left, right) * 32767.0) + 0.5).toInt().toShort()
             }
         })
     }
