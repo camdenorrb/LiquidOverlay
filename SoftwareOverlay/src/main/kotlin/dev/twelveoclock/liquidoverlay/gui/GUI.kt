@@ -1,5 +1,6 @@
 package dev.twelveoclock.liquidoverlay.gui
 
+//import dev.twelveoclock.liquidoverlay.LIQUIPEDIA
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -26,7 +27,6 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-//import dev.twelveoclock.liquidoverlay.LIQUIPEDIA
 import kotlin.math.roundToInt
 
 object GUI {
@@ -48,11 +48,34 @@ object GUI {
 			val section = remember { mutableStateOf(Section.OVERLAY) }
 
 			MaterialTheme {
+				var translateOffsetX by remember { mutableStateOf(0f) }
+				var translateOffsetY by remember { mutableStateOf(0f) }
+
+				Box(
+					modifier = Modifier
+						//.alpha(if (isTranslateActivated) 1f else 0f)
+						.size(300.dp, 100.dp)
+						.offset { IntOffset(translateOffsetX.roundToInt(), translateOffsetY.roundToInt()) }
+						.background(Color(49, 136, 237))
+						.pointerInput(Unit) {
+							detectDragGestures { change, dragAmount ->
+								change.consumeAllChanges()
+								translateOffsetX += dragAmount.x
+								translateOffsetY += dragAmount.y
+							}
+						},
+					contentAlignment = Alignment.Center
+				) {
+
+				}
+				/*
 				when (section.value) {
 					//Section.HOME -> HomeScreen(section)
 					Section.OVERLAY -> OverlayScreen(section)
 					Section.SETTINGS -> SettingsScreen(section)
+					Section.START_OVERLAY -> StartOverlayScreen(section)
 				}
+				*/
 			}
 		}
 	}
@@ -307,9 +330,9 @@ object GUI {
 		val colWidth = 100.dp
 		val colFontSize = 10.sp
 
-		val offColor = Color(33, 41, 54)
-		val onColor = Color(81, 142, 240)
-		val textColor = Color.White
+		val toggleOnColor = Color(81, 142, 240)
+		val toggleOffColor = Color(33, 41, 54)
+		val toggleTextColor = Color.White
 
 		/*
 		val notActivated = 0f
@@ -342,19 +365,19 @@ object GUI {
 				// Captions
 				Column(
 					modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth)
-						.background(if (isCaptionsActivated) onColor else offColor)
+						.background(if (isCaptionsActivated) toggleOnColor else toggleOffColor)
 						.clickable { isCaptionsActivated = !isCaptionsActivated },
 					horizontalAlignment = Alignment.CenterHorizontally
 				) {
 					Icon(
 						painterResource("font-icons/captions.svg"),
 						modifier = Modifier.padding(rowPadding),
-						tint = textColor,
+						tint = toggleTextColor,
 						contentDescription = "Captions",
 					)
 					Text(
 						text = "Captions",
-						color = textColor,
+						color = toggleTextColor,
 						fontSize = colFontSize,
 						fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
 					)
@@ -411,19 +434,19 @@ object GUI {
 				// Translate
 				Column(
 					modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth)
-						.background(if (isTranslateActivated) onColor else offColor)
+						.background(if (isTranslateActivated) toggleOnColor else toggleOffColor)
 						.clickable { isTranslateActivated = !isTranslateActivated },
 					horizontalAlignment = Alignment.CenterHorizontally
 				) {
 					Icon(
 						painterResource("font-icons/translate.svg"),
 						modifier = Modifier.padding(rowPadding),
-						tint = textColor,
+						tint = toggleTextColor,
 						contentDescription = "Translate",
 					)
 					Text(
 						text = "Translate",
-						color = textColor,
+						color = toggleTextColor,
 						fontSize = colFontSize,
 						fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
 					)
@@ -432,19 +455,19 @@ object GUI {
 				// Music
 				Column(
 					modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth)
-						.background(if (isMusicActivated) onColor else offColor)
+						.background(if (isMusicActivated) toggleOnColor else toggleOffColor)
 						.clickable { isMusicActivated = !isMusicActivated },
 					horizontalAlignment = Alignment.CenterHorizontally
 				) {
 					Icon(
 						painterResource("font-icons/music.svg"),
 						modifier = Modifier.padding(17.dp),
-						tint = textColor,
+						tint = toggleTextColor,
 						contentDescription = "Music"
 					)
 					Text(
 						text = "Music",
-						color = textColor,
+						color = toggleTextColor,
 						fontSize = colFontSize,
 						fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
 					)
@@ -464,18 +487,15 @@ object GUI {
 					Image(
 						painterResource("image/valorant.jpg"),
 						"Valorant Gameplay Image",
-						modifier = Modifier.fillMaxWidth(),
-						//contentScale = ContentScale.Crop
+						modifier = Modifier.padding(25.dp).fillMaxSize(),
 					)
+
+
+					// Draggable Captions
 
 					var captionOffsetX by remember { mutableStateOf(0f) }
 					var captionOffsetY by remember { mutableStateOf(0f) }
-					var translateOffsetX by remember { mutableStateOf(0f) }
-					var translateOffsetY by remember { mutableStateOf(0f) }
-					var musicOffsetX by remember { mutableStateOf(0f) }
-					var musicOffsetY by remember { mutableStateOf(0f) }
 
-					// Draggable Captions
 					Image(
 						painterResource("draggable/captions.svg"),
 						"Draggable Captions",
@@ -493,6 +513,28 @@ object GUI {
 					)
 
 					// Draggable Translate
+
+					var translateOffsetX by remember { mutableStateOf(0f) }
+					var translateOffsetY by remember { mutableStateOf(0f) }
+
+					Box(
+						modifier = Modifier
+							//.alpha(if (isTranslateActivated) 1f else 0f)
+							.size(300.dp, 100.dp)
+							.offset { IntOffset(translateOffsetX.roundToInt(), translateOffsetY.roundToInt()) }
+							.background(Color(49, 136, 237))
+							.pointerInput(Unit) {
+								detectDragGestures { change, dragAmount ->
+									change.consumeAllChanges()
+									translateOffsetX += dragAmount.x
+									translateOffsetY += dragAmount.y
+								}
+							},
+						contentAlignment = Alignment.Center
+					) {
+
+					}
+					/*
 					Image(
 						painterResource("draggable/translate.svg"),
 						"Draggable Translation",
@@ -507,9 +549,13 @@ object GUI {
 									translateOffsetY += dragAmount.y
 								}
 							}
-					)
+					)*/
 
 					// Draggable Music
+
+					var musicOffsetX by remember { mutableStateOf(0f) }
+					var musicOffsetY by remember { mutableStateOf(0f) }
+
 					Image(
 						painterResource("draggable/music.svg"),
 						"Draggable Music",
@@ -572,14 +618,18 @@ object GUI {
 				horizontalArrangement = Arrangement.SpaceBetween,
 			) {
 				Row {
+
 					Spacer(Modifier.width(10.dp))
+
 					Text(
 						text = "Color Blind",
 						color = prefixColor,
 						fontSize = 20.sp,
 						fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
 					)
+
 					Spacer(Modifier.width(10.dp))
+
 					Text(
 						text = "for vibrant colors and sharper contrast",
 						modifier = Modifier.padding(top = 5.dp),
@@ -636,14 +686,18 @@ object GUI {
 				horizontalArrangement = Arrangement.SpaceBetween,
 			) {
 				Row {
+
 					Spacer(Modifier.width(10.dp))
+
 					Text(
 						text = "Language",
 						color = prefixColor,
 						fontSize = 20.sp,
 						fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
 					)
+
 					Spacer(Modifier.width(10.dp))
+
 					Text(
 						text = "for message transcription and translating",
 						modifier = Modifier.padding(top = 5.dp),
@@ -675,7 +729,7 @@ object GUI {
 						contentDescription = "DropDown",
 						tint = Color.White,
 						modifier = Modifier.size(30.dp).offset(x = 0.dp, y = (-7).dp)
-							.clickable { isExpanded = !isExpanded}
+							.clickable { isExpanded = !isExpanded }
 					)
 
 					DropdownMenu(
@@ -695,6 +749,34 @@ object GUI {
 				}
 			}
 		}
+	}
+
+	@Composable
+	fun StartOverlayScreen(section: MutableState<Section>) {
+
+		NavigationMenu(section)
+
+		Column(
+			modifier = Modifier
+				.padding(start = NAVIGATION_WIDTH)
+				.fillMaxSize()
+				.background(BACKGROUND_COLOR)
+		) {
+
+		}
+		/*
+		Column(Modifier.width(NAVIGATION_WIDTH).fillMaxHeight().background(Color(33, 41, 54))) {
+			Row(
+				modifier = Modifier.height(100.dp).fillMaxWidth().offset(y = 20.dp),
+				horizontalArrangement = Arrangement.Center
+			) {
+				Image(
+					painterResource("logo/logoTransparent.svg"),
+					"Liquid Overlay Icon"
+				)
+			}
+		}*/
+
 	}
 
 	@Composable
@@ -776,7 +858,6 @@ object GUI {
 					fontSize = fontSize,
 					fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
 				)
-
 			}
 
 			// Settings Row
@@ -809,9 +890,11 @@ object GUI {
 			Spacer(Modifier.height(20.dp))
 
 			Row(
-				modifier = Modifier.height(rowHeight).fillMaxWidth().clickable { /*createOverlay()*/ },
+				modifier = Modifier.height(rowHeight).fillMaxWidth()
+					.clickable { section.value = Section.START_OVERLAY },
 				verticalAlignment = Alignment.CenterVertically
 			) {
+
 				Icon(
 					modifier = Modifier.offset(x = moveRight),
 					imageVector = Icons.Rounded.PlayArrow,
@@ -826,7 +909,7 @@ object GUI {
 					text = "Start Overlay",
 					fontSize = fontSize,
 					fontFamily = FontFamily(Font("font/Roboto-Medium.ttf")),
-					color = textColor
+					color = if (section.value == Section.START_OVERLAY) selectedColor else textColor,
 				)
 			}
 		}
@@ -837,6 +920,7 @@ object GUI {
 		//HOME,
 		OVERLAY,
 		SETTINGS,
+		START_OVERLAY
 	}
 
 }
