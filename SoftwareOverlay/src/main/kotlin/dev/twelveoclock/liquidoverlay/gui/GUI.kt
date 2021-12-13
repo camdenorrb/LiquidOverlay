@@ -1,6 +1,5 @@
 package dev.twelveoclock.liquidoverlay.gui
 
-//import dev.twelveoclock.liquidoverlay.LIQUIPEDIA
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -28,6 +27,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import kotlinx.serialization.Serializable
 import kotlin.math.roundToInt
 
 object GUI {
@@ -57,6 +57,23 @@ object GUI {
 				}
 			}
 		}
+	}
+
+	@Serializable
+	data class Settings(
+		val showCaptions: Boolean = false,
+		val showTranslate: Boolean = false,
+		val showMusic: Boolean = false,
+		val colorBlind: Boolean = false,
+		val isDarkMode: Boolean = true,
+		val language: Language = Language.ENGLISH,
+	)
+
+	@Serializable
+	enum class Language {
+		ENGLISH,
+		CHINESE,
+		ESPANOL
 	}
 
 	/*
@@ -331,19 +348,17 @@ object GUI {
 
 		NavigationMenu(section)
 
-		Column(
-			modifier = Modifier.padding(start = NAVIGATION_WIDTH).fillMaxSize().background(BACKGROUND_COLOR)
-		) {
+		Column(Modifier.padding(start = NAVIGATION_WIDTH).fillMaxSize().background(BACKGROUND_COLOR)) {
 
 			// Menu
-			Row(
-				modifier = Modifier.padding(rowPadding).fillMaxWidth().height(rowHeight),
-				//horizontalArrangement = Arrangement.Center
-			) {
+			Row(Modifier.padding(rowPadding).fillMaxWidth().height(rowHeight)) {
 
 				// Captions
 				Column(
-					modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth)
+					modifier = Modifier
+						.padding(colPadding)
+						.fillMaxHeight()
+						.width(colWidth)
 						.background(if (isCaptionsActivated) toggleOnColor else toggleOffColor)
 						.clickable { isCaptionsActivated = !isCaptionsActivated },
 					horizontalAlignment = Alignment.CenterHorizontally
@@ -412,7 +427,10 @@ object GUI {
 
 				// Translate
 				Column(
-					modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth)
+					modifier = Modifier
+						.padding(colPadding)
+						.fillMaxHeight()
+						.width(colWidth)
 						.background(if (isTranslateActivated) toggleOnColor else toggleOffColor)
 						.clickable { isTranslateActivated = !isTranslateActivated },
 					horizontalAlignment = Alignment.CenterHorizontally
@@ -433,7 +451,10 @@ object GUI {
 
 				// Music
 				Column(
-					modifier = Modifier.padding(colPadding).fillMaxHeight().width(colWidth)
+					modifier = Modifier
+						.padding(colPadding)
+						.fillMaxHeight()
+						.width(colWidth)
 						.background(if (isMusicActivated) toggleOnColor else toggleOffColor)
 						.clickable { isMusicActivated = !isMusicActivated },
 					horizontalAlignment = Alignment.CenterHorizontally
@@ -587,9 +608,7 @@ object GUI {
 		val rowHeight = 50.dp
 		val rowPadding = 20.dp
 
-		Column(
-			modifier = Modifier.padding(start = NAVIGATION_WIDTH).fillMaxSize().background(BACKGROUND_COLOR)
-		) {
+		Column(Modifier.padding(start = NAVIGATION_WIDTH).fillMaxSize().background(BACKGROUND_COLOR)) {
 
 			// Color blind
 			Row(
@@ -659,6 +678,7 @@ object GUI {
 				verticalAlignment = Alignment.CenterVertically,
 				horizontalArrangement = Arrangement.SpaceBetween,
 			) {
+
 				Row {
 					Text(
 						text = "Language",
@@ -873,18 +893,21 @@ object GUI {
 
 			// Overlay Row
 			Row(
-				modifier = Modifier.height(rowHeight).fillMaxWidth().clickable { section.value = Section.OVERLAY },
+				modifier = Modifier
+					.offset(x = moveRight)
+					.height(rowHeight)
+					.fillMaxWidth()
+					.clickable { section.value = Section.OVERLAY },
 				verticalAlignment = Alignment.CenterVertically
 			) {
 				// https://developer.android.com/reference/kotlin/androidx/compose/material/icons/Icons
 				Icon(
-					modifier = Modifier.offset(x = moveRight).padding(horizontal = 10.dp),
+					modifier = Modifier.padding(horizontal = 10.dp),
 					painter = painterResource("font-icons/layers.svg"),
 					contentDescription = "Overlay",
 					tint = if (section.value == Section.OVERLAY) selectedColor else prefixIconColor
 				)
 				Text(
-					modifier = Modifier.offset(x = moveRight),
 					text = "Overlay",
 					color = if (section.value == Section.OVERLAY) selectedColor else textColor,
 					fontSize = fontSize,
@@ -894,18 +917,21 @@ object GUI {
 
 			// Settings Row
 			Row(
-				modifier = Modifier.height(rowHeight).fillMaxWidth().clickable { section.value = Section.SETTINGS },
+				modifier = Modifier
+					.offset(x = moveRight)
+					.height(rowHeight)
+					.fillMaxWidth()
+					.clickable { section.value = Section.SETTINGS },
 				verticalAlignment = Alignment.CenterVertically
 			) {
 				// https://developer.android.com/reference/kotlin/androidx/compose/material/icons/Icons
 				Icon(
-					modifier = Modifier.offset(x = moveRight).padding(end = 10.dp),
+					modifier = Modifier.padding(horizontal = 10.dp),
 					imageVector = Icons.Rounded.Settings,
 					contentDescription = "Settings",
 					tint = if (section.value == Section.SETTINGS) selectedColor else prefixIconColor
 				)
 				Text(
-					modifier = Modifier.offset(x = moveRight),
 					text = "Settings",
 					color = if (section.value == Section.SETTINGS) selectedColor else textColor,
 					fontSize = fontSize,
@@ -919,18 +945,20 @@ object GUI {
 			)
 
 			Row(
-				modifier = Modifier.height(rowHeight).fillMaxWidth()
+				modifier = Modifier
+					.offset(x = moveRight)
+					.height(rowHeight)
+					.fillMaxWidth()
 					.clickable { section.value = Section.START_OVERLAY },
 				verticalAlignment = Alignment.CenterVertically
 			) {
 				Icon(
-					modifier = Modifier.offset(x = moveRight).padding(horizontal = 10.dp),
+					modifier = Modifier.padding(horizontal = 10.dp),
 					imageVector = Icons.Rounded.PlayArrow,
 					contentDescription = "Start Overlay",
 					tint = prefixIconColor
 				)
 				Text(
-					modifier = Modifier.offset(x = moveRight),
 					text = "Start Overlay",
 					fontSize = fontSize,
 					fontFamily = FontFamily(Font("font/Roboto-Medium.ttf")),
