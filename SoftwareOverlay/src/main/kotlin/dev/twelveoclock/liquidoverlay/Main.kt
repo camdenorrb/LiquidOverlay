@@ -1,6 +1,5 @@
 package dev.twelveoclock.liquidoverlay
 
-import dev.twelveoclock.liquidoverlay.api.Liquipedia
 import dev.twelveoclock.liquidoverlay.gui.GUI
 import dev.twelveoclock.liquidoverlay.modules.sub.PluginModule
 import dev.twelveoclock.liquidoverlay.speech.GoogleSpeechAPI

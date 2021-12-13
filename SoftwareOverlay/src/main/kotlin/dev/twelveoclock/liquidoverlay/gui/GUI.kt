@@ -14,6 +14,7 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.consumeAllChanges
 import androidx.compose.ui.input.pointer.pointerInput
@@ -48,34 +49,12 @@ object GUI {
 			val section = remember { mutableStateOf(Section.OVERLAY) }
 
 			MaterialTheme {
-				var translateOffsetX by remember { mutableStateOf(0f) }
-				var translateOffsetY by remember { mutableStateOf(0f) }
-
-				Box(
-					modifier = Modifier
-						//.alpha(if (isTranslateActivated) 1f else 0f)
-						.size(300.dp, 100.dp)
-						.offset { IntOffset(translateOffsetX.roundToInt(), translateOffsetY.roundToInt()) }
-						.background(Color(49, 136, 237))
-						.pointerInput(Unit) {
-							detectDragGestures { change, dragAmount ->
-								change.consumeAllChanges()
-								translateOffsetX += dragAmount.x
-								translateOffsetY += dragAmount.y
-							}
-						},
-					contentAlignment = Alignment.Center
-				) {
-
-				}
-				/*
 				when (section.value) {
 					//Section.HOME -> HomeScreen(section)
 					Section.OVERLAY -> OverlayScreen(section)
 					Section.SETTINGS -> SettingsScreen(section)
-					Section.START_OVERLAY -> StartOverlayScreen(section)
+					Section.START_OVERLAY -> StartOverlayScreen(window, section)
 				}
-				*/
 			}
 		}
 	}
@@ -490,49 +469,48 @@ object GUI {
 						modifier = Modifier.padding(25.dp).fillMaxSize(),
 					)
 
-
 					// Draggable Captions
 
 					var captionOffsetX by remember { mutableStateOf(0f) }
 					var captionOffsetY by remember { mutableStateOf(0f) }
 
-					Image(
-						painterResource("draggable/captions.svg"),
-						"Draggable Captions",
-						alpha = if (isCaptionsActivated) 1f else 0f,
-						modifier = Modifier
-							.width(300.dp)
-							.offset { IntOffset(captionOffsetX.roundToInt(), captionOffsetY.roundToInt()) }
-							.pointerInput(Unit) {
-								detectDragGestures { change, dragAmount ->
-									change.consumeAllChanges()
-									captionOffsetX += dragAmount.x
-									captionOffsetY += dragAmount.y
+					if (isCaptionsActivated) {
+						Image(
+							painterResource("draggable/captions.svg"),
+							"Draggable Captions",
+							modifier = Modifier
+								.width(300.dp)
+								.offset { IntOffset(captionOffsetX.roundToInt(), captionOffsetY.roundToInt()) }
+								.pointerInput(Unit) {
+									detectDragGestures { change, dragAmount ->
+										change.consumeAllChanges()
+										captionOffsetX += dragAmount.x
+										captionOffsetY += dragAmount.y
+									}
 								}
-							}
-					)
+						)
+					}
 
 					// Draggable Translate
 
 					var translateOffsetX by remember { mutableStateOf(0f) }
 					var translateOffsetY by remember { mutableStateOf(0f) }
 
-					Box(
-						modifier = Modifier
-							//.alpha(if (isTranslateActivated) 1f else 0f)
-							.size(300.dp, 100.dp)
-							.offset { IntOffset(translateOffsetX.roundToInt(), translateOffsetY.roundToInt()) }
-							.background(Color(49, 136, 237))
-							.pointerInput(Unit) {
-								detectDragGestures { change, dragAmount ->
-									change.consumeAllChanges()
-									translateOffsetX += dragAmount.x
-									translateOffsetY += dragAmount.y
+					if (isTranslateActivated) {
+						Image(
+							painterResource("draggable/translate.svg"),
+							"Draggable Music",
+							modifier = Modifier
+								.width(300.dp)
+								.offset { IntOffset(translateOffsetX.roundToInt(), translateOffsetY.roundToInt()) }
+								.pointerInput(Unit) {
+									detectDragGestures { change, dragAmount ->
+										change.consumeAllChanges()
+										translateOffsetX += dragAmount.x
+										translateOffsetY += dragAmount.y
+									}
 								}
-							},
-						contentAlignment = Alignment.Center
-					) {
-
+						)
 					}
 					/*
 					Image(
@@ -556,20 +534,22 @@ object GUI {
 					var musicOffsetX by remember { mutableStateOf(0f) }
 					var musicOffsetY by remember { mutableStateOf(0f) }
 
-					Image(
-						painterResource("draggable/music.svg"),
-						"Draggable Music",
-						alpha = if (isMusicActivated) 1f else 0f,
-						modifier = Modifier
-							.offset { IntOffset(musicOffsetX.roundToInt(), musicOffsetY.roundToInt()) }
-							.pointerInput(Unit) {
-								detectDragGestures { change, dragAmount ->
-									change.consumeAllChanges()
-									musicOffsetX += dragAmount.x
-									musicOffsetY += dragAmount.y
+					if (isMusicActivated) {
+						Image(
+							painterResource("draggable/music.svg"),
+							"Draggable Music",
+							modifier = Modifier
+								.width(300.dp)
+								.offset { IntOffset(musicOffsetX.roundToInt(), musicOffsetY.roundToInt()) }
+								.pointerInput(Unit) {
+									detectDragGestures { change, dragAmount ->
+										change.consumeAllChanges()
+										musicOffsetX += dragAmount.x
+										musicOffsetY += dragAmount.y
+									}
 								}
-							}
-					)
+						)
+					}
 
 					// Footsteps Toggle
 					/*
@@ -618,18 +598,13 @@ object GUI {
 				horizontalArrangement = Arrangement.SpaceBetween,
 			) {
 				Row {
-
-					Spacer(Modifier.width(10.dp))
-
 					Text(
 						text = "Color Blind",
 						color = prefixColor,
+						modifier = Modifier.padding(horizontal = 10.dp),
 						fontSize = 20.sp,
 						fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
 					)
-
-					Spacer(Modifier.width(10.dp))
-
 					Text(
 						text = "for vibrant colors and sharper contrast",
 						modifier = Modifier.padding(top = 5.dp),
@@ -654,14 +629,13 @@ object GUI {
 				horizontalArrangement = Arrangement.SpaceBetween,
 			) {
 				Row {
-					Spacer(Modifier.width(10.dp))
 					Text(
 						text = "Dark/Light",
 						color = prefixColor,
+						modifier = Modifier.padding(horizontal = 10.dp),
 						fontSize = 20.sp,
 						fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
 					)
-					Spacer(Modifier.width(10.dp))
 					Text(
 						text = "to prove if you’re a true gamer",
 						modifier = Modifier.padding(top = 5.dp),
@@ -686,18 +660,13 @@ object GUI {
 				horizontalArrangement = Arrangement.SpaceBetween,
 			) {
 				Row {
-
-					Spacer(Modifier.width(10.dp))
-
 					Text(
 						text = "Language",
 						color = prefixColor,
+						modifier = Modifier.padding(horizontal = 10.dp),
 						fontSize = 20.sp,
 						fontFamily = FontFamily(Font("font/Roboto-Medium.ttf"))
 					)
-
-					Spacer(Modifier.width(10.dp))
-
 					Text(
 						text = "for message transcription and translating",
 						modifier = Modifier.padding(top = 5.dp),
@@ -712,14 +681,13 @@ object GUI {
 				var isExpanded by remember { mutableStateOf(false) }
 
 				Row(
-					modifier = Modifier.padding(top = 10.dp, end = 10.dp)
-						.clickable{ isExpanded = !isExpanded },
-					horizontalArrangement = Arrangement.Center
+					modifier = Modifier.clickable{ isExpanded = !isExpanded },
+					horizontalArrangement = Arrangement.Center,
+					verticalAlignment = Alignment.CenterVertically
 				) {
 
 					Text(
 						text = languageChoice,
-						modifier = Modifier.clickable { isExpanded = !isExpanded },
 						color = Color.White,
 						fontSize = 14.sp,
 						fontFamily = FontFamily(Font("font/Roboto-Medium.ttf")),
@@ -728,9 +696,9 @@ object GUI {
 						imageVector = Icons.Rounded.ArrowDropDown,
 						contentDescription = "DropDown",
 						tint = Color.White,
-						modifier = Modifier.size(30.dp).offset(x = 0.dp, y = (-7).dp)
-							.clickable { isExpanded = !isExpanded }
+						modifier = Modifier.size(30.dp)
 					)
+
 
 					DropdownMenu(
 						expanded = isExpanded,
@@ -741,27 +709,95 @@ object GUI {
 								isExpanded = false
 								languageChoice = language
 							}) {
-								Text(language)
+								Text(
+									text = language,
+									color = Color.Black,
+									fontSize = 14.sp,
+									fontFamily = FontFamily(Font("font/Roboto-Medium.ttf")),
+								)
 							}
 						}
 					}
 
 				}
+
 			}
 		}
 	}
 
 	@Composable
-	fun StartOverlayScreen(section: MutableState<Section>) {
+	fun StartOverlayScreen(window: ComposeWindow, section: MutableState<Section>) {
 
 		NavigationMenu(section)
 
 		Column(
+			horizontalAlignment = Alignment.CenterHorizontally,
+
 			modifier = Modifier
 				.padding(start = NAVIGATION_WIDTH)
 				.fillMaxSize()
 				.background(BACKGROUND_COLOR)
 		) {
+
+			val languages = listOf("English", "中文", "Español")
+			var languageChoice by remember { mutableStateOf(languages[0]) }
+			var isExpanded by remember { mutableStateOf(false) }
+
+			Row(
+				modifier = Modifier.padding(top = (window.height / 4).dp)
+					.clickable{ isExpanded = !isExpanded },
+				horizontalArrangement = Arrangement.Center,
+				verticalAlignment = Alignment.CenterVertically
+			) {
+
+				Text(
+					text = languageChoice,
+					color = Color.White,
+					fontSize = 14.sp,
+					fontFamily = FontFamily(Font("font/Roboto-Medium.ttf")),
+				)
+				Icon(
+					imageVector = Icons.Rounded.ArrowDropDown,
+					contentDescription = "DropDown",
+					tint = Color.White,
+					modifier = Modifier.size(30.dp)
+				)
+
+
+				DropdownMenu(
+					expanded = isExpanded,
+					onDismissRequest = { isExpanded = false }
+				) {
+					languages.forEach { language ->
+						DropdownMenuItem(onClick = {
+							isExpanded = false
+							languageChoice = language
+						}) {
+							Text(language)
+						}
+					}
+				}
+
+			}
+
+
+			Row {
+				Box(
+					modifier = Modifier
+						.size(200.dp, 50.dp)
+						.background(Color(81, 142, 240))
+						.clickable {  },
+					contentAlignment = Alignment.Center
+				) {
+					Text(
+						text = "Start",
+						color = Color.White,
+						fontSize = 14.sp,
+						fontFamily = FontFamily(Font("font/Roboto-Medium.ttf")),
+					)
+				}
+			}
+
 
 		}
 		/*
@@ -840,17 +876,13 @@ object GUI {
 				modifier = Modifier.height(rowHeight).fillMaxWidth().clickable { section.value = Section.OVERLAY },
 				verticalAlignment = Alignment.CenterVertically
 			) {
-
 				// https://developer.android.com/reference/kotlin/androidx/compose/material/icons/Icons
 				Icon(
-					modifier = Modifier.offset(x = moveRight),
+					modifier = Modifier.offset(x = moveRight).padding(horizontal = 10.dp),
 					painter = painterResource("font-icons/layers.svg"),
 					contentDescription = "Overlay",
 					tint = if (section.value == Section.OVERLAY) selectedColor else prefixIconColor
 				)
-
-				Spacer(Modifier.width(10.dp))
-
 				Text(
 					modifier = Modifier.offset(x = moveRight),
 					text = "Overlay",
@@ -865,17 +897,13 @@ object GUI {
 				modifier = Modifier.height(rowHeight).fillMaxWidth().clickable { section.value = Section.SETTINGS },
 				verticalAlignment = Alignment.CenterVertically
 			) {
-
 				// https://developer.android.com/reference/kotlin/androidx/compose/material/icons/Icons
 				Icon(
-					modifier = Modifier.offset(x = moveRight),
+					modifier = Modifier.offset(x = moveRight).padding(end = 10.dp),
 					imageVector = Icons.Rounded.Settings,
 					contentDescription = "Settings",
 					tint = if (section.value == Section.SETTINGS) selectedColor else prefixIconColor
 				)
-
-				Spacer(Modifier.width(10.dp))
-
 				Text(
 					modifier = Modifier.offset(x = moveRight),
 					text = "Settings",
@@ -885,25 +913,22 @@ object GUI {
 				)
 			}
 
-			Divider(modifier = Modifier.offset(y = 10.dp), color = textColor, thickness = 1.dp)
-
-			Spacer(Modifier.height(20.dp))
+			Divider(
+				modifier = Modifier.offset(y = 10.dp).padding(bottom = 20.dp),
+				color = textColor, thickness = 1.dp
+			)
 
 			Row(
 				modifier = Modifier.height(rowHeight).fillMaxWidth()
 					.clickable { section.value = Section.START_OVERLAY },
 				verticalAlignment = Alignment.CenterVertically
 			) {
-
 				Icon(
-					modifier = Modifier.offset(x = moveRight),
+					modifier = Modifier.offset(x = moveRight).padding(horizontal = 10.dp),
 					imageVector = Icons.Rounded.PlayArrow,
 					contentDescription = "Start Overlay",
 					tint = prefixIconColor
 				)
-
-				Spacer(Modifier.width(10.dp))
-
 				Text(
 					modifier = Modifier.offset(x = moveRight),
 					text = "Start Overlay",
