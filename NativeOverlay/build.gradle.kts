@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 
 plugins {
-    kotlin("jvm") version "1.6.0"
+    kotlin("jvm")
 }
 
 group = "tech.poder"
@@ -15,8 +15,8 @@ repositories {
 dependencies {
     implementation(platform(kotlin("bom")))
     implementation(kotlin("stdlib-jdk8"))
-    implementation("org.jetbrains.kotlinx:atomicfu:0.17.0")
-    testImplementation("org.junit.platform:junit-platform-commons:+")
+    implementation("org.jetbrains.kotlinx:atomicfu:0.17.2")
+    testImplementation("org.junit.platform:junit-platform-commons:1.8.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation(kotlin("test"))
 }
