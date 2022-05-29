@@ -3,8 +3,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm")
     kotlin("plugin.serialization") version "1.6.21"
-    id("com.github.johnrengelman.shadow") version "7.1.0"
-    id("org.jetbrains.compose") version "1.0.0"
+    id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("org.jetbrains.compose") version "1.1.1"
 }
 
 group = "dev.twelveoclock"
@@ -24,7 +24,7 @@ dependencies {
     implementation(platform(kotlin("bom")))
     implementation(kotlin("stdlib-jdk8"))
     implementation(kotlin("reflect"))
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
 
     // Sub Modules
     implementation(project(":NativeOverlay"))
