@@ -15,7 +15,7 @@ repositories {
 dependencies {
     implementation(platform(kotlin("bom")))
     implementation(kotlin("stdlib-jdk8"))
-    implementation("org.jetbrains.kotlinx:atomicfu:0.17.2")
+    implementation("org.jetbrains.kotlinx:atomicfu:0.17.3")
     testImplementation("org.junit.platform:junit-platform-commons:1.8.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation(kotlin("test"))
