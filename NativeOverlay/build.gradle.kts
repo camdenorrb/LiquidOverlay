@@ -16,7 +16,7 @@ dependencies {
     implementation(platform(kotlin("bom")))
     implementation(kotlin("stdlib-jdk8"))
     implementation("org.jetbrains.kotlinx:atomicfu:0.18.3")
-    testImplementation("org.junit.platform:junit-platform-commons:1.8.2")
+    testImplementation("org.junit.platform:junit-platform-commons:1.9.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation(kotlin("test"))
 }
